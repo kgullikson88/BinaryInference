@@ -189,7 +189,10 @@ class OrbitCalculator(object):
 
 
 
-
+#class ProbabilisticCalculator(object):
+#    """ This class assumes uniform distributions of the orbital orientation parameters, 
+#    and samples a bunch of them to get probability of observables"""
+#    def __init__(self, )
 
 
 
