@@ -54,7 +54,7 @@ class OrbitCalculator(object):
         self.a = a if isinstance(a, u.Quantity) else a*u.AU
         self.big_omega = big_omega if isinstance(big_omega, u.Quantity) else big_omega*u.degree
         self.little_omega = little_omega if isinstance(little_omega, u.Quantity) else little_omega*u.degree
-        self.primary_mass = primary_mass if isinstance(primary_mass, u.Quantity) else primary_mass.u.M_sun
+        self.primary_mass = primary_mass if isinstance(primary_mass, u.Quantity) else primary_mass*u.M_sun
 
         # Pre-compute sin(i) and cos(i), two useful quantities.
         inc = i if isinstance(i, u.Quantity) else i*u.degree
@@ -180,8 +180,9 @@ class OrbitCalculator(object):
         y = self.B*X + self.G*Y
 
         # Convert to rho/theta
-        r = self.a * (1-self.e**2) / (1 + self.e*np.cos(nu))
-        rho = r*np.sqrt(x**2 + y**2)
+        #r = self.a * (1-self.e**2) / (1 + self.e*np.cos(nu))
+        #rho = r*np.sqrt(x**2 + y**2)
+        rho = self.a * (1 - self.e * np.cos(E))
         theta = self.big_omega + np.arctan2(y, x)
 
         return rho, theta
