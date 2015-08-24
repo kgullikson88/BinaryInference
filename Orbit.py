@@ -4,6 +4,7 @@ import HelperFunctions
 from scipy.optimize import newton
 import scipy.interpolate
 import logging
+import Fitters
 
 cache = None
 
@@ -12,7 +13,9 @@ class OrbitCalculator(object):
     Calculates various quantities for an orbit, 
     given the Keplerian elements
     """
-    def __init__(self, P, M0, e, a, big_omega, little_omega, i, q=1.0, primary_mass=2.0*u.M_sun, precompute=True):
+    def __init__(self, P, M0, e, a, big_omega, little_omega, i, 
+                 q=1.0, primary_mass=2.0, K1=None, K2=None, 
+                 precompute=True):
         """
         Initialize the OrbitCalculator class.
 
@@ -45,6 +48,14 @@ class OrbitCalculator(object):
         - primary_mass: float
                         The mass of the primary star in solar masses
 
+        - K1:           float
+                        The semiamplitude velocity of the primary star (in km/s).
+                        Overrides the calculation from mass, semi-major axis, etc if given
+
+        - K2:           float
+                        The semiamplitude velocity of the secondary star (in km/s)
+                        Overrides the calculation from mass, semi-major axis, etc if given
+
         - precompute:   If true, it calculates a bunch of combinations of mean anomaly
                         and eccentricity, and interpolates between them. This provides 
                         about an order of magnitude speedup at the expense of a few seconds
@@ -66,8 +77,14 @@ class OrbitCalculator(object):
         self.cosi = np.cos(inc)
 
         # Compute the orbit radial velocity semi-amplitude.
-        self.K1 = (1+q) * self.sini * np.sqrt(constants.G * self.primary_mass*u.M_sun * (1+q) / (self.a*u.AU*(1-e**2))).to(u.km/u.s).value
-        self.K2 = self.K1 / q
+        if K1 is None:
+            self.K1 = (1+q) * self.sini * np.sqrt(constants.G * self.primary_mass*u.M_sun * (1+q) / (self.a*u.AU*(1-e**2))).to(u.km/u.s).value
+        else:
+            self.K1 = K1
+        if K2 is None:
+            self.K2 = self.K1 / q
+        else:
+            self.K2 = K2
 
         # Compute the Thiele-Innes elements for cartesian calculations
         # Formulas from http://ugastro.berkeley.edu/infrared10/adaptiveoptics/binary_orbit.pdf
@@ -110,10 +127,10 @@ class OrbitCalculator(object):
         """
         if self.anomaly_interpolator is not None:
             output = self.anomaly_interpolator((e, M))
-            return output*u.radian
+            return output
 
         if HelperFunctions.IsListlike(M):
-            return np.array([self.calculate_eccentric_anomaly(Mi, e).value for Mi in M])
+            return np.array([self.calculate_eccentric_anomaly(Mi, e) for Mi in M])
 
         func = lambda E: E - e*np.sin(E) - M
         dfunc = lambda E: 1.0 - e*np.cos(E)
@@ -291,11 +308,10 @@ class OrbitFitter(Fitters.Bayesian_LS):
            The primary/secondary rv, and the on-sky x- and y-positions
         """
         period, M0, a, e, Omega, omega, i, K1, K2 = p
-        orbit = Orbit.OrbitCalculator(P=period, M0=M0, a=a, e=e, 
-                                      big_omega=Omega, little_omega=omega,
-                                      i=i)
-        orbit.K1 = K1
-        orbit.K2 = K2
+        orbit = OrbitCalculator(P=period, M0=M0, a=a, e=e, 
+                                big_omega=Omega, little_omega=omega,
+                                i=i, K1=K1, K2=K2)
+
         rv1 = orbit.get_rv(x['t_rv'], component='primary')
         rv2 = rv1 * orbit.K2 / orbit.K1
         rho, theta = orbit.get_imaging_observables(x['t_im'], distance=self.distance)
@@ -334,7 +350,7 @@ class OrbitFitter(Fitters.Bayesian_LS):
     def lnprior(self, pars):
         # emcee prior
         period, M0, a, e, Omega, omega, i, K1, K2 = pars
-        if 0 < period < 1e5 and 0 < a < 1e5 and 0 < e < 1 and 0 < Omega < 2*np.pi and 0 < omega < 2*np.pi and 0 < i < 2*np.pi and 0 < K1 < 1e3 and 0 < K2 < 1e3:
+        if 0 < period < 1e5 and 0 < a < 1e5 and 0 < e < 1 and 0 < Omega < 360. and 0 < omega < 360. and 0 < i < 360. and 0 < K1 < 1e3 and 0 < K2 < 1e3:
             return 0.0
         return -np.inf
 
