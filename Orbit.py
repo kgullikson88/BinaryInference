@@ -190,7 +190,7 @@ class OrbitCalculator(object):
         Returns:
         ========
         - rho:              float
-                            The angular separation between the primary and secondary star (in radians)
+                            The angular separation between the primary and secondary star (in arcseconds)
 
         - theta:            float
                             The position angle of the companion, in relation to the primary star (in radians).
@@ -220,10 +220,123 @@ class OrbitCalculator(object):
 
 
 
-#class ProbabilisticCalculator(object):
-#    """ This class assumes uniform distributions of the orbital orientation parameters, 
-#    and samples a bunch of them to get probability of observables"""
-#    def __init__(self, )
+class OrbitFitter(Fitters.Bayesian_LS):
+    """
+    Fit a binary orbit from radial velocity measurements of the primary and secondary, and
+    from imaging observables.
+
+    Parameters:
+    ===========
+     - rv_times:             ndarray of floats
+                             The julian dates at which the radial velocity measurements were taken
+                             
+     - imaging_times:        ndarray of floats
+                             The julian dates at which the imaging measurements were taken
+                             
+     - rv1_measurements:     ndarray of floats
+                             The radial velocity measurements of the primary star (in km/s)
+                             
+     - rv1_err:              ndarray of floats, or float
+                             Uncertainty in the radial velocity measurements of the primary star (in km/s)
+                             
+     - rv2_measurements:     ndarray of floats
+                             The radial velocity measurements of the secondary star (in km/s)
+                             
+     - rv2_err:              ndarray of floats, or float
+                             Uncertainty in the radial velocity measurements of the secondary star (in km/s)
+                             
+     - rho_measurements:     ndarray of floats
+                             measurements of the primary-secondary separation (in arcseconds)
+                             
+     - theta_measurements:   ndarray of floats
+                             measurements of the position angle (in radians)
+                             
+     - pos_err:              ndarray of floats, or float
+                             Uncertainty in the position of the secondary star relative to the primary (in arcseconds).
+                             
+     - distance:             float
+                             Distance from the Earth to the star in question (in parsecs)
+
+    """
+    def __init__(self, rv_times, imaging_times, 
+                 rv1_measurements, rv1_err, rv2_measurements, rv2_err, 
+                 rho_measurements, theta_measurements, pos_err,
+                 distance=100.0):
+        
+        # Put the data into appropriate dictionaries
+        x = dict(t_rv=rv_times, t_im=imaging_times)
+        y = dict(rv1=rv1_measurements, rv2=rv2_measurements,
+                 xpos=rho_measurements*np.cos(theta_measurements),
+                 ypos=rho_measurements*np.sin(theta_measurements))
+        yerr = dict(rv1=rv1_err, rv2=rv2_err, pos=pos_err)
+        
+        # List the parameter names
+        parnames = ['Period', '$M_0$', 'a', 'e', '$\Omega$', '$\omega$', 'i', '$K_1$', '$K_2$']
+        
+        super(OrbitFitter, self).__init__(x, y, yerr, param_names=parnames)
+        self.distance = distance
+        return
+        
+        
+    def model(self, p, x):
+        """ Generate observables from the model parameters
+        
+        Parameters:
+        ============
+         -p: a list of parameters giving the orbital elements
+         -x: A dictionary with keys for the time of the rv and imaging observations
+        
+        Returns:
+        ======== 
+           The primary/secondary rv, and the on-sky x- and y-positions
+        """
+        period, M0, a, e, Omega, omega, i, K1, K2 = p
+        orbit = Orbit.OrbitCalculator(P=period, M0=M0, a=a, e=e, 
+                                      big_omega=Omega, little_omega=omega,
+                                      i=i)
+        orbit.K1 = K1
+        orbit.K2 = K2
+        rv1 = orbit.get_rv(x['t_rv'], component='primary')
+        rv2 = rv1 * orbit.K2 / orbit.K1
+        rho, theta = orbit.get_imaging_observables(x['t_im'], distance=self.distance)
+        xpos = rho*np.cos(theta)
+        ypos = rho*np.sin(theta)
+        return rv1, rv2, xpos, ypos
+    
+    def lnlike_rv(self, rv1_pred, rv2_pred, primary=True, secondary=True):
+        s = 0.0
+        if primary:
+            s += -0.5*np.sum((rv1_pred - self.y['rv1'])**2 / self.yerr['rv1']**2 )
+        if secondary:
+            s += -0.5*np.sum((rv2_pred - self.y['rv2'])**2 / self.yerr['rv2']**2 )
+        return s
+    
+    def lnlike_imaging(self, xpos_pred, ypos_pred):
+        return -0.5*np.sum(((xpos_pred - self.y['xpos'])**2 + (ypos_pred - self.y['ypos'])**2) / self.yerr['pos']**2)
+        
+    def _lnlike(self, pars, primary=True, secondary=True):
+        rv1, rv2, xpos, ypos = self.model(pars, self.x)
+        return self.lnlike_rv(rv1, rv2, primary=primary, secondary=secondary) + self.lnlike_imaging(xpos, ypos)
+    
+    def mnest_prior(self, cube, ndim, nparames):
+        # Multinest prior
+        cube[0] = 10**(cube[0]*5)    # log-uniform in period
+        cube[1] = cube[1] * 2*np.pi  # Uniform in mean anomaly at epoch (M0)
+        cube[2] = 10**(cube[2]*5)    # Log-uniform in semi-major axis
+        cube[3] = cube[3]            # Uniform in eccentricity
+        cube[4] = cube[4] * 2*np.pi  # Uniform in big omega
+        cube[5] = cube[5] * 2*np.pi  # Uniform in little omega
+        cube[6] = cube[6] * 2*np.pi  # Uniform in inclination
+        cube[7] = 10**(cube[7]*3)    # Log-uniform in rv semiamplitude (primary)
+        cube[8] = 10**(cube[8]*3)    # Log-uniform in rv semiamplitude (secondary)
+        return
+    
+    def lnprior(self, pars):
+        # emcee prior
+        period, M0, a, e, Omega, omega, i, K1, K2 = pars
+        if 0 < period < 1e5 and 0 < a < 1e5 and 0 < e < 1 and 0 < Omega < 2*np.pi and 0 < omega < 2*np.pi and 0 < i < 2*np.pi and 0 < K1 < 1e3 and 0 < K2 < 1e3:
+            return 0.0
+        return -np.inf
 
 
 
