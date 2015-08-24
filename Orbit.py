@@ -2,13 +2,17 @@ import numpy as np
 from astropy import units as u, constants
 import HelperFunctions
 from scipy.optimize import newton
+import scipy.interpolate
+import logging
+
+cache = None
 
 class OrbitCalculator(object):
     """
     Calculates various quantities for an orbit, 
     given the Keplerian elements
     """
-    def __init__(self, P, M0, e, a, big_omega, little_omega, i, q=1.0, primary_mass=2.0*u.M_sun):
+    def __init__(self, P, M0, e, a, big_omega, little_omega, i, q=1.0, primary_mass=2.0*u.M_sun, precompute=True):
         """
         Initialize the OrbitCalculator class.
 
@@ -45,6 +49,11 @@ class OrbitCalculator(object):
         - primary_mass: float, or astropy quantity for mass
                         The mass of the primary star. Assumed to be in solar masses
                         if not an astropy quantity.
+
+        - precompute:   If true, it calculates a bunch of combinations of mean anomaly
+                        and eccentricity, and interpolates between them. This provides 
+                        about an order of magnitude speedup at the expense of a few seconds
+                        of startup time.
         """
 
         # Save most of the variables as instance variables for use in various functions.
@@ -75,6 +84,28 @@ class OrbitCalculator(object):
                            np.cos(self.little_omega)*np.sin(self.big_omega)*self.cosi)
         self.G= self.a * (-np.sin(self.little_omega)*np.sin(self.big_omega) - 
                            np.cos(self.little_omega)*np.cos(self.big_omega)*self.cosi)
+        
+        self.anomaly_interpolator = None
+        if precompute:
+            self.anomaly_interpolator = self.get_anomaly_interpolator()
+        return
+
+
+    def get_anomaly_interpolator(self):
+        """ Generate or retrieve an interpolator 
+        for the eccentric anomaly"""
+        global cache
+        if cache is not None:
+            return cache
+        ee = np.arange(0, 1.01, 0.01)
+        MM = np.arange(0, 360.5, 0.5) * u.degree
+        E = np.empty(ee.size*MM.size)
+        for i, e in enumerate(ee):
+            logging.debug('Calculating eccentric anomalies for e = {}'.format(e))
+            E[i*MM.size:MM.size*(i+1)] = self.calculate_eccentric_anomaly(MM, e)
+        
+        cache = scipy.interpolate.RegularGridInterpolator((ee, MM), E.reshape((ee.size, MM.size)))
+        return cache
 
 
     def calculate_eccentric_anomaly(self, M, e):
@@ -82,6 +113,10 @@ class OrbitCalculator(object):
         Get the eccentric anomaly (E) from the mean anomaly (M) and orbital eccentricity (e)
         Uses the equation M = E - esinE
         """
+        if self.anomaly_interpolator is not None:
+            output = self.anomaly_interpolator((e, M))
+            return output*u.radian
+
         if HelperFunctions.IsListlike(M):
             return np.array([self.calculate_eccentric_anomaly(Mi, e).value for Mi in M])*u.radian
         
@@ -114,7 +149,8 @@ class OrbitCalculator(object):
                             The true anomaly of the orbit, as an angle.
         """
         dt = time_since_epoch if isinstance(time_since_epoch, u.Quantity) else time_since_epoch*u.year
-        M = self.M0 + (2*np.pi*dt / self.P).to(u.radian, equivalencies=u.dimensionless_angles())
+        M = self.M0 + (2*np.pi*dt/self.P).to(u.radian, equivalencies=u.dimensionless_angles())
+        M = M % (360*u.degree)
         E = self.calculate_eccentric_anomaly(M, self.e)
         A = (np.cos(E) - self.e)/(1-self.e*np.cos(E))
         B = (np.sqrt(1.-self.e**2) * np.sin(E)) / (1.-self.e*np.cos(E))
@@ -172,7 +208,16 @@ class OrbitCalculator(object):
         - theta:            astropy.Quantity
                             The position angle of the companion, in relation to the primary star.
         """
-        # Calculate the cartesian coordinates, first, to get the quadrant right in theta.
+        # Make sure either distance or parallax is given
+        assert distance is not None or parallax is not None
+
+        if distance is None:
+            plx = parallax.to(u.arcsec) if isinstance(parallax, u.Quantity) else parallax
+            distance = 1.0 / plx * u.parsec 
+        else:
+            distance = distance if isinstance(distance, u.Quantity) else distance*u.parsec
+
+        # Calculate the cartesian coordinates first, to get the quadrant right in theta.
         nu, E = self.get_true_anomaly(time_since_epoch, ret_ecc_anomaly=True)
         X = np.cos(E) - self.e
         Y = np.sin(E) * np.sqrt(1-self.e**2)
@@ -180,10 +225,11 @@ class OrbitCalculator(object):
         y = self.B*X + self.G*Y
 
         # Convert to rho/theta
-        #r = self.a * (1-self.e**2) / (1 + self.e*np.cos(nu))
-        #rho = r*np.sqrt(x**2 + y**2)
         rho = self.a * (1 - self.e * np.cos(E))
         theta = self.big_omega + np.arctan2(y, x)
+
+        # rho is currently in AU. Convert to on-sky distance
+        rho = (rho / distance).to(u.arcsec, equivalencies=u.dimensionless_angles())
 
         return rho, theta
 
