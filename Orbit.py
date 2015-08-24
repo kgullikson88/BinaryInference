@@ -238,9 +238,7 @@ class OrbitCalculator(object):
         return rho, theta
 
 
-
-
-class OrbitFitter(Fitters.Bayesian_LS):
+class FullOrbitFitter(Fitters.Bayesian_LS):
     """
     Fit a binary orbit from radial velocity measurements of the primary and secondary, and
     from imaging observables.
@@ -292,8 +290,8 @@ class OrbitFitter(Fitters.Bayesian_LS):
         
         # List the parameter names
         parnames = ['Period', '$M_0$', 'a', 'e', '$\Omega$', '$\omega$', 'i', '$K_1$', '$K_2$', 'dv1', 'dv2']
-        
-        super(OrbitFitter, self).__init__(x, y, yerr, param_names=parnames)
+
+        super(FullOrbitFitter, self).__init__(x, y, yerr, param_names=parnames)
         self.distance = distance
         return
         
@@ -336,7 +334,12 @@ class OrbitFitter(Fitters.Bayesian_LS):
         
     def _lnlike(self, pars, primary=True, secondary=True):
         rv1, rv2, xpos, ypos = self.model(pars, self.x)
-        return self.lnlike_rv(rv1, rv2, primary=primary, secondary=secondary) + self.lnlike_imaging(xpos, ypos)
+        s = 0.0
+        if len(rv1) > 0:
+            s += self.lnlike_rv(rv1, rv2, primary=primary, secondary=secondary)
+        if len(xpos) > 0:
+            s += self.lnlike_imaging(xpos, ypos)
+        return s
     
     def mnest_prior(self, cube, ndim, nparames):
         # Multinest prior
@@ -364,5 +367,104 @@ class OrbitFitter(Fitters.Bayesian_LS):
         return -np.inf
 
 
+class SpectroscopicOrbitFitter(Fitters.Bayesian_LS):
+    """
+    Fit a binary orbit from radial velocity measurements of the primary and (optionally) secondary
+
+    Parameters:
+    ===========
+     - rv_times:             ndarray of floats
+                             The julian dates at which the radial velocity measurements were taken
+
+     - rv1_measurements:     ndarray of floats
+                             The radial velocity measurements of the primary star (in km/s)
+
+     - rv1_err:              ndarray of floats, or float
+                             Uncertainty in the radial velocity measurements of the primary star (in km/s)
+
+     - rv2_measurements:     ndarray of floats
+                             The radial velocity measurements of the secondary star (in km/s)
+
+     - rv2_err:              ndarray of floats, or float
+                             Uncertainty in the radial velocity measurements of the secondary star (in km/s)
 
 
+    """
+
+    def __init__(self, rv_times, rv1_measurements, rv1_err, rv2_measurements=None, rv2_err=None):
+
+        if rv2_measurements is None:
+            rv2_measurements = np.nan * np.ones_like(rv1_measurements)
+            rv2_err = 1.0
+
+        # Put the data into appropriate dictionaries
+        x = dict(t_rv=rv_times)
+        y = dict(rv1=rv1_measurements, rv2=rv2_measurements)
+        yerr = dict(rv1=rv1_err, rv2=rv2_err)
+
+        # List the parameter names
+        parnames = ['Period', '$M_0$', 'asini', 'e', '$\omega$', '$K_1$', '$K_2$', 'dv1', 'dv2']
+
+        super(SpectroscopicOrbitFitter, self).__init__(x, y, yerr, param_names=parnames)
+        return
+
+
+    def model(self, p, x):
+        """ Generate observables from the model parameters
+
+        Parameters:
+        ============
+         -p: a list of parameters giving the orbital elements
+         -x: A dictionary with keys for the time of the rv and imaging observations
+
+        Returns:
+        ========
+           The primary/secondary rv, and the on-sky x- and y-positions
+        """
+        period, M0, asini, e, omega, K1, K2, dv1, dv2 = p
+        orbit = OrbitCalculator(P=period, M0=M0, a=asini, e=e,
+                                big_omega=90.0, little_omega=omega,
+                                i=90.0, K1=K1, K2=K2)
+
+        rv1 = orbit.get_rv(x['t_rv'], component='primary')
+        rv2 = rv1 * orbit.K2 / orbit.K1
+
+        return rv1 + dv1, rv2 + dv2
+
+    def lnlike_rv(self, rv1_pred, rv2_pred, primary=True, secondary=True):
+        s = 0.0
+        if primary:
+            s += -0.5 * np.nansum((rv1_pred - self.y['rv1']) ** 2 / self.yerr['rv1'] ** 2)
+        if secondary:
+            s += -0.5 * np.nansum((rv2_pred - self.y['rv2']) ** 2 / self.yerr['rv2'] ** 2)
+        return s
+
+    def lnlike_imaging(self, xpos_pred, ypos_pred):
+        return -0.5 * np.nansum(
+            ((xpos_pred - self.y['xpos']) ** 2 + (ypos_pred - self.y['ypos']) ** 2) / self.yerr['pos'] ** 2)
+
+    def _lnlike(self, pars, primary=True, secondary=True):
+        rv1, rv2 = self.model(pars, self.x)
+        return self.lnlike_rv(rv1, rv2, primary=primary, secondary=secondary)
+
+    def mnest_prior(self, cube, ndim, nparames):
+        # Multinest prior
+        cube[0] = 10 ** (cube[0] * 5)  # log-uniform in period
+        cube[1] = cube[1] * 2 * np.pi  # Uniform in mean anomaly at epoch (M0)
+        cube[2] = 10 ** (cube[2] * 5)  # Log-uniform in semi-major axis
+        cube[3] = cube[3]  # Uniform in eccentricity
+        cube[4] = cube[4] * 2 * np.pi  # Uniform in little omega
+        cube[5] = 10 ** (cube[5] * 3)  # Log-uniform in rv semiamplitude (primary)
+        cube[6] = 10 ** (cube[6] * 3)  # Log-uniform in rv semiamplitude (secondary)
+        cube[7] = cube[7] * 40 - 20  # Uniform in dv1
+        cube[8] = cube[8] * 40 - 20  # Uniform in dv2
+        return
+
+    def lnprior(self, pars):
+        # emcee prior
+        period, M0, asini, e, omega, K1, K2, dv1, dv2 = pars
+        if (0 < period < 1e5 and 0 < asini < 1e5 and 0 < e < 1 and 0 < omega < 360.
+            and 0 < K1 < 1e3 and 0 < K2 < 1e3 and -20 < dv1 < 20 and -20 < dv2 < 20):
+            return 0.0
+
+        return -np.inf
