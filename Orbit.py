@@ -18,37 +18,32 @@ class OrbitCalculator(object):
 
         Parameters
         ===========
-        - P:            float, or astropy quantity for time.
-                        Orbital period. Assumed to be in years if not an astropy quantity.
+        - P:            float
+                        Orbital period in years.
 
-        - M0:           float, or astropy quantity for angle.
-                        The mean anomaly at epoch. Assumed to be in degrees in not an
-                        astropy quantity.
+        - M0:           float
+                        The mean anomaly at epoch (in degrees).
 
         - e:            float
                         Orbital eccentricity
 
-        - a:            float, or astropy quantity for distance.
-                        Semimajor axis. Assumed to be in AU if not an astropy quantity.
+        - a:            float
+                        Semimajor axis in AU. 
 
-        - big_omega:    float, or astropy quantity for angle.
-                        The longitude of the ascending node. Assumed to be in degrees 
-                        if not as astropy quantity.
+        - big_omega:    float
+                        The longitude of the ascending node (in degrees).
 
-        - little_omega: float, or astropy quantity for angle.
-                        The argument of periastron. Assumed to be in degrees 
-                        if not as astropy quantity.
+        - little_omega: float
+                        The argument of periastron (in degrees).
 
-        - i:            float, or astropy quantity for angle.
-                        Orbital inclination. Assumed to be in degrees 
-                        if not as astropy quantity.
+        - i:            float
+                        Orbital inclination (in degrees).
 
         - q:            float
                         The mass-ratio of the binary system.
 
-        - primary_mass: float, or astropy quantity for mass
-                        The mass of the primary star. Assumed to be in solar masses
-                        if not an astropy quantity.
+        - primary_mass: float
+                        The mass of the primary star in solar masses
 
         - precompute:   If true, it calculates a bunch of combinations of mean anomaly
                         and eccentricity, and interpolates between them. This provides 
@@ -57,21 +52,21 @@ class OrbitCalculator(object):
         """
 
         # Save most of the variables as instance variables for use in various functions.
-        self.P = P if isinstance(P, u.Quantity) else P*u.year
-        self.M0 = M0 if isinstance(M0, u.Quantity) else M0*u.degree
+        self.P = P
+        self.M0 = M0 * np.pi/180.
         self.e = e
-        self.a = a if isinstance(a, u.Quantity) else a*u.AU
-        self.big_omega = big_omega if isinstance(big_omega, u.Quantity) else big_omega*u.degree
-        self.little_omega = little_omega if isinstance(little_omega, u.Quantity) else little_omega*u.degree
-        self.primary_mass = primary_mass if isinstance(primary_mass, u.Quantity) else primary_mass*u.M_sun
+        self.a = a
+        self.big_omega = big_omega * np.pi/180.
+        self.little_omega = little_omega * np.pi/180.
+        self.primary_mass = primary_mass
 
         # Pre-compute sin(i) and cos(i), two useful quantities.
-        inc = i if isinstance(i, u.Quantity) else i*u.degree
+        inc = i * np.pi / 180. 
         self.sini = np.sin(inc)
         self.cosi = np.cos(inc)
 
         # Compute the orbit radial velocity semi-amplitude.
-        self.K1 = (1+q) * self.sini * np.sqrt(constants.G * self.primary_mass * (1+q) / (self.a*(1-e**2))).to(u.km/u.s)
+        self.K1 = (1+q) * self.sini * np.sqrt(constants.G * self.primary_mass*u.M_sun * (1+q) / (self.a*u.AU*(1-e**2))).to(u.km/u.s).value
         self.K2 = self.K1 / q
 
         # Compute the Thiele-Innes elements for cartesian calculations
@@ -98,7 +93,7 @@ class OrbitCalculator(object):
         if cache is not None:
             return cache
         ee = np.arange(0, 1.01, 0.01)
-        MM = np.arange(0, 360.5, 0.5) * u.degree
+        MM = np.arange(0, 2*np.pi+0.01, 0.01)
         E = np.empty(ee.size*MM.size)
         for i, e in enumerate(ee):
             logging.debug('Calculating eccentric anomalies for e = {}'.format(e))
@@ -118,16 +113,14 @@ class OrbitCalculator(object):
             return output*u.radian
 
         if HelperFunctions.IsListlike(M):
-            return np.array([self.calculate_eccentric_anomaly(Mi, e).value for Mi in M])*u.radian
-        
-        M = M.to(u.radian).value
+            return np.array([self.calculate_eccentric_anomaly(Mi, e).value for Mi in M])
 
         func = lambda E: E - e*np.sin(E) - M
         dfunc = lambda E: 1.0 - e*np.cos(E)
         d2func = lambda E: e*np.sin(E)
 
         output = newton(func, np.pi, fprime=dfunc, fprime2=d2func)
-        return output*u.radian
+        return output
 
 
     def get_true_anomaly(self, time_since_epoch, ret_ecc_anomaly=False):
@@ -135,9 +128,8 @@ class OrbitCalculator(object):
 
         Parameters:
         ===========
-        - time_since_epoch: float, or astropy quantity for any time unit.
-                            Gives the time since the epoch at which self.M0 is defined. Assumed
-                            to be in years if not an astropy quantity instance.
+        - time_since_epoch: float
+                            Gives the time since the epoch at which self.M0 is defined (in years)
 
         - ret_ecc_anomaly:  boolean
                             Flag for returning the eccentric anomaly as well as the true anomaly.
@@ -145,12 +137,10 @@ class OrbitCalculator(object):
 
         Returns:
         ========
-        - True anomaly:     astropy.Quantity 
-                            The true anomaly of the orbit, as an angle.
+        - True anomaly:     float
+                            The true anomaly of the orbit, as an angle (in radians).
         """
-        dt = time_since_epoch if isinstance(time_since_epoch, u.Quantity) else time_since_epoch*u.year
-        M = self.M0 + (2*np.pi*dt/self.P).to(u.radian, equivalencies=u.dimensionless_angles())
-        M = M % (360*u.degree)
+        M = (self.M0 + (2*np.pi*time_since_epoch/self.P)) % (2*np.pi)
         E = self.calculate_eccentric_anomaly(M, self.e)
         A = (np.cos(E) - self.e)/(1-self.e*np.cos(E))
         B = (np.sqrt(1.-self.e**2) * np.sin(E)) / (1.-self.e*np.cos(E))
@@ -164,9 +154,8 @@ class OrbitCalculator(object):
 
         Parameters:
         ===========
-        - time_since_epoch: float, or astropy quantity for any time unit.
-                            Gives the time since the epoch at which self.M0 is defined. Assumed
-                            to be in years if not an astropy quantity instance.
+        - time_since_epoch: float
+                            Gives the time since the epoch at which self.M0 is defined (in years)
 
         - component:        string
                             Which binary component to get the velocity of. Choices are 'primary'
@@ -174,8 +163,8 @@ class OrbitCalculator(object):
 
         Returns:
         ========
-        - Radial velocity:  astropy.Quantity 
-                            The radial velocity of the chosen binary component.
+        - Radial velocity:  float 
+                            The radial velocity of the chosen binary component (in km/s).
         """
         nu = self.get_true_anomaly(time_since_epoch)
         K = self.K1 if component == 'primary' else self.K2
@@ -187,35 +176,30 @@ class OrbitCalculator(object):
 
         Parameters:
         ===========
-        - time_since_epoch: float, or astropy quantity for any time unit.
-                            Gives the time since the epoch at which self.M0 is defined. Assumed
-                            to be in years if not an astropy quantity instance.
+        - time_since_epoch: float
+                            Gives the time since the epoch at which self.M0 is defined (in years).
 
-        - distance :        float, or astropy quantity for distance.
-                            The distance from Earth to the star. If not astropy quantity, assumed
-                            to have units of parsecs. Either this or parallax MUST be given!
+        - distance :        float
+                            The distance from Earth to the star in parsecs. 
+                            Either this or parallax MUST be given!
 
-        - parallax :        float, or astropy quantity for angle.
-                            The parallax of the star system. If not astropy quantity, 
-                            assumed to have units of arcsec. Either this or distance 
-                            MUST be given!
+        - parallax :        float
+                            The parallax of the star system in arcsecondss.
+                            Either this or distance MUST be given!
 
         Returns:
         ========
-        - rho:              astropy.Quantity 
-                            The angular separation between the primary and secondary star
+        - rho:              float
+                            The angular separation between the primary and secondary star (in radians)
 
-        - theta:            astropy.Quantity
-                            The position angle of the companion, in relation to the primary star.
+        - theta:            float
+                            The position angle of the companion, in relation to the primary star (in radians).
         """
         # Make sure either distance or parallax is given
         assert distance is not None or parallax is not None
 
         if distance is None:
-            plx = parallax.to(u.arcsec) if isinstance(parallax, u.Quantity) else parallax
-            distance = 1.0 / plx * u.parsec 
-        else:
-            distance = distance if isinstance(distance, u.Quantity) else distance*u.parsec
+            distance = 1.0 / parallax
 
         # Calculate the cartesian coordinates first, to get the quadrant right in theta.
         nu, E = self.get_true_anomaly(time_since_epoch, ret_ecc_anomaly=True)
@@ -228,8 +212,8 @@ class OrbitCalculator(object):
         rho = self.a * (1 - self.e * np.cos(E))
         theta = self.big_omega + np.arctan2(y, x)
 
-        # rho is currently in AU. Convert to on-sky distance
-        rho = (rho / distance).to(u.arcsec, equivalencies=u.dimensionless_angles())
+        # rho is currently in AU. Convert to on-sky distance in arcsecondss
+        rho = rho / distance
 
         return rho, theta
 
