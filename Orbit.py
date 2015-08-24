@@ -314,7 +314,7 @@ class FullOrbitFitter(Fitters.Bayesian_LS):
                                 i=i, K1=K1, K2=K2)
 
         rv1 = orbit.get_rv(x['t_rv'], component='primary')
-        rv2 = rv1 * orbit.K2 / orbit.K1
+        rv2 = -rv1 * orbit.K2 / orbit.K1
         rho, theta = orbit.get_imaging_observables(x['t_im'], distance=self.distance)
         xpos = rho*np.cos(theta)
         ypos = rho*np.sin(theta)
@@ -403,7 +403,7 @@ class SpectroscopicOrbitFitter(Fitters.Bayesian_LS):
         yerr = dict(rv1=rv1_err, rv2=rv2_err)
 
         # List the parameter names
-        parnames = ['Period', '$M_0$', 'asini', 'e', '$\omega$', '$K_1$', '$K_2$', 'dv1', 'dv2']
+        parnames = ['Period', '$M_0$', 'e', '$\omega$', '$K_1$', '$K_2$', 'dv1', 'dv2']
 
         super(SpectroscopicOrbitFitter, self).__init__(x, y, yerr, param_names=parnames)
         return
@@ -421,13 +421,13 @@ class SpectroscopicOrbitFitter(Fitters.Bayesian_LS):
         ========
            The primary/secondary rv, and the on-sky x- and y-positions
         """
-        period, M0, asini, e, omega, K1, K2, dv1, dv2 = p
-        orbit = OrbitCalculator(P=period, M0=M0, a=asini, e=e,
+        period, M0, e, omega, K1, K2, dv1, dv2 = p
+        orbit = OrbitCalculator(P=period, M0=M0, a=1.0, e=e,
                                 big_omega=90.0, little_omega=omega,
                                 i=90.0, K1=K1, K2=K2)
 
         rv1 = orbit.get_rv(x['t_rv'], component='primary')
-        rv2 = rv1 * orbit.K2 / orbit.K1
+        rv2 = -rv1 * orbit.K2 / orbit.K1
 
         return rv1 + dv1, rv2 + dv2
 
@@ -462,8 +462,8 @@ class SpectroscopicOrbitFitter(Fitters.Bayesian_LS):
 
     def lnprior(self, pars):
         # emcee prior
-        period, M0, asini, e, omega, K1, K2, dv1, dv2 = pars
-        if (0 < period < 1e5 and 0 < asini < 1e5 and 0 < e < 1 and 0 < omega < 360.
+        period, M0, e, omega, K1, K2, dv1, dv2 = pars
+        if (0 < period < 1e5 and -20 < M0 < 380 and 0 < e < 1 and -20 < omega < 380.
             and 0 < K1 < 1e3 and 0 < K2 < 1e3 and -20 < dv1 < 20 and -20 < dv2 < 20):
             return 0.0
 
