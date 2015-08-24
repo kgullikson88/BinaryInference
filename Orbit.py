@@ -1,10 +1,13 @@
+import logging
+
 import numpy as np
 from astropy import units as u, constants
-import HelperFunctions
 from scipy.optimize import newton
 import scipy.interpolate
-import logging
+
+import HelperFunctions
 import Fitters
+
 
 cache = None
 
@@ -288,7 +291,7 @@ class OrbitFitter(Fitters.Bayesian_LS):
         yerr = dict(rv1=rv1_err, rv2=rv2_err, pos=pos_err)
         
         # List the parameter names
-        parnames = ['Period', '$M_0$', 'a', 'e', '$\Omega$', '$\omega$', 'i', '$K_1$', '$K_2$']
+        parnames = ['Period', '$M_0$', 'a', 'e', '$\Omega$', '$\omega$', 'i', '$K_1$', '$K_2$', 'dv1', 'dv2']
         
         super(OrbitFitter, self).__init__(x, y, yerr, param_names=parnames)
         self.distance = distance
@@ -307,7 +310,7 @@ class OrbitFitter(Fitters.Bayesian_LS):
         ======== 
            The primary/secondary rv, and the on-sky x- and y-positions
         """
-        period, M0, a, e, Omega, omega, i, K1, K2 = p
+        period, M0, a, e, Omega, omega, i, K1, K2, dv1, dv2 = p
         orbit = OrbitCalculator(P=period, M0=M0, a=a, e=e, 
                                 big_omega=Omega, little_omega=omega,
                                 i=i, K1=K1, K2=K2)
@@ -317,18 +320,19 @@ class OrbitFitter(Fitters.Bayesian_LS):
         rho, theta = orbit.get_imaging_observables(x['t_im'], distance=self.distance)
         xpos = rho*np.cos(theta)
         ypos = rho*np.sin(theta)
-        return rv1, rv2, xpos, ypos
+        return rv1 + dv1, rv2 + dv2, xpos, ypos
     
     def lnlike_rv(self, rv1_pred, rv2_pred, primary=True, secondary=True):
         s = 0.0
         if primary:
-            s += -0.5*np.sum((rv1_pred - self.y['rv1'])**2 / self.yerr['rv1']**2 )
+            s += -0.5 * np.nansum((rv1_pred - self.y['rv1']) ** 2 / self.yerr['rv1'] ** 2)
         if secondary:
-            s += -0.5*np.sum((rv2_pred - self.y['rv2'])**2 / self.yerr['rv2']**2 )
+            s += -0.5 * np.nansum((rv2_pred - self.y['rv2']) ** 2 / self.yerr['rv2'] ** 2)
         return s
     
     def lnlike_imaging(self, xpos_pred, ypos_pred):
-        return -0.5*np.sum(((xpos_pred - self.y['xpos'])**2 + (ypos_pred - self.y['ypos'])**2) / self.yerr['pos']**2)
+        return -0.5 * np.nansum(
+            ((xpos_pred - self.y['xpos']) ** 2 + (ypos_pred - self.y['ypos']) ** 2) / self.yerr['pos'] ** 2)
         
     def _lnlike(self, pars, primary=True, secondary=True):
         rv1, rv2, xpos, ypos = self.model(pars, self.x)
@@ -345,13 +349,18 @@ class OrbitFitter(Fitters.Bayesian_LS):
         cube[6] = cube[6] * 2*np.pi  # Uniform in inclination
         cube[7] = 10**(cube[7]*3)    # Log-uniform in rv semiamplitude (primary)
         cube[8] = 10**(cube[8]*3)    # Log-uniform in rv semiamplitude (secondary)
+        cube[9] = cube[9] * 40 - 20  # Uniform in dv1
+        cube[10] = cube[10] * 40 - 20  # Uniform in dv2
         return
     
     def lnprior(self, pars):
         # emcee prior
-        period, M0, a, e, Omega, omega, i, K1, K2 = pars
-        if 0 < period < 1e5 and 0 < a < 1e5 and 0 < e < 1 and 0 < Omega < 360. and 0 < omega < 360. and 0 < i < 360. and 0 < K1 < 1e3 and 0 < K2 < 1e3:
+        period, M0, a, e, Omega, omega, i, K1, K2, dv1, dv2 = pars
+        if (0 < period < 1e5 and 0 < a < 1e5 and 0 < e < 1 and 0 < Omega < 360. and 0 < omega < 360.
+            and 0 < i < 360. and 0 < K1 < 1e3 and 0 < K2 < 1e3 and -20 < dv1 < 20 and -20 < dv2 < 20):
+
             return 0.0
+
         return -np.inf
 
 
