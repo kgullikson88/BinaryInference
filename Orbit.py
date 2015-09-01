@@ -388,10 +388,29 @@ class SpectroscopicOrbitFitter(Fitters.Bayesian_LS):
      - rv2_err:              ndarray of floats, or float
                              Uncertainty in the radial velocity measurements of the secondary star (in km/s)
 
+     - gamma:                float (default = 0.4)
+                             Parameter describing the mass-ratio distribution exponential decay:
+                             ```
+                             P(q) = (1-gamma)q^(-gamma)
+                             ```
+
+     - mu, sigma:            floats (defaults: mu = 5.3, sigma=2.3)
+                             Parameters describing the semi-major axis distribution (log-normal):
+
+     - eta:                  float (default = 0.7)
+                             Parameter describing the eccentricity distribution exponential decay:
+                             ```
+                             P(e) = (1-eta)e^(-eta)
+                             ```
+
+     - primary_mass          float (default = 2 Msun)
+                             The mass (in solar masses) of the primary star. Used in the prior to convert
+                             from period to semimajor axis.
 
     """
 
-    def __init__(self, rv_times, rv1_measurements, rv1_err, rv2_measurements=None, rv2_err=None):
+    def __init__(self, rv_times, rv1_measurements, rv1_err, rv2_measurements=None, rv2_err=None,
+                 gamma=0.4, mu=np.log(200), sigma=np.log(10), eta=0.7, primary_mass=2.0):
 
         if rv2_measurements is None:
             rv2_measurements = np.nan * np.ones_like(rv1_measurements)
@@ -406,6 +425,11 @@ class SpectroscopicOrbitFitter(Fitters.Bayesian_LS):
         parnames = ['Period', '$M_0$', 'e', '$\omega$', '$K_1$', '$K_2$', 'dv1', 'dv2']
 
         super(SpectroscopicOrbitFitter, self).__init__(x, y, yerr, param_names=parnames)
+        self.gamma = gamma
+        self.mu = mu
+        self.sigma = sigma
+        self.eta = eta
+        self.primary_mass = primary_mass
         return
 
 
@@ -434,37 +458,56 @@ class SpectroscopicOrbitFitter(Fitters.Bayesian_LS):
     def lnlike_rv(self, rv1_pred, rv2_pred, primary=True, secondary=True):
         s = 0.0
         if primary:
-            s += -0.5 * np.nansum((rv1_pred - self.y['rv1']) ** 2 / self.yerr['rv1'] ** 2)
+            s += -0.5 * np.nansum((rv1_pred - self.y['rv1']) ** 2 / self.yerr['rv1'] ** 2 +
+                                  np.log(2 * np.pi * self.yerr['rv1'] ** 2))
         if secondary:
-            s += -0.5 * np.nansum((rv2_pred - self.y['rv2']) ** 2 / self.yerr['rv2'] ** 2)
+            s += -0.5 * np.nansum((rv2_pred - self.y['rv2']) ** 2 / self.yerr['rv2'] ** 2 +
+                                  np.log(2 * np.pi * self.yerr['rv2'] ** 2))
         return s
 
-    def lnlike_imaging(self, xpos_pred, ypos_pred):
-        return -0.5 * np.nansum(
-            ((xpos_pred - self.y['xpos']) ** 2 + (ypos_pred - self.y['ypos']) ** 2) / self.yerr['pos'] ** 2)
 
     def _lnlike(self, pars, primary=True, secondary=True):
         rv1, rv2 = self.model(pars, self.x)
         return self.lnlike_rv(rv1, rv2, primary=primary, secondary=secondary)
 
-    def mnest_prior(self, cube, ndim, nparames):
+
+    def mnest_prior(self, cube, ndim, nparams):
         # Multinest prior
-        cube[0] = 10 ** (cube[0] * 5)  # log-uniform in period
-        cube[1] = cube[1] * 2 * np.pi  # Uniform in mean anomaly at epoch (M0)
-        cube[2] = 10 ** (cube[2] * 5)  # Log-uniform in semi-major axis
-        cube[3] = cube[3]  # Uniform in eccentricity
-        cube[4] = cube[4] * 2 * np.pi  # Uniform in little omega
-        cube[5] = 10 ** (cube[5] * 3)  # Log-uniform in rv semiamplitude (primary)
-        cube[6] = 10 ** (cube[6] * 3)  # Log-uniform in rv semiamplitude (secondary)
-        cube[7] = cube[7] * 40 - 20  # Uniform in dv1
-        cube[8] = cube[8] * 40 - 20  # Uniform in dv2
+
+        # pretend cube[0] (the period) is actually semimajor axis to calculate inverse CDF
+        lna = scipy.stats.norm.ppf(cube[0], loc=self.mu, scale=self.sigma)
+        mass = self.primary_mass * (1 + cube[4] / cube[5])  # Total system mass
+        cube[0] = np.exp(1.5 * lna) / mass
+
+        cube[1] = cube[1] * 360.  # Uniform in mean anomaly at epoch (M0)
+        cube[3] = cube[4] * 360.  # Uniform in little omega
+
+        # The eccentricity is exponential in [0,1])
+        cube[2] = cube[2] ** (1.0 / (1.0 - self.eta))
+
+        # The rv semi-amplitudes are a bit tricky. I let the primary vary from 0-->1000 km/s, and make it log-uniform.
+        # The secondary then comes from the mass-ratio distribution prior and the secondary rvs.
+        cube[4] = 10 ** (cube[4] * 3)
+        q = cube[5] ** (1.0 / (1.0 - self.gamma))
+        cube[5] = cube[4] / q
+
+        # Give the RV offsets uniform priors
+        cube[6] = cube[6] * 40 - 20
+        cube[7] = cube[7] * 40 - 20
         return
+
 
     def lnprior(self, pars):
         # emcee prior
         period, M0, e, omega, K1, K2, dv1, dv2 = pars
+        gamma, mu, sigma, eta = self.gamma, self.mu, self.sigma, self.eta
+        mass = self.primary_mass * (1 + K1 / K2)
+        lna = 2. / 3. * np.log(period) + 1. / 3. * np.log(mass)
         if (0 < period < 1e5 and -20 < M0 < 380 and 0 < e < 1 and -20 < omega < 380.
             and 0 < K1 < 1e3 and 0 < K2 < 1e3 and -20 < dv1 < 20 and -20 < dv2 < 20):
-            return 0.0
+            ecc_prior = np.log(1 - eta) - eta * np.log(e)
+            q_prior = np.log(1 - gamma) - gamma * np.log(K1 / K2)
+            a_prior = -0.5 * (np.log(2 * np.pi * sigma ** 2) + (lna - mu) ** 2 / sigma ** 2)
+            return ecc_prior + q_prior + a_prior
 
         return -np.inf
