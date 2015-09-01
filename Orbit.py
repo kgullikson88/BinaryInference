@@ -1,9 +1,13 @@
+import logging
+
 import numpy as np
 from astropy import units as u, constants
-import HelperFunctions
 from scipy.optimize import newton
 import scipy.interpolate
-import logging
+
+import HelperFunctions
+import Fitters
+
 
 cache = None
 
@@ -12,43 +16,48 @@ class OrbitCalculator(object):
     Calculates various quantities for an orbit, 
     given the Keplerian elements
     """
-    def __init__(self, P, M0, e, a, big_omega, little_omega, i, q=1.0, primary_mass=2.0*u.M_sun, precompute=True):
+    def __init__(self, P, M0, e, a, big_omega, little_omega, i, 
+                 q=1.0, primary_mass=2.0, K1=None, K2=None, 
+                 precompute=True):
         """
         Initialize the OrbitCalculator class.
 
         Parameters
         ===========
-        - P:            float, or astropy quantity for time.
-                        Orbital period. Assumed to be in years if not an astropy quantity.
+        - P:            float
+                        Orbital period in years.
 
-        - M0:           float, or astropy quantity for angle.
-                        The mean anomaly at epoch. Assumed to be in degrees in not an
-                        astropy quantity.
+        - M0:           float
+                        The mean anomaly at epoch (in degrees).
 
         - e:            float
                         Orbital eccentricity
 
-        - a:            float, or astropy quantity for distance.
-                        Semimajor axis. Assumed to be in AU if not an astropy quantity.
+        - a:            float
+                        Semimajor axis in AU. 
 
-        - big_omega:    float, or astropy quantity for angle.
-                        The longitude of the ascending node. Assumed to be in degrees 
-                        if not as astropy quantity.
+        - big_omega:    float
+                        The longitude of the ascending node (in degrees).
 
-        - little_omega: float, or astropy quantity for angle.
-                        The argument of periastron. Assumed to be in degrees 
-                        if not as astropy quantity.
+        - little_omega: float
+                        The argument of periastron (in degrees).
 
-        - i:            float, or astropy quantity for angle.
-                        Orbital inclination. Assumed to be in degrees 
-                        if not as astropy quantity.
+        - i:            float
+                        Orbital inclination (in degrees).
 
         - q:            float
                         The mass-ratio of the binary system.
 
-        - primary_mass: float, or astropy quantity for mass
-                        The mass of the primary star. Assumed to be in solar masses
-                        if not an astropy quantity.
+        - primary_mass: float
+                        The mass of the primary star in solar masses
+
+        - K1:           float
+                        The semiamplitude velocity of the primary star (in km/s).
+                        Overrides the calculation from mass, semi-major axis, etc if given
+
+        - K2:           float
+                        The semiamplitude velocity of the secondary star (in km/s)
+                        Overrides the calculation from mass, semi-major axis, etc if given
 
         - precompute:   If true, it calculates a bunch of combinations of mean anomaly
                         and eccentricity, and interpolates between them. This provides 
@@ -57,22 +66,28 @@ class OrbitCalculator(object):
         """
 
         # Save most of the variables as instance variables for use in various functions.
-        self.P = P if isinstance(P, u.Quantity) else P*u.year
-        self.M0 = M0 if isinstance(M0, u.Quantity) else M0*u.degree
+        self.P = P
+        self.M0 = M0 * np.pi/180.
         self.e = e
-        self.a = a if isinstance(a, u.Quantity) else a*u.AU
-        self.big_omega = big_omega if isinstance(big_omega, u.Quantity) else big_omega*u.degree
-        self.little_omega = little_omega if isinstance(little_omega, u.Quantity) else little_omega*u.degree
-        self.primary_mass = primary_mass if isinstance(primary_mass, u.Quantity) else primary_mass*u.M_sun
+        self.a = a
+        self.big_omega = big_omega * np.pi/180.
+        self.little_omega = little_omega * np.pi/180.
+        self.primary_mass = primary_mass
 
         # Pre-compute sin(i) and cos(i), two useful quantities.
-        inc = i if isinstance(i, u.Quantity) else i*u.degree
+        inc = i * np.pi / 180. 
         self.sini = np.sin(inc)
         self.cosi = np.cos(inc)
 
         # Compute the orbit radial velocity semi-amplitude.
-        self.K1 = (1+q) * self.sini * np.sqrt(constants.G * self.primary_mass * (1+q) / (self.a*(1-e**2))).to(u.km/u.s)
-        self.K2 = self.K1 / q
+        if K1 is None:
+            self.K1 = (1+q) * self.sini * np.sqrt(constants.G * self.primary_mass*u.M_sun * (1+q) / (self.a*u.AU*(1-e**2))).to(u.km/u.s).value
+        else:
+            self.K1 = K1
+        if K2 is None:
+            self.K2 = self.K1 / q
+        else:
+            self.K2 = K2
 
         # Compute the Thiele-Innes elements for cartesian calculations
         # Formulas from http://ugastro.berkeley.edu/infrared10/adaptiveoptics/binary_orbit.pdf
@@ -98,7 +113,7 @@ class OrbitCalculator(object):
         if cache is not None:
             return cache
         ee = np.arange(0, 1.01, 0.01)
-        MM = np.arange(0, 360.5, 0.5) * u.degree
+        MM = np.arange(0, 2*np.pi+0.01, 0.01)
         E = np.empty(ee.size*MM.size)
         for i, e in enumerate(ee):
             logging.debug('Calculating eccentric anomalies for e = {}'.format(e))
@@ -115,19 +130,17 @@ class OrbitCalculator(object):
         """
         if self.anomaly_interpolator is not None:
             output = self.anomaly_interpolator((e, M))
-            return output*u.radian
+            return output
 
         if HelperFunctions.IsListlike(M):
-            return np.array([self.calculate_eccentric_anomaly(Mi, e).value for Mi in M])*u.radian
-        
-        M = M.to(u.radian).value
+            return np.array([self.calculate_eccentric_anomaly(Mi, e) for Mi in M])
 
         func = lambda E: E - e*np.sin(E) - M
         dfunc = lambda E: 1.0 - e*np.cos(E)
         d2func = lambda E: e*np.sin(E)
 
         output = newton(func, np.pi, fprime=dfunc, fprime2=d2func)
-        return output*u.radian
+        return output
 
 
     def get_true_anomaly(self, time_since_epoch, ret_ecc_anomaly=False):
@@ -135,9 +148,8 @@ class OrbitCalculator(object):
 
         Parameters:
         ===========
-        - time_since_epoch: float, or astropy quantity for any time unit.
-                            Gives the time since the epoch at which self.M0 is defined. Assumed
-                            to be in years if not an astropy quantity instance.
+        - time_since_epoch: float
+                            Gives the time since the epoch at which self.M0 is defined (in years)
 
         - ret_ecc_anomaly:  boolean
                             Flag for returning the eccentric anomaly as well as the true anomaly.
@@ -145,12 +157,10 @@ class OrbitCalculator(object):
 
         Returns:
         ========
-        - True anomaly:     astropy.Quantity 
-                            The true anomaly of the orbit, as an angle.
+        - True anomaly:     float
+                            The true anomaly of the orbit, as an angle (in radians).
         """
-        dt = time_since_epoch if isinstance(time_since_epoch, u.Quantity) else time_since_epoch*u.year
-        M = self.M0 + (2*np.pi*dt/self.P).to(u.radian, equivalencies=u.dimensionless_angles())
-        M = M % (360*u.degree)
+        M = (self.M0 + (2*np.pi*time_since_epoch/self.P)) % (2*np.pi)
         E = self.calculate_eccentric_anomaly(M, self.e)
         A = (np.cos(E) - self.e)/(1-self.e*np.cos(E))
         B = (np.sqrt(1.-self.e**2) * np.sin(E)) / (1.-self.e*np.cos(E))
@@ -164,9 +174,8 @@ class OrbitCalculator(object):
 
         Parameters:
         ===========
-        - time_since_epoch: float, or astropy quantity for any time unit.
-                            Gives the time since the epoch at which self.M0 is defined. Assumed
-                            to be in years if not an astropy quantity instance.
+        - time_since_epoch: float
+                            Gives the time since the epoch at which self.M0 is defined (in years)
 
         - component:        string
                             Which binary component to get the velocity of. Choices are 'primary'
@@ -174,8 +183,8 @@ class OrbitCalculator(object):
 
         Returns:
         ========
-        - Radial velocity:  astropy.Quantity 
-                            The radial velocity of the chosen binary component.
+        - Radial velocity:  float 
+                            The radial velocity of the chosen binary component (in km/s).
         """
         nu = self.get_true_anomaly(time_since_epoch)
         K = self.K1 if component == 'primary' else self.K2
@@ -187,35 +196,30 @@ class OrbitCalculator(object):
 
         Parameters:
         ===========
-        - time_since_epoch: float, or astropy quantity for any time unit.
-                            Gives the time since the epoch at which self.M0 is defined. Assumed
-                            to be in years if not an astropy quantity instance.
+        - time_since_epoch: float
+                            Gives the time since the epoch at which self.M0 is defined (in years).
 
-        - distance :        float, or astropy quantity for distance.
-                            The distance from Earth to the star. If not astropy quantity, assumed
-                            to have units of parsecs. Either this or parallax MUST be given!
+        - distance :        float
+                            The distance from Earth to the star in parsecs. 
+                            Either this or parallax MUST be given!
 
-        - parallax :        float, or astropy quantity for angle.
-                            The parallax of the star system. If not astropy quantity, 
-                            assumed to have units of arcsec. Either this or distance 
-                            MUST be given!
+        - parallax :        float
+                            The parallax of the star system in arcsecondss.
+                            Either this or distance MUST be given!
 
         Returns:
         ========
-        - rho:              astropy.Quantity 
-                            The angular separation between the primary and secondary star
+        - rho:              float
+                            The angular separation between the primary and secondary star (in arcseconds)
 
-        - theta:            astropy.Quantity
-                            The position angle of the companion, in relation to the primary star.
+        - theta:            float
+                            The position angle of the companion, in relation to the primary star (in radians).
         """
         # Make sure either distance or parallax is given
         assert distance is not None or parallax is not None
 
         if distance is None:
-            plx = parallax.to(u.arcsec) if isinstance(parallax, u.Quantity) else parallax
-            distance = 1.0 / plx * u.parsec 
-        else:
-            distance = distance if isinstance(distance, u.Quantity) else distance*u.parsec
+            distance = 1.0 / parallax
 
         # Calculate the cartesian coordinates first, to get the quadrant right in theta.
         nu, E = self.get_true_anomaly(time_since_epoch, ret_ecc_anomaly=True)
@@ -228,19 +232,239 @@ class OrbitCalculator(object):
         rho = self.a * (1 - self.e * np.cos(E))
         theta = self.big_omega + np.arctan2(y, x)
 
-        # rho is currently in AU. Convert to on-sky distance
-        rho = (rho / distance).to(u.arcsec, equivalencies=u.dimensionless_angles())
+        # rho is currently in AU. Convert to on-sky distance in arcsecondss
+        rho = rho / distance
 
         return rho, theta
 
 
+class FullOrbitFitter(Fitters.Bayesian_LS):
+    """
+    Fit a binary orbit from radial velocity measurements of the primary and secondary, and
+    from imaging observables.
+
+    Parameters:
+    ===========
+     - rv_times:             ndarray of floats
+                             The julian dates at which the radial velocity measurements were taken
+                             
+     - imaging_times:        ndarray of floats
+                             The julian dates at which the imaging measurements were taken
+                             
+     - rv1_measurements:     ndarray of floats
+                             The radial velocity measurements of the primary star (in km/s)
+                             
+     - rv1_err:              ndarray of floats, or float
+                             Uncertainty in the radial velocity measurements of the primary star (in km/s)
+                             
+     - rv2_measurements:     ndarray of floats
+                             The radial velocity measurements of the secondary star (in km/s)
+                             
+     - rv2_err:              ndarray of floats, or float
+                             Uncertainty in the radial velocity measurements of the secondary star (in km/s)
+                             
+     - rho_measurements:     ndarray of floats
+                             measurements of the primary-secondary separation (in arcseconds)
+                             
+     - theta_measurements:   ndarray of floats
+                             measurements of the position angle (in radians)
+                             
+     - pos_err:              ndarray of floats, or float
+                             Uncertainty in the position of the secondary star relative to the primary (in arcseconds).
+                             
+     - distance:             float
+                             Distance from the Earth to the star in question (in parsecs)
+
+    """
+    def __init__(self, rv_times, imaging_times, 
+                 rv1_measurements, rv1_err, rv2_measurements, rv2_err, 
+                 rho_measurements, theta_measurements, pos_err,
+                 distance=100.0):
+        
+        # Put the data into appropriate dictionaries
+        x = dict(t_rv=rv_times, t_im=imaging_times)
+        y = dict(rv1=rv1_measurements, rv2=rv2_measurements,
+                 xpos=rho_measurements*np.cos(theta_measurements),
+                 ypos=rho_measurements*np.sin(theta_measurements))
+        yerr = dict(rv1=rv1_err, rv2=rv2_err, pos=pos_err)
+        
+        # List the parameter names
+        parnames = ['Period', '$M_0$', 'a', 'e', '$\Omega$', '$\omega$', 'i', '$K_1$', '$K_2$', 'dv1', 'dv2']
+
+        super(FullOrbitFitter, self).__init__(x, y, yerr, param_names=parnames)
+        self.distance = distance
+        return
+        
+        
+    def model(self, p, x):
+        """ Generate observables from the model parameters
+        
+        Parameters:
+        ============
+         -p: a list of parameters giving the orbital elements
+         -x: A dictionary with keys for the time of the rv and imaging observations
+        
+        Returns:
+        ======== 
+           The primary/secondary rv, and the on-sky x- and y-positions
+        """
+        period, M0, a, e, Omega, omega, i, K1, K2, dv1, dv2 = p
+        orbit = OrbitCalculator(P=period, M0=M0, a=a, e=e, 
+                                big_omega=Omega, little_omega=omega,
+                                i=i, K1=K1, K2=K2)
+
+        rv1 = orbit.get_rv(x['t_rv'], component='primary')
+        rv2 = -rv1 * orbit.K2 / orbit.K1
+        rho, theta = orbit.get_imaging_observables(x['t_im'], distance=self.distance)
+        xpos = rho*np.cos(theta)
+        ypos = rho*np.sin(theta)
+        return rv1 + dv1, rv2 + dv2, xpos, ypos
+    
+    def lnlike_rv(self, rv1_pred, rv2_pred, primary=True, secondary=True):
+        s = 0.0
+        if primary:
+            s += -0.5 * np.nansum((rv1_pred - self.y['rv1']) ** 2 / self.yerr['rv1'] ** 2)
+        if secondary:
+            s += -0.5 * np.nansum((rv2_pred - self.y['rv2']) ** 2 / self.yerr['rv2'] ** 2)
+        return s
+    
+    def lnlike_imaging(self, xpos_pred, ypos_pred):
+        return -0.5 * np.nansum(
+            ((xpos_pred - self.y['xpos']) ** 2 + (ypos_pred - self.y['ypos']) ** 2) / self.yerr['pos'] ** 2)
+        
+    def _lnlike(self, pars, primary=True, secondary=True):
+        rv1, rv2, xpos, ypos = self.model(pars, self.x)
+        s = 0.0
+        if len(rv1) > 0:
+            s += self.lnlike_rv(rv1, rv2, primary=primary, secondary=secondary)
+        if len(xpos) > 0:
+            s += self.lnlike_imaging(xpos, ypos)
+        return s
+    
+    def mnest_prior(self, cube, ndim, nparames):
+        # Multinest prior
+        cube[0] = 10**(cube[0]*5)    # log-uniform in period
+        cube[1] = cube[1] * 2*np.pi  # Uniform in mean anomaly at epoch (M0)
+        cube[2] = 10**(cube[2]*5)    # Log-uniform in semi-major axis
+        cube[3] = cube[3]            # Uniform in eccentricity
+        cube[4] = cube[4] * 2*np.pi  # Uniform in big omega
+        cube[5] = cube[5] * 2*np.pi  # Uniform in little omega
+        cube[6] = cube[6] * 2*np.pi  # Uniform in inclination
+        cube[7] = 10**(cube[7]*3)    # Log-uniform in rv semiamplitude (primary)
+        cube[8] = 10**(cube[8]*3)    # Log-uniform in rv semiamplitude (secondary)
+        cube[9] = cube[9] * 40 - 20  # Uniform in dv1
+        cube[10] = cube[10] * 40 - 20  # Uniform in dv2
+        return
+    
+    def lnprior(self, pars):
+        # emcee prior
+        period, M0, a, e, Omega, omega, i, K1, K2, dv1, dv2 = pars
+        if (0 < period < 1e5 and 0 < a < 1e5 and 0 < e < 1 and 0 < Omega < 360. and 0 < omega < 360.
+            and 0 < i < 360. and 0 < K1 < 1e3 and 0 < K2 < 1e3 and -20 < dv1 < 20 and -20 < dv2 < 20):
+
+            return 0.0
+
+        return -np.inf
 
 
-#class ProbabilisticCalculator(object):
-#    """ This class assumes uniform distributions of the orbital orientation parameters, 
-#    and samples a bunch of them to get probability of observables"""
-#    def __init__(self, )
+class SpectroscopicOrbitFitter(Fitters.Bayesian_LS):
+    """
+    Fit a binary orbit from radial velocity measurements of the primary and (optionally) secondary
+
+    Parameters:
+    ===========
+     - rv_times:             ndarray of floats
+                             The julian dates at which the radial velocity measurements were taken
+
+     - rv1_measurements:     ndarray of floats
+                             The radial velocity measurements of the primary star (in km/s)
+
+     - rv1_err:              ndarray of floats, or float
+                             Uncertainty in the radial velocity measurements of the primary star (in km/s)
+
+     - rv2_measurements:     ndarray of floats
+                             The radial velocity measurements of the secondary star (in km/s)
+
+     - rv2_err:              ndarray of floats, or float
+                             Uncertainty in the radial velocity measurements of the secondary star (in km/s)
 
 
+    """
+
+    def __init__(self, rv_times, rv1_measurements, rv1_err, rv2_measurements=None, rv2_err=None):
+
+        if rv2_measurements is None:
+            rv2_measurements = np.nan * np.ones_like(rv1_measurements)
+            rv2_err = 1.0
+
+        # Put the data into appropriate dictionaries
+        x = dict(t_rv=rv_times)
+        y = dict(rv1=rv1_measurements, rv2=rv2_measurements)
+        yerr = dict(rv1=rv1_err, rv2=rv2_err)
+
+        # List the parameter names
+        parnames = ['Period', '$M_0$', 'e', '$\omega$', '$K_1$', '$K_2$', 'dv1', 'dv2']
+
+        super(SpectroscopicOrbitFitter, self).__init__(x, y, yerr, param_names=parnames)
+        return
 
 
+    def model(self, p, x):
+        """ Generate observables from the model parameters
+
+        Parameters:
+        ============
+         -p: a list of parameters giving the orbital elements
+         -x: A dictionary with keys for the time of the rv and imaging observations
+
+        Returns:
+        ========
+           The primary/secondary rv, and the on-sky x- and y-positions
+        """
+        period, M0, e, omega, K1, K2, dv1, dv2 = p
+        orbit = OrbitCalculator(P=period, M0=M0, a=1.0, e=e,
+                                big_omega=90.0, little_omega=omega,
+                                i=90.0, K1=K1, K2=K2)
+
+        rv1 = orbit.get_rv(x['t_rv'], component='primary')
+        rv2 = -rv1 * orbit.K2 / orbit.K1
+
+        return rv1 + dv1, rv2 + dv2
+
+    def lnlike_rv(self, rv1_pred, rv2_pred, primary=True, secondary=True):
+        s = 0.0
+        if primary:
+            s += -0.5 * np.nansum((rv1_pred - self.y['rv1']) ** 2 / self.yerr['rv1'] ** 2)
+        if secondary:
+            s += -0.5 * np.nansum((rv2_pred - self.y['rv2']) ** 2 / self.yerr['rv2'] ** 2)
+        return s
+
+    def lnlike_imaging(self, xpos_pred, ypos_pred):
+        return -0.5 * np.nansum(
+            ((xpos_pred - self.y['xpos']) ** 2 + (ypos_pred - self.y['ypos']) ** 2) / self.yerr['pos'] ** 2)
+
+    def _lnlike(self, pars, primary=True, secondary=True):
+        rv1, rv2 = self.model(pars, self.x)
+        return self.lnlike_rv(rv1, rv2, primary=primary, secondary=secondary)
+
+    def mnest_prior(self, cube, ndim, nparames):
+        # Multinest prior
+        cube[0] = 10 ** (cube[0] * 5)  # log-uniform in period
+        cube[1] = cube[1] * 2 * np.pi  # Uniform in mean anomaly at epoch (M0)
+        cube[2] = 10 ** (cube[2] * 5)  # Log-uniform in semi-major axis
+        cube[3] = cube[3]  # Uniform in eccentricity
+        cube[4] = cube[4] * 2 * np.pi  # Uniform in little omega
+        cube[5] = 10 ** (cube[5] * 3)  # Log-uniform in rv semiamplitude (primary)
+        cube[6] = 10 ** (cube[6] * 3)  # Log-uniform in rv semiamplitude (secondary)
+        cube[7] = cube[7] * 40 - 20  # Uniform in dv1
+        cube[8] = cube[8] * 40 - 20  # Uniform in dv2
+        return
+
+    def lnprior(self, pars):
+        # emcee prior
+        period, M0, e, omega, K1, K2, dv1, dv2 = pars
+        if (0 < period < 1e5 and -20 < M0 < 380 and 0 < e < 1 and -20 < omega < 380.
+            and 0 < K1 < 1e3 and 0 < K2 < 1e3 and -20 < dv1 < 20 and -20 < dv2 < 20):
+            return 0.0
+
+        return -np.inf
