@@ -479,23 +479,28 @@ class SpectroscopicOrbitFitter(Fitters.Bayesian_LS):
 
     def mnest_prior(self, cube, ndim, nparams):
         # Multinest prior
+        # Make the mass-ratio (exponential) and eccentricity (log-uniform)
         q = cube[5] ** (1.0 / (1.0 - self.gamma))
+        e = 10 ** (cube[2] * 20 - 20)
 
         # pretend cube[0] (the period) is actually semimajor axis to calculate inverse CDF
         lna = scipy.stats.norm.ppf(cube[0], loc=self.mu, scale=self.sigma)
         mass = self.primary_mass * (1 + q)  # Total system mass (depends on mass-ratio)
-        cube[0] = np.exp(1.5 * lna) / np.sqrt(mass)
+        # cube[0] = np.exp(1.5 * lna) / np.sqrt(mass)
+
+        # Try period as log-uniform instead
+        cube[0] = 10 ** (cube[0] * 6)
 
         cube[1] = cube[1] * 360.  # Uniform in mean anomaly at epoch (M0)
         cube[3] = cube[3] * 360.  # Uniform in little omega
 
         # Log-uniform in eccentricity from 10^-20 to 0
-        cube[2] = 10 ** (cube[2] * 20 - 20)
+        cube[2] = e
 
         # The rv semi-amplitude is a bit tricky. We will sample sini uniformly, assume we know M1.
         # the mass-ratio is in cube[5], and the period is (now) in cube[0]
         sini = cube[4]
-        cube[4] = q * sini / np.sqrt(1 - cube[2] ** 2) * (2 * np.pi * G * self.primary_mass * (1 + q) / cube[0]) ** (
+        cube[4] = q * sini / np.sqrt(1 - e ** 2) * (2 * np.pi * G * self.primary_mass * (1 + q) / cube[0]) ** (
         1. / 3.) * unit_factor
         cube[5] = q
 
