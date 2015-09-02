@@ -413,10 +413,14 @@ class SpectroscopicOrbitFitter(Fitters.Bayesian_LS):
                              The mass (in solar masses) of the primary star. Used in the prior to convert
                              from period to semimajor axis.
 
+     - q_prior:              Callable function
+                             This should return the prior probability density function for the mass-ratio (q).
+                             It should come from the estimated primary star mass and companion temperature.
+                             This code already assumes a mass-ratio distribution as the main prior on q
     """
 
     def __init__(self, rv_times, rv1_measurements, rv1_err, rv2_measurements=None, rv2_err=None,
-                 gamma=0.4, mu=np.log(200), sigma=np.log(10), eta=0.7, primary_mass=2.0):
+                 gamma=0.4, mu=np.log(200), sigma=np.log(10), eta=0.7, primary_mass=2.0, q_prior=None):
 
         if rv2_measurements is None:
             rv2_measurements = np.nan * np.ones_like(rv1_measurements)
@@ -436,6 +440,7 @@ class SpectroscopicOrbitFitter(Fitters.Bayesian_LS):
         self.sigma = sigma
         self.eta = eta
         self.primary_mass = primary_mass
+        self.q_prior = q_prior
         return
 
 
@@ -474,7 +479,8 @@ class SpectroscopicOrbitFitter(Fitters.Bayesian_LS):
 
     def _lnlike(self, pars, primary=True, secondary=True):
         rv1, rv2 = self.model(pars, self.x)
-        return self.lnlike_rv(rv1, rv2, primary=primary, secondary=secondary)
+        ll = self.lnlike_rv(rv1, rv2, primary=primary, secondary=secondary)
+        return ll if self.q_prior is None else ll + np.log(self.q_prior(pars[5]))
 
 
     def mnest_prior(self, cube, ndim, nparams):
