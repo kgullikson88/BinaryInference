@@ -10,6 +10,10 @@ import Fitters
 
 
 cache = None
+G = constants.G.cgs.value  # gravitational constant in cgs units
+M_sun = constants.M_sun.cgs.value
+year2sec = u.year.to(u.second)
+unit_factor = (M_sun / year2sec) ** (1. / 3.) * 1e-5
 
 class OrbitCalculator(object):
     """
@@ -81,7 +85,9 @@ class OrbitCalculator(object):
 
         # Compute the orbit radial velocity semi-amplitude.
         if K1 is None:
-            self.K1 = (1+q) * self.sini * np.sqrt(constants.G * self.primary_mass*u.M_sun * (1+q) / (self.a*u.AU*(1-e**2))).to(u.km/u.s).value
+            self.K1 = q * self.sini * np.sqrt(
+                constants.G * self.primary_mass * u.M_sun / (self.a * u.AU * (1 - e ** 2) * (1 + q))).to(
+                u.km / u.s).value
         else:
             self.K1 = K1
         if K2 is None:
@@ -422,7 +428,7 @@ class SpectroscopicOrbitFitter(Fitters.Bayesian_LS):
         yerr = dict(rv1=rv1_err, rv2=rv2_err)
 
         # List the parameter names
-        parnames = ['Period', '$M_0$', 'e', '$\omega$', '$K_1$', '$K_2$', 'dv1', 'dv2']
+        parnames = ['Period', '$M_0$', 'e', '$\omega$', '$K_1$', 'q', 'dv1', 'dv2']
 
         super(SpectroscopicOrbitFitter, self).__init__(x, y, yerr, param_names=parnames)
         self.gamma = gamma
@@ -445,13 +451,13 @@ class SpectroscopicOrbitFitter(Fitters.Bayesian_LS):
         ========
            The primary/secondary rv, and the on-sky x- and y-positions
         """
-        period, M0, e, omega, K1, K2, dv1, dv2 = p
+        period, M0, e, omega, K1, q, dv1, dv2 = p
         orbit = OrbitCalculator(P=period, M0=M0, a=1.0, e=e,
                                 big_omega=90.0, little_omega=omega,
-                                i=90.0, K1=K1, K2=K2)
+                                i=90.0, K1=K1, K2=K1 / q)
 
         rv1 = orbit.get_rv(x['t_rv'], component='primary')
-        rv2 = -rv1 * orbit.K2 / orbit.K1
+        rv2 = -rv1 / q
 
         return rv1 + dv1, rv2 + dv2
 
@@ -473,23 +479,25 @@ class SpectroscopicOrbitFitter(Fitters.Bayesian_LS):
 
     def mnest_prior(self, cube, ndim, nparams):
         # Multinest prior
+        q = cube[5] ** (1.0 / (1.0 - self.gamma))
 
         # pretend cube[0] (the period) is actually semimajor axis to calculate inverse CDF
         lna = scipy.stats.norm.ppf(cube[0], loc=self.mu, scale=self.sigma)
-        mass = self.primary_mass * (1 + cube[4] / cube[5])  # Total system mass
+        mass = self.primary_mass * (1 + q)  # Total system mass (depends on mass-ratio)
         cube[0] = np.exp(1.5 * lna) / mass
 
         cube[1] = cube[1] * 360.  # Uniform in mean anomaly at epoch (M0)
-        cube[3] = cube[4] * 360.  # Uniform in little omega
+        cube[3] = cube[3] * 360.  # Uniform in little omega
 
         # The eccentricity is exponential in [0,1])
         cube[2] = cube[2] ** (1.0 / (1.0 - self.eta))
 
-        # The rv semi-amplitudes are a bit tricky. I let the primary vary from 0-->1000 km/s, and make it log-uniform.
-        # The secondary then comes from the mass-ratio distribution prior and the secondary rvs.
-        cube[4] = 10 ** (cube[4] * 3)
-        q = cube[5] ** (1.0 / (1.0 - self.gamma))
-        cube[5] = cube[4] / q
+        # The rv semi-amplitude is a bit tricky. We will sample sini uniformly, assume we know M1.
+        # the mass-ratio is in cube[5], and the period is (now) in cube[0]
+        sini = cube[4]
+        cube[4] = q * sini / np.sqrt(1 - cube[2] ** 2) * (2 * np.pi * G * self.primary_mass * (1 + q) / cube[0]) ** (
+        1. / 3.) * unit_factor
+        cube[5] = q
 
         # Give the RV offsets uniform priors
         cube[6] = cube[6] * 40 - 20
@@ -499,15 +507,16 @@ class SpectroscopicOrbitFitter(Fitters.Bayesian_LS):
 
     def lnprior(self, pars):
         # emcee prior
-        period, M0, e, omega, K1, K2, dv1, dv2 = pars
+        period, M0, e, omega, K1, q, dv1, dv2 = pars
         gamma, mu, sigma, eta = self.gamma, self.mu, self.sigma, self.eta
-        mass = self.primary_mass * (1 + K1 / K2)
+        mass = self.primary_mass * (1 + q)
         lna = 2. / 3. * np.log(period) + 1. / 3. * np.log(mass)
         if (0 < period < 1e5 and -20 < M0 < 380 and 0 < e < 1 and -20 < omega < 380.
-            and 0 < K1 < 1e3 and 0 < K2 < 1e3 and -20 < dv1 < 20 and -20 < dv2 < 20):
+            and 0 < K1 < 1e3 and 0 < q < 1 and -20 < dv1 < 20 and -20 < dv2 < 20):
             ecc_prior = np.log(1 - eta) - eta * np.log(e)
-            q_prior = np.log(1 - gamma) - gamma * np.log(K1 / K2)
+            q_prior = np.log(1 - gamma) - gamma * np.log(q)
             a_prior = -0.5 * (np.log(2 * np.pi * sigma ** 2) + (lna - mu) ** 2 / sigma ** 2)
             return ecc_prior + q_prior + a_prior
 
         return -np.inf
+
