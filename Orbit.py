@@ -428,7 +428,7 @@ class SpectroscopicOrbitFitter(Fitters.Bayesian_LS):
         yerr = dict(rv1=rv1_err, rv2=rv2_err)
 
         # List the parameter names
-        parnames = ['Period', '$M_0$', 'e', '$\omega$', '$K_1$', 'q', 'dv1', 'dv2']
+        parnames = ['Period', '$M_0$', 'e', '$\omega$', '$K_1$', 'q', 'dv1']
 
         super(SpectroscopicOrbitFitter, self).__init__(x, y, yerr, param_names=parnames)
         self.gamma = gamma
@@ -451,7 +451,7 @@ class SpectroscopicOrbitFitter(Fitters.Bayesian_LS):
         ========
            The primary/secondary rv, and the on-sky x- and y-positions
         """
-        period, M0, e, omega, K1, q, dv1, dv2 = p
+        period, M0, e, omega, K1, q, dv1 = p
         orbit = OrbitCalculator(P=period, M0=M0, a=1.0, e=e,
                                 big_omega=90.0, little_omega=omega,
                                 i=90.0, K1=K1, K2=K1 / q)
@@ -459,7 +459,7 @@ class SpectroscopicOrbitFitter(Fitters.Bayesian_LS):
         rv1 = orbit.get_rv(x['t_rv'], component='primary')
         rv2 = -rv1 / q
 
-        return rv1 + dv1, rv2 + dv2
+        return rv1 + dv1, rv2 + dv1
 
     def lnlike_rv(self, rv1_pred, rv2_pred, primary=True, secondary=True):
         s = 0.0
@@ -499,20 +499,19 @@ class SpectroscopicOrbitFitter(Fitters.Bayesian_LS):
         1. / 3.) * unit_factor
         cube[5] = q
 
-        # Give the RV offsets uniform priors
+        # Give the RV offset uniform priors
         cube[6] = cube[6] * 40 - 20
-        cube[7] = cube[7] * 40 - 20
         return
 
 
     def lnprior(self, pars):
         # emcee prior
-        period, M0, e, omega, K1, q, dv1, dv2 = pars
+        period, M0, e, omega, K1, q, dv1 = pars
         gamma, mu, sigma, eta = self.gamma, self.mu, self.sigma, self.eta
         mass = self.primary_mass * (1 + q)
         lna = 2. / 3. * np.log(period) + 1. / 3. * np.log(mass)
         if (0 < period < 1e5 and -20 < M0 < 380 and 0 < e < 1 and -20 < omega < 380.
-            and 0 < K1 < 1e3 and 0 < q < 1 and -20 < dv1 < 20 and -20 < dv2 < 20):
+            and 0 < K1 < 1e3 and 0 < q < 1 and -20 < dv1 < 20):
             ecc_prior = 1.0 / (np.log(1e20) * e)
             q_prior = np.log(1 - gamma) - gamma * np.log(q)
             a_prior = -0.5 * (np.log(2 * np.pi * sigma ** 2) + (lna - mu) ** 2 / sigma ** 2)
