@@ -484,13 +484,13 @@ class SpectroscopicOrbitFitter(Fitters.Bayesian_LS):
         # pretend cube[0] (the period) is actually semimajor axis to calculate inverse CDF
         lna = scipy.stats.norm.ppf(cube[0], loc=self.mu, scale=self.sigma)
         mass = self.primary_mass * (1 + q)  # Total system mass (depends on mass-ratio)
-        cube[0] = np.exp(1.5 * lna) / mass
+        cube[0] = np.exp(1.5 * lna) / np.sqrt(mass)
 
         cube[1] = cube[1] * 360.  # Uniform in mean anomaly at epoch (M0)
         cube[3] = cube[3] * 360.  # Uniform in little omega
 
-        # The eccentricity is exponential in [0,1])
-        cube[2] = cube[2] ** (1.0 / (1.0 - self.eta))
+        # Log-uniform in eccentricity from 10^-20 to 0
+        cube[2] = 10 ** (cube[2] * 20 - 20)
 
         # The rv semi-amplitude is a bit tricky. We will sample sini uniformly, assume we know M1.
         # the mass-ratio is in cube[5], and the period is (now) in cube[0]
@@ -513,7 +513,7 @@ class SpectroscopicOrbitFitter(Fitters.Bayesian_LS):
         lna = 2. / 3. * np.log(period) + 1. / 3. * np.log(mass)
         if (0 < period < 1e5 and -20 < M0 < 380 and 0 < e < 1 and -20 < omega < 380.
             and 0 < K1 < 1e3 and 0 < q < 1 and -20 < dv1 < 20 and -20 < dv2 < 20):
-            ecc_prior = np.log(1 - eta) - eta * np.log(e)
+            ecc_prior = 1.0 / (np.log(1e20) * e)
             q_prior = np.log(1 - gamma) - gamma * np.log(q)
             a_prior = -0.5 * (np.log(2 * np.pi * sigma ** 2) + (lna - mu) ** 2 / sigma ** 2)
             return ecc_prior + q_prior + a_prior
