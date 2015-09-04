@@ -18,20 +18,24 @@ class DistributionFitter(Fitters.Bayesian_LS):
                       One array to hold all of the mcmc samples for the orbital fits for all Nstars stars.
                       N_mcmc is the number of MCMC samples for each orbit fit.
                       The samples for each parameter (q, a, e) are:
-                      ```
-                      q = mcmc_samples[:, :, 0]
-                      a = mcmc_samples[:, :, 1]
-                      e = mcmc_samples[:, :, 2]
-                      ```
-    - [something to encode the orbit fit prior]
+
+                      >>> q = mcmc_samples[:, :, 0]
+                      >>> a = mcmc_samples[:, :, 1]
+                      >>> e = mcmc_samples[:, :, 2]
+
+    - prior_fcn:      A callable that takes the arguments a, e, q
+                      Returns the prior probability function for the semimajor axis, eccentricity, and mass-ratio.
+                      This should encode the (normalized) priors you used to get the MCMC samples,
+                      and is different from the prior on the distribution parameters (gamma, mu, sigma, and eta).
 
     """
 
-    def __init__(self, mcmc_samples):
+    def __init__(self, mcmc_samples, prior_fcn):
         self.param_names = ['$\gamma$', '$\mu$', '$\sigma$', '$\eta$']
         self.q = mcmc_samples[:, :, 0]
         self.a = mcmc_samples[:, :, 1]
         self.e = mcmc_samples[:, :, 2]
+        self.prior = prior_fcn(self.a, self.e, self.q)
 
 
     def _lnlike(self, pars):
@@ -40,8 +44,8 @@ class DistributionFitter(Fitters.Bayesian_LS):
         Gamma_e = (1 - eta) * self.e ** (-eta)
         Gamma_a = 1. / (sigma * np.sqrt(2 * np.pi)) * np.exp(-0.5 * (np.log(self.a) - mu) ** 2 / sigma ** 2)
 
-        Gamma = Gamma_q * Gamma_e * Gamma_a
-        return np.log(Gamma.mean(axis=1)).sum()
+        Gamma = Gamma_q * Gamma_e * Gamma_a / self.prior
+        return np.log(np.nanmean(Gamma, axis=1)).sum()
 
 
     def lnprior(self, pars):
@@ -53,7 +57,7 @@ class DistributionFitter(Fitters.Bayesian_LS):
     def mnest_prior(self, cube, ndim, nparams):
         cube[1] = cube[1] * 10  # Uniform in mean (log) separation
         cube[2] = cube[2] * 10 + 1e-3  # Uniform in (log) separation spread
-        # cube[0] and cube[3] encode the gamma and mu parameters, which are uniform on [0,1]
+        # cube[0] and cube[3] encode the gamma and eta parameters, which are uniform on [0,1]
         return
 
     def guess_fit_parameters(self):
