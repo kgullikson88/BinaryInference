@@ -494,8 +494,8 @@ class SpectroscopicOrbitFitter(Fitters.Bayesian_LS):
         mass = self.primary_mass * (1 + q)  # Total system mass (depends on mass-ratio)
         # cube[0] = np.exp(1.5 * lna) / np.sqrt(mass)
 
-        # Try period as log-uniform instead
-        cube[0] = 10 ** (cube[0] * 6)
+        # Period is log-uniform from 10^-3 years (0.3 days) to 10^6 years
+        cube[0] = 10 ** (cube[0] * 9 - 3)
 
         cube[1] = cube[1] * 360.  # Uniform in mean anomaly at epoch (M0)
         cube[3] = cube[3] * 360.  # Uniform in little omega
