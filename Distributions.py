@@ -43,7 +43,36 @@ class DistributionFitter(Fitters.Bayesian_LS):
         self.e = mcmc_samples[:, :, 2]
         self.prior = prior_fcn(self.q, self.a, self.e) if prior_fcn is not None else 1.0
         self.completeness = completeness_fcn(self.q, self.a, self.e) if completeness_fcn is not None else 1.0
-        self.integral_fcn = integral_fcn if integral_fcn is not None else lambda gamma, mu, sigma, eta: 0.0
+        if integral_fcn is not None:
+            self.integral_fcn = integral_fcn
+        else:
+            self.integral_fcn = self._setup_generic_integral_function()
+
+
+    def _setup_generic_integral_function(self):
+        """
+            Use a self-compiled integral function. The details are available at
+            https://gist.github.com/1288a4698ad5ff7a3640
+        """
+        import platform
+        import os
+        import ctypes
+        from scipy.integrate import tplquad
+
+        if 'linux' in platform.system().lower():
+            lib_name = '{}/School/Research/libintegrand_linux.so'.format(os.environ['HOME'])
+        else:
+            lib_name = '{}/School/Research/libintegrand_macosx.so'.format(os.environ['HOME'])
+
+        lib = ctypes.CDLL(lib_name)
+        c_integrand = lib.integrand  # Assign specific function to name c_integrand (for simplicity)
+        c_integrand.restype = ctypes.c_double
+        c_integrand.argtypes = (ctypes.c_int, ctypes.c_double)
+
+        return lambda gamma, mu, sigma, eta: tplquad(c_integrand, 0, 1,
+                                                     lambda x: 0, lambda x: 1,
+                                                     lambda x, y: -3, lambda x, y: 20,
+                                                     args=(gamma, mu, sigma, eta))
 
 
     def _lnlike(self, pars):
