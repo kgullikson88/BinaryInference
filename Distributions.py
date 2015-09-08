@@ -32,10 +32,11 @@ class DistributionFitter(Fitters.Bayesian_LS):
 
     def __init__(self, mcmc_samples, prior_fcn):
         self.param_names = ['$\gamma$', '$\mu$', '$\sigma$', '$\eta$']
+        self.n_params = len(self.param_names)
         self.q = mcmc_samples[:, :, 0]
         self.a = mcmc_samples[:, :, 1]
         self.e = mcmc_samples[:, :, 2]
-        self.prior = prior_fcn(self.a, self.e, self.q)
+        self.prior = prior_fcn(self.q, self.a, self.e)
 
 
     def _lnlike(self, pars):
