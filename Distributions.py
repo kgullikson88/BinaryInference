@@ -23,20 +23,27 @@ class DistributionFitter(Fitters.Bayesian_LS):
                       >>> a = mcmc_samples[:, :, 1]
                       >>> e = mcmc_samples[:, :, 2]
 
-    - prior_fcn:      A callable that takes the arguments a, e, q
+    - prior_fcn:      A callable that takes the arguments q, a, e
                       Returns the prior probability function for the semimajor axis, eccentricity, and mass-ratio.
                       This should encode the (normalized) priors you used to get the MCMC samples,
                       and is different from the prior on the distribution parameters (gamma, mu, sigma, and eta).
 
+    - completeness_fcn: A callable that takes the arguments q, a, e
+                        Returns the completeness fraction for those parameters. This is the Q(w) in Equation 11.
+
+    - integral_fcn:     A callable that takes the arguments gamma, mu, sigma, eta
+                        Should return the integral in Equation 11
     """
 
-    def __init__(self, mcmc_samples, prior_fcn):
+    def __init__(self, mcmc_samples, prior_fcn=None, completeness_fcn=None, integral_fcn=None):
         self.param_names = ['$\gamma$', '$\mu$', '$\sigma$', '$\eta$']
         self.n_params = len(self.param_names)
         self.q = mcmc_samples[:, :, 0]
         self.a = mcmc_samples[:, :, 1]
         self.e = mcmc_samples[:, :, 2]
-        self.prior = prior_fcn(self.q, self.a, self.e)
+        self.prior = prior_fcn(self.q, self.a, self.e) if prior_fcn is not None else 1.0
+        self.completeness = completeness_fcn(self.q, self.a, self.e) if completeness_fcn is not None else 1.0
+        self.integral_fcn = integral_fcn if integral_fcn is not None else lambda gamma, mu, sigma, eta: 0.0
 
 
     def _lnlike(self, pars):
@@ -45,8 +52,8 @@ class DistributionFitter(Fitters.Bayesian_LS):
         Gamma_e = (1 - eta) * self.e ** (-eta)
         Gamma_a = 1. / (sigma * np.sqrt(2 * np.pi)) * np.exp(-0.5 * (np.log(self.a) - mu) ** 2 / sigma ** 2)
 
-        Gamma = Gamma_q * Gamma_e * Gamma_a / self.prior
-        return np.log(np.nanmean(Gamma, axis=1)).sum()
+        Gamma = Gamma_q * Gamma_e * Gamma_a * self.completeness / self.prior
+        return np.log(np.nanmean(Gamma, axis=1)).sum() - self.integral_fcn(gamma, mu, sigma, eta)
 
 
     def lnprior(self, pars):
