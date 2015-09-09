@@ -456,8 +456,9 @@ class SpectroscopicOrbitFitter(Fitters.Bayesian_LS):
         ========
            The primary/secondary rv, and the on-sky x- and y-positions
         """
-        lnP, M0, e, omega, K1, q, dv1 = p
-        period = np.exp(lnP)
+        logP, M0, e, omega, logK1, q, dv1 = p
+        period = 10 ** logP
+        K1 = 10 ** logK1
         orbit = OrbitCalculator(P=period, M0=M0, a=1.0, e=e,
                                 big_omega=90.0, little_omega=omega,
                                 i=90.0, K1=K1, K2=K1 / q)
@@ -507,9 +508,12 @@ class SpectroscopicOrbitFitter(Fitters.Bayesian_LS):
 
         # The rv semi-amplitude is a bit tricky. We will sample sini uniformly, assume we know M1.
         # the mass-ratio is in cube[5], and the period is (now) in cube[0]
-        sini = cube[4]
-        cube[4] = q * sini / np.sqrt(1 - e ** 2) * (2 * np.pi * G * self.primary_mass * (1 + q) / cube[0]) ** (
-        1. / 3.) * unit_factor
+        # sini = cube[4]
+        #cube[4] = q * sini / np.sqrt(1 - e ** 2) * (2 * np.pi * G * self.primary_mass * (1 + q) / cube[0]) ** (
+        #1. / 3.) * unit_factor
+
+        # Sample log(K1) uniformly from 10^-3 --> 10^3 km/s
+        cube[4] = cube[4] * 6 - 3
         cube[5] = q
 
         # Give the RV offset uniform priors
@@ -519,12 +523,12 @@ class SpectroscopicOrbitFitter(Fitters.Bayesian_LS):
 
     def lnprior(self, pars):
         # emcee prior
-        lnP, M0, e, omega, K1, q, dv1 = pars
-        period = np.exp(lnP)
+        logP, M0, e, omega, K1, q, dv1 = pars
+        period = 10 ** logP
         gamma, mu, sigma, eta = self.gamma, self.mu, self.sigma, self.eta
         mass = self.primary_mass * (1 + q)
-        lna = 2. / 3. * lnP + 1. / 3. * np.log(mass)
-        if (-7 < lnP < 14 and -20 < M0 < 380 and 0 < e < 1 and -20 < omega < 380.
+        lna = 2. / 3. * np.log(period) + 1. / 3. * np.log(mass)
+        if (-3 < lnP < 6 and -20 < M0 < 380 and 0 < e < 1 and -20 < omega < 380.
             and 0 < K1 < 1e3 and 0 < q < 1 and -20 < dv1 < 20):
             ecc_prior = 1.0 / (np.log(1e20) * e)
             q_prior = np.log(1 - gamma) - gamma * np.log(q)
