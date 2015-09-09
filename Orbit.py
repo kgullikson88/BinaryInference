@@ -532,12 +532,14 @@ class SpectroscopicOrbitFitter(Fitters.Bayesian_LS):
         gamma, mu, sigma, eta = self.gamma, self.mu, self.sigma, self.eta
         mass = self.primary_mass * (1 + q)
         lna = 2. / 3. * np.log(period) + 1. / 3. * np.log(mass)
-        if (-3 < logP < 6 and -20 < M0 < 380 and -20 < loge < 0 and -20 < omega < 380.
+        if (-3 < logP < 9 and -20 < M0 < 380 and -20 < loge < 0 and -20 < omega < 380.
             and -3 < logK1 < 3 and 0 < q < 1 and -20 < dv1 < 20):
             ecc_prior = 1.0 / (np.log(1e20) * e)
             q_prior = np.log(1 - gamma) - gamma * np.log(q)
             a_prior = -0.5 * (np.log(2 * np.pi * sigma ** 2) + (lna - mu) ** 2 / sigma ** 2)
-            return ecc_prior + q_prior + a_prior
+            #return ecc_prior + q_prior + a_prior
+            #return q_prior
+            return 0.0
 
         return -np.inf
 

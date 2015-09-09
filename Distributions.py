@@ -81,7 +81,8 @@ class DistributionFitter(Fitters.Bayesian_LS):
         Gamma_e = (1 - eta) * self.e ** (-eta)
         Gamma_a = 1. / (sigma * np.sqrt(2 * np.pi)) * np.exp(-0.5 * (np.log(self.a) - mu) ** 2 / sigma ** 2)
 
-        Gamma = Gamma_q * Gamma_e * Gamma_a * self.completeness / self.prior
+        #Gamma = Gamma_q * Gamma_e * Gamma_a * self.completeness / self.prior
+        Gamma = Gamma_q * self.completeness / self.prior
         return np.log(np.nanmean(Gamma, axis=1)).sum() - self.integral_fcn(gamma, mu, sigma, eta)
 
 
