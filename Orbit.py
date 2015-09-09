@@ -456,9 +456,10 @@ class SpectroscopicOrbitFitter(Fitters.Bayesian_LS):
         ========
            The primary/secondary rv, and the on-sky x- and y-positions
         """
-        logP, M0, e, omega, logK1, q, dv1 = p
+        logP, M0, loge, omega, logK1, q, dv1 = p
         period = 10 ** logP
         K1 = 10 ** logK1
+        e = 10 ** loge
         orbit = OrbitCalculator(P=period, M0=M0, a=1.0, e=e,
                                 big_omega=90.0, little_omega=omega,
                                 i=90.0, K1=K1, K2=K1 / q)
@@ -489,7 +490,8 @@ class SpectroscopicOrbitFitter(Fitters.Bayesian_LS):
         # Multinest prior
         # Make the mass-ratio (exponential) and eccentricity (log-uniform)
         q = cube[5] ** (1.0 / (1.0 - self.gamma))
-        e = 10 ** (cube[2] * 20 - 20)
+        loge = cube[2] * 20 - 20
+        e = 10 ** loge
 
         # pretend cube[0] (the period) is actually semimajor axis to calculate inverse CDF
         lna = scipy.stats.norm.ppf(cube[0], loc=self.mu, scale=self.sigma)
@@ -504,7 +506,7 @@ class SpectroscopicOrbitFitter(Fitters.Bayesian_LS):
         cube[3] = cube[3] * 360.  # Uniform in little omega
 
         # Log-uniform in eccentricity from 10^-20 to 0
-        cube[2] = e
+        cube[2] = loge
 
         # The rv semi-amplitude is a bit tricky. We will sample sini uniformly, assume we know M1.
         # the mass-ratio is in cube[5], and the period is (now) in cube[0]
@@ -523,13 +525,15 @@ class SpectroscopicOrbitFitter(Fitters.Bayesian_LS):
 
     def lnprior(self, pars):
         # emcee prior
-        logP, M0, e, omega, K1, q, dv1 = pars
+        logP, M0, loge, omega, logK1, q, dv1 = pars
         period = 10 ** logP
+        e = 10 ** loge
+        K1 = 10 ** logK1
         gamma, mu, sigma, eta = self.gamma, self.mu, self.sigma, self.eta
         mass = self.primary_mass * (1 + q)
         lna = 2. / 3. * np.log(period) + 1. / 3. * np.log(mass)
-        if (-3 < lnP < 6 and -20 < M0 < 380 and 0 < e < 1 and -20 < omega < 380.
-            and 0 < K1 < 1e3 and 0 < q < 1 and -20 < dv1 < 20):
+        if (-3 < logP < 6 and -20 < M0 < 380 and -10 < loge < 01 and -20 < omega < 380.
+            and -3 < logK1 < 3 and 0 < q < 1 and -20 < dv1 < 20):
             ecc_prior = 1.0 / (np.log(1e20) * e)
             q_prior = np.log(1 - gamma) - gamma * np.log(q)
             a_prior = -0.5 * (np.log(2 * np.pi * sigma ** 2) + (lna - mu) ** 2 / sigma ** 2)
