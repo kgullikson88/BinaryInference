@@ -456,7 +456,8 @@ class SpectroscopicOrbitFitter(Fitters.Bayesian_LS):
         ========
            The primary/secondary rv, and the on-sky x- and y-positions
         """
-        period, M0, e, omega, K1, q, dv1 = p
+        lnP, M0, e, omega, K1, q, dv1 = p
+        period = np.exp(lnP)
         orbit = OrbitCalculator(P=period, M0=M0, a=1.0, e=e,
                                 big_omega=90.0, little_omega=omega,
                                 i=90.0, K1=K1, K2=K1 / q)
@@ -495,7 +496,8 @@ class SpectroscopicOrbitFitter(Fitters.Bayesian_LS):
         # cube[0] = np.exp(1.5 * lna) / np.sqrt(mass)
 
         # Period is log-uniform from 10^-3 years (0.3 days) to 10^6 years
-        cube[0] = 10 ** (cube[0] * 9 - 3)
+        # cube[0] = 10 ** (cube[0] * 9 - 3)
+        cube[0] = cube[0] * 9 - 3
 
         cube[1] = cube[1] * 360.  # Uniform in mean anomaly at epoch (M0)
         cube[3] = cube[3] * 360.  # Uniform in little omega
@@ -517,11 +519,12 @@ class SpectroscopicOrbitFitter(Fitters.Bayesian_LS):
 
     def lnprior(self, pars):
         # emcee prior
-        period, M0, e, omega, K1, q, dv1 = pars
+        lnP, M0, e, omega, K1, q, dv1 = pars
+        period = np.exp(lnP)
         gamma, mu, sigma, eta = self.gamma, self.mu, self.sigma, self.eta
         mass = self.primary_mass * (1 + q)
-        lna = 2. / 3. * np.log(period) + 1. / 3. * np.log(mass)
-        if (0 < period < 1e5 and -20 < M0 < 380 and 0 < e < 1 and -20 < omega < 380.
+        lna = 2. / 3. * lnP + 1. / 3. * np.log(mass)
+        if (-7 < lnP < 14 and -20 < M0 < 380 and 0 < e < 1 and -20 < omega < 380.
             and 0 < K1 < 1e3 and 0 < q < 1 and -20 < dv1 < 20):
             ecc_prior = 1.0 / (np.log(1e20) * e)
             q_prior = np.log(1 - gamma) - gamma * np.log(q)
