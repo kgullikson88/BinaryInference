@@ -33,9 +33,12 @@ class DistributionFitter(Fitters.Bayesian_LS):
 
     - integral_fcn:     A callable that takes the arguments gamma, mu, sigma, eta
                         Should return the integral in Equation 11
+    
+    - q_limits:         An iterable of length 2
+                        Gives the hard limits for the mass-ratio function. Defaults to (0,1).
     """
 
-    def __init__(self, mcmc_samples, prior_fcn=None, completeness_fcn=None, integral_fcn=None):
+    def __init__(self, mcmc_samples, prior_fcn=None, completeness_fcn=None, integral_fcn=None, q_limits=(0.0, 1.0)):
         self.param_names = ['$\gamma$', '$\mu$', '$\sigma$', '$\eta$']
         self.n_params = len(self.param_names)
         self.q = mcmc_samples[:, :, 0]
@@ -43,6 +46,16 @@ class DistributionFitter(Fitters.Bayesian_LS):
         self.e = mcmc_samples[:, :, 2]
         self.prior = prior_fcn(self.q, self.a, self.e) if prior_fcn is not None else 1.0
         self.completeness = completeness_fcn(self.q, self.a, self.e) if completeness_fcn is not None else 1.0
+        
+        # Pre-compute logs
+        self.lnq = np.log(self.q)
+        self.lna = np.log(self.a)
+        self.lne = np.log(self.e)
+        self.lnp = np.log(self.prior)
+        self.ln_completeness = np.log(self.completeness)
+        self.q_limits = q_limits[:2]
+
+        # Register the integral function
         if integral_fcn is not None:
             self.integral_fcn = integral_fcn
         else:
@@ -75,7 +88,7 @@ class DistributionFitter(Fitters.Bayesian_LS):
                                                      args=(gamma, mu, sigma, eta))
 
 
-    def _lnlike(self, pars):
+    def _lnlike_normal(self, pars):
         gamma, mu, sigma, eta = pars
         Gamma_q = (1 - gamma) * self.q ** (-gamma)
         Gamma_e = (1 - eta) * self.e ** (-eta)
@@ -83,7 +96,29 @@ class DistributionFitter(Fitters.Bayesian_LS):
 
         #Gamma = Gamma_q * Gamma_e * Gamma_a * self.completeness / self.prior
         Gamma = Gamma_q * self.completeness / self.prior
-        return np.log(np.nanmean(Gamma, axis=1)).sum() - self.integral_fcn(gamma, mu, sigma, eta)
+        return np.sum(np.log(np.nanmean(Gamma, axis=1))) - self.integral_fcn(gamma, mu, sigma, eta)
+
+
+    def _lnlike_stable(self, pars):
+        gamma, mu, sigma, eta = pars
+        #low = 0.05
+        #high = 0.8
+        #high = 1.0
+        low, high = self.q_limits
+        ln_gamma_q = np.log(1 - gamma) - gamma*self.lnq - np.log(high**(1-gamma) - low**(1-gamma))
+        ln_gamma_e = np.log(1-eta) - eta*self.lne
+        ln_gamma_a = -0.5*(self.lna-mu)**2/sigma**2 - 0.5*np.log(2*np.pi*sigma**2)
+
+        ln_gamma = ln_gamma_q + ln_gamma_e + ln_gamma_a
+        #ln_gamma = ln_gamma_q
+        ln_summand = ln_gamma + self.ln_completeness - self.lnp
+        N_k = self.q.shape[1] - np.isnan(self.q).sum(axis=1)
+        return np.sum(np.log(np.nansum(np.exp(ln_summand), axis=1)) - np.log(N_k)) - self.integral_fcn(gamma, mu, sigma, eta)
+        #return np.sum(np.log(np.nansum(ln_summand, axis=1)) - np.log(N_k)) - self.integral_fcn(gamma, mu, sigma, eta)  # GIVES NANS ALWAYS
+
+    
+    def _lnlike(self, pars):
+        return self._lnlike_stable(pars)
 
 
     def lnprior(self, pars):
