@@ -488,19 +488,20 @@ class SpectroscopicOrbitFitter(Fitters.Bayesian_LS):
 
     def mnest_prior(self, cube, ndim, nparams):
         # Multinest prior
-        # Make the mass-ratio (exponential) and eccentricity (log-uniform)
-        q = cube[5] ** (1.0 / (1.0 - self.gamma))
+        # Make the mass-ratio (uniform) and eccentricity (log-uniform)
+        # q = cube[5] ** (1.0 / (1.0 - self.gamma))
+        q = cube[5]
         loge = cube[2] * 20 - 20
-        e = 10 ** loge
+        #e = 10 ** loge
 
         # pretend cube[0] (the period) is actually semimajor axis to calculate inverse CDF
-        lna = scipy.stats.norm.ppf(cube[0], loc=self.mu, scale=self.sigma)
-        mass = self.primary_mass * (1 + q)  # Total system mass (depends on mass-ratio)
+        # lna = scipy.stats.norm.ppf(cube[0], loc=self.mu, scale=self.sigma)
+        #mass = self.primary_mass * (1 + q)  # Total system mass (depends on mass-ratio)
         # cube[0] = np.exp(1.5 * lna) / np.sqrt(mass)
 
-        # Period is log-uniform from 10^-3 years (0.3 days) to 10^6 years
+        # Period is log-uniform from 10^-3 years (0.3 days) to 10^15 years
         # cube[0] = 10 ** (cube[0] * 9 - 3)
-        cube[0] = cube[0] * 9 - 3
+        cube[0] = cube[0] * 18 - 3
 
         cube[1] = cube[1] * 360.  # Uniform in mean anomaly at epoch (M0)
         cube[3] = cube[3] * 360.  # Uniform in little omega
