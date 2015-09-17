@@ -2,7 +2,8 @@
 #include <math.h>
 
 double integrand(int n, double args[n]);
-double integrand(int n, double* args);
+double q_integrand_logisticQ(int n, double args[n]);
+double integrand2(int n, double* args);
 double Q(double q, double a, double e);
 
 static const double SQ2PI = sqrt(2*M_PI);
@@ -24,9 +25,18 @@ double integrand(int n, double args[n])
     double Gamma_a = 1.0/(sigma*SQ2PI) * exp(-0.5*(lna-mu)*(lna-mu)/(sigma*sigma));
     double Q_val = Q(q, exp(lna), e);
 
-    return Gamma_q*Gamma_e*Gamma_a*Q_val;
+    return Gamma_q*Gamma_e*Gamma_a*Q_val;    
+}
 
+double q_integrand_logisticQ(int n, double args[n])
+{
+    //unpack arguments
+    double q = args[0];
+    double gamma = args[1];
+    double alpha = args[2];
+    double beta = args[3];
     
+    return (1-gamma)*pow(q, -gamma) / (1.0 + exp(-alpha*(q-beta)));
 }
 
 double integrand2(int n, double* args)
