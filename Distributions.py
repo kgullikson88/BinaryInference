@@ -101,12 +101,9 @@ class DistributionFitter(Fitters.Bayesian_LS):
 
     def _lnlike_stable(self, pars):
         gamma, mu, sigma, eta = pars
-        #low = 0.05
-        #high = 0.8
-        #high = 1.0
         low, high = self.q_limits
         ln_gamma_q = np.log(1 - gamma) - gamma*self.lnq - np.log(high**(1-gamma) - low**(1-gamma))
-        ln_gamma_e = np.log(1-eta) - eta*self.lne
+        ln_gamma_e = np.log(1-eta) - eta*self.lne - np.log(1.0 - 10**(-20*(1-eta)))
         ln_gamma_a = -0.5*(self.lna-mu)**2/sigma**2 - 0.5*np.log(2*np.pi*sigma**2)
 
         ln_gamma = ln_gamma_q + ln_gamma_e + ln_gamma_a
