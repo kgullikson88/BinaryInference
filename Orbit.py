@@ -530,22 +530,16 @@ class SpectroscopicOrbitFitter(Fitters.Bayesian_LS):
 
     def lnprior(self, pars):
         # emcee prior
-        logP, M0, loge, omega, logK1, q, dv1 = pars
-        period = 10 ** logP
+        loga, M0, loge, omega, logK1, q, dv1 = pars
+        a = 10 ** loga
         e = 10 ** loge
         K1 = 10 ** logK1
-        gamma, mu, sigma, eta = self.gamma, self.mu, self.sigma, self.eta
         mass = self.primary_mass * (1 + q)
-        lna = 2. / 3. * np.log(period) + 1. / 3. * np.log(mass)
-        if (-3 < logP < 9 and -20 < M0 < 380 and -20 < loge < 0 and -20 < omega < 380.
+        if (-2 < loga < 8 and -20 < M0 < 380 and -20 < loge < 0 and -20 < omega < 380.
             and -3 < logK1 < 3 and 0 < q < 1 and -20 < dv1 < 20):
-            ecc_prior = 1.0 / (10*np.log(10) * e)
-            #q_prior = np.log(1 - gamma) - gamma * np.log(q)
+            ecc_prior = 1.0 / (20 * np.log(10) * e)
             q_prior = 1.0
-            #a_prior = -0.5 * (np.log(2 * np.pi * sigma ** 2) + (lna - mu) ** 2 / sigma ** 2)
             a_prior = 1.0 / (10*np.log(10)*a)
-            #return ecc_prior + q_prior + a_prior
-            #return q_prior
             return np.log(ecc_prior) + np.log(q_prior) + np.log(a_prior)
 
         return -np.inf
