@@ -10,17 +10,14 @@
 
 
 import numpy as np
-import pandas as pd
-import HelperFunctions
-import os
 import scipy.stats
-import matplotlib.pyplot as plt
-import IMF_utils
 from astropy import units as u, constants
 from scipy.optimize import newton
 import pandas as pd
-from Mamajek_Table import MamajekTable
 
+import HelperFunctions
+import IMF_utils
+from Mamajek_Table import MamajekTable
 
 
 def truncated_expon(scale=0.0, Nsamp=100):
@@ -29,6 +26,7 @@ def truncated_expon(scale=0.0, Nsamp=100):
     u = np.random.uniform(size=Nsamp)
     x = u**(1./(1-scale))
     return x
+
 
 def get_eccentric_anomaly(M, e):
     """
@@ -184,35 +182,64 @@ class ForwardModeler(object):
         return sample
 
 
-def nb_stuff():
-    pars = [0.5, 0.4, np.log(200), np.log(10), 0.7, 2., 6.]
-    fw = ForwardModeler()
-    vl_sample = fw.model(pars, N_obs=1000)
-    ml_sample = fw.model(pars, N_obs=1000, Vmag_lim=6.0)
+def make_representative_sample(gamma, mu, sigma, eta, size=1, min_mass=1.5, max_mass=20.0):
+    """ Generate a representative sample from the population parameters gamma, mu, sigma, and eta.
+    """
+    a = np.random.lognormal(mean=mu, sigma=sigma, size=size) * u.AU
+    e = truncated_expon(scale=eta, Nsamp=size)
+    q = truncated_expon(scale=gamma, Nsamp=size)
+    prim_mass = IMF_utils.inverse_imf(np.random.uniform(size=size), mmin=min_mass, mmax=max_mass) * u.M_sun
+    M0 = np.random.uniform(0, 2 * np.pi, size=size) * u.radian
+    Omega = np.random.uniform(0, 2 * np.pi, size=size) * u.radian
+    omega = np.random.uniform(0, 2 * np.pi, size=size) * u.radian
+    sini = np.random.uniform(0, 1, size=size)
+    i = np.arcsin(sini) * u.radian
+    Period = np.sqrt(4 * np.pi ** 2 * a ** 3 / (constants.G * (prim_mass + prim_mass * q))).to(u.year)
+
+    sample = pd.DataFrame(data=dict(a=a, e=e, q=q, M_prim=prim_mass, Period=Period.to(u.year),
+                                    M0=M0.to(u.degree), big_omega=Omega.to(u.degree),
+                                    little_omega=omega.to(u.degree), i=i.to(u.degree)))
+    return sample
 
 
-    # In[271]:
+def make_malmquist_sample(gamma, mu, sigma, eta, size=1, min_mass=1.5, max_mass=20.0, Vlim=6.0):
+    """ Make a magnitude-limited sample from the population parameters gamma, mu, sigma, and eta.
+    """
 
-    _ = plt.hist(vl_sample.M1.values, bins=50, cumulative=True, normed=True, histtype='step')
-    _ = plt.hist(ml_sample.M1.values, bins=50, cumulative=True, normed=True, histtype='step')
+    # Make a representative sample with 10x the size
+    sample = make_representative_sample(gamma, mu, sigma, eta, size=size * 1000, min_mass=min_mass, max_mass=max_mass)
 
+    # Sample distances such that they uniformly fill a sphere
+    distance = (np.random.uniform(size=len(sample))) ** (1. / 3.) * 1000.0
 
-    # In[245]:
+    # Get the mamajek table. Sort by mass, and remove the NaNs
+    MT = MamajekTable()
+    df = MT.mam_df.dropna(subset=['Msun']).sort('Msun')
+    mass = df['Msun']
+    vmag = df['Mv']
 
-    get_ipython().magic(u'pinfo plt.hist')
+    # Interpolate the table with a smoothing spline.
+    from scipy.interpolate import UnivariateSpline
 
+    spline = UnivariateSpline(mass, vmag, s=0.9,
+                              ext=3)  # The s parameter was fine-tuned. See the MalmquistBias notebook.
 
-    # In[45]:
+    def get_vmag(q, mass, d):
+        """ Get the V-band magnitude as a function of mass-ratio (q), primary mass(mass),
+        and distance (d)
+        """
 
-    masses = IMF_utils.inverse_imf(np.random.uniform(size=10000), mmin=2, mmax=10)
+        M1 = spline(mass)
+        M2 = spline(q * mass)
+        M_total = HelperFunctions.add_magnitudes(M1, M2)
+        V = M_total + 5 * np.log10(d) - 5
+        return V
 
+    # Get the V magnitude of the sample stars
+    sample['Vmag'] = get_vmag(sample['q'].values, sample['M_prim'].values, distance)
+    sample['distance'] = distance
 
-    # In[47]:
-
-    plt.hist(masses, bins=30)
-
-
-    # In[ ]:
-
+    # Keep 'size' of the stars with Vmag < Vlim
+    return sample.loc[sample.Vmag < Vlim].sample(size).copy()
 
 
