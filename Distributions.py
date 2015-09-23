@@ -33,17 +33,22 @@ class DistributionFitter(Fitters.Bayesian_LS):
 
     - integral_fcn:     A callable that takes the arguments gamma, mu, sigma, eta
                         Should return the integral in Equation 11
-    
-    - q_limits:         An iterable of length 2
-                        Gives the hard limits for the mass-ratio function. Defaults to (0,1).
+
+    - malm_pars:        An iterable of any size
+                        The iterable should parameterize a function
+                        f(q) = malm_pars[0] + q*malm_pars[1] + q^2 * malm_pars[2] + ...
+                        such that the probability of observing a mass-ratio q is given
+                        (up to a normalization constant) by
+                        P(q) = f(q)Gamma(q)
     """
 
-    def __init__(self, mcmc_samples, prior_fcn=None, completeness_fcn=None, integral_fcn=None, q_limits=(0.0, 1.0)):
+    def __init__(self, mcmc_samples, prior_fcn=None, completeness_fcn=None, integral_fcn=None, malm_pars=(1.0,)):
         self.param_names = ['$\gamma$', '$\mu$', '$\sigma$', '$\eta$']
         self.n_params = len(self.param_names)
         self.q = mcmc_samples[:, :, 0]
         self.a = mcmc_samples[:, :, 1]
         self.e = mcmc_samples[:, :, 2]
+        self.malm_pars = np.atleast_1d(malm_pars)
         self.prior = prior_fcn(self.q, self.a, self.e) if prior_fcn is not None else 1.0
         self.completeness = completeness_fcn(self.q, self.a, self.e) if completeness_fcn is not None else 1.0
         
@@ -53,7 +58,6 @@ class DistributionFitter(Fitters.Bayesian_LS):
         self.lne = np.log(self.e)
         self.lnp = np.log(self.prior)
         self.ln_completeness = np.log(self.completeness)
-        self.q_limits = q_limits[:2]
 
         # Register the integral function
         if integral_fcn is not None:
@@ -101,10 +105,13 @@ class DistributionFitter(Fitters.Bayesian_LS):
 
     def _lnlike_stable(self, pars):
         gamma, mu, sigma, eta = pars
-        low, high = self.q_limits
-        ln_gamma_q = np.log(1 - gamma) - gamma*self.lnq - np.log(high**(1-gamma) - low**(1-gamma))
+        ln_gamma_q = np.log(1 - gamma) - gamma * self.lnq
         ln_gamma_e = np.log(1-eta) - eta*self.lne - np.log(1.0 - 10**(-20*(1-eta)))
         ln_gamma_a = -0.5*(self.lna-mu)**2/sigma**2 - 0.5*np.log(2*np.pi*sigma**2)
+
+        # Adjust for malmquist bias
+        malm_func, denominator = self._malmquist(gamma)
+        ln_gamma_q += np.log(malm_func(self.q)) - np.log(denominator)  # This could probably be made more efficient...
 
         ln_gamma = ln_gamma_q + ln_gamma_e + ln_gamma_a
         #ln_gamma = ln_gamma_q
@@ -112,6 +119,15 @@ class DistributionFitter(Fitters.Bayesian_LS):
         N_k = self.q.shape[1] - np.isnan(self.q).sum(axis=1)
         return np.sum(np.log(np.nansum(np.exp(ln_summand), axis=1)) - np.log(N_k)) - self.integral_fcn(gamma, mu, sigma, eta)
         #return np.sum(np.log(np.nansum(ln_summand, axis=1)) - np.log(N_k)) - self.integral_fcn(gamma, mu, sigma, eta)  # GIVES NANS ALWAYS
+
+
+    def _malmquist(self, gamma):
+        """ Return the malmquist adjustment function as well as the normalization constant
+        """
+        func = np.poly1d(self.malm_pars[::-1])
+        denom = np.sum([p * (1.0 - gamma) / (i + 1 - gamma) for i, p in enumerate(self.malm_pars)])
+        return func, denom
+
 
     
     def _lnlike(self, pars):
