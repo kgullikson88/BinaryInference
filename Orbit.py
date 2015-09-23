@@ -456,8 +456,8 @@ class SpectroscopicOrbitFitter(Fitters.Bayesian_LS):
         ========
            The primary/secondary rv, and the on-sky x- and y-positions
         """
-        logP, M0, loge, omega, logK1, q, dv1 = p
-        period = 10 ** logP
+        loga, M0, loge, omega, logK1, q, dv1 = p
+        period = 10 ** (1.5*loga) / np.sqrt(self.primary_mass*(1+q))
         K1 = 10 ** logK1
         e = 10 ** loge
         orbit = OrbitCalculator(P=period, M0=M0, a=1.0, e=e,
@@ -501,7 +501,11 @@ class SpectroscopicOrbitFitter(Fitters.Bayesian_LS):
 
         # Period is log-uniform from 10^-3 years (0.3 days) to 10^15 years
         # cube[0] = 10 ** (cube[0] * 9 - 3)
-        cube[0] = cube[0] * 18 - 3
+        #cube[0] = cube[0] * 18 - 3
+        
+        # Semi-major axis is log-uniform from 0.01 to 10^8 AU
+        cube[0] = cube[0]*10 - 2
+
 
         cube[1] = cube[1] * 360.  # Uniform in mean anomaly at epoch (M0)
         cube[3] = cube[3] * 360.  # Uniform in little omega
@@ -526,21 +530,17 @@ class SpectroscopicOrbitFitter(Fitters.Bayesian_LS):
 
     def lnprior(self, pars):
         # emcee prior
-        logP, M0, loge, omega, logK1, q, dv1 = pars
-        period = 10 ** logP
+        loga, M0, loge, omega, logK1, q, dv1 = pars
+        a = 10 ** loga
         e = 10 ** loge
         K1 = 10 ** logK1
-        gamma, mu, sigma, eta = self.gamma, self.mu, self.sigma, self.eta
         mass = self.primary_mass * (1 + q)
-        lna = 2. / 3. * np.log(period) + 1. / 3. * np.log(mass)
-        if (-3 < logP < 9 and -20 < M0 < 380 and -20 < loge < 0 and -20 < omega < 380.
+        if (-2 < loga < 8 and -20 < M0 < 380 and -20 < loge < 0 and -20 < omega < 380.
             and -3 < logK1 < 3 and 0 < q < 1 and -20 < dv1 < 20):
-            ecc_prior = 1.0 / (np.log(1e20) * e)
-            q_prior = np.log(1 - gamma) - gamma * np.log(q)
-            a_prior = -0.5 * (np.log(2 * np.pi * sigma ** 2) + (lna - mu) ** 2 / sigma ** 2)
-            #return ecc_prior + q_prior + a_prior
-            #return q_prior
-            return 0.0
+            ecc_prior = 1.0 / (20 * np.log(10) * e)
+            q_prior = 1.0
+            a_prior = 1.0 / (10*np.log(10)*a)
+            return np.log(ecc_prior) + np.log(q_prior) + np.log(a_prior)
 
         return -np.inf
 
