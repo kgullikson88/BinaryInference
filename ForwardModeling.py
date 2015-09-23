@@ -240,6 +240,6 @@ def make_malmquist_sample(gamma, mu, sigma, eta, size=1, min_mass=1.5, max_mass=
     sample['distance'] = distance
 
     # Keep 'size' of the stars with Vmag < Vlim
-    return sample.loc[sample.Vmag < Vlim].sample(size).copy()
+    return sample.loc[sample.Vmag < Vlim].sample(size).reset_index().copy()
 
 
