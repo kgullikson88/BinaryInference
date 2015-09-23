@@ -33,12 +33,9 @@ class DistributionFitter(Fitters.Bayesian_LS):
 
     - integral_fcn:     A callable that takes the arguments gamma, mu, sigma, eta
                         Should return the integral in Equation 11
-    
-    - q_limits:         An iterable of length 2
-                        Gives the hard limits for the mass-ratio function. Defaults to (0,1).
     """
 
-    def __init__(self, mcmc_samples, prior_fcn=None, completeness_fcn=None, integral_fcn=None, q_limits=(0.0, 1.0)):
+    def __init__(self, mcmc_samples, prior_fcn=None, completeness_fcn=None, integral_fcn=None):
         self.param_names = ['$\gamma$', '$\mu$', '$\sigma$', '$\eta$']
         self.n_params = len(self.param_names)
         self.q = mcmc_samples[:, :, 0]
@@ -53,7 +50,6 @@ class DistributionFitter(Fitters.Bayesian_LS):
         self.lne = np.log(self.e)
         self.lnp = np.log(self.prior)
         self.ln_completeness = np.log(self.completeness)
-        self.q_limits = q_limits[:2]
 
         # Register the integral function
         if integral_fcn is not None:
@@ -101,8 +97,7 @@ class DistributionFitter(Fitters.Bayesian_LS):
 
     def _lnlike_stable(self, pars):
         gamma, mu, sigma, eta = pars
-        low, high = self.q_limits
-        ln_gamma_q = np.log(1 - gamma) - gamma*self.lnq - np.log(high**(1-gamma) - low**(1-gamma))
+        ln_gamma_q = np.log(1 - gamma) - gamma * self.lnq
         ln_gamma_e = np.log(1-eta) - eta*self.lne - np.log(1.0 - 10**(-20*(1-eta)))
         ln_gamma_a = -0.5*(self.lna-mu)**2/sigma**2 - 0.5*np.log(2*np.pi*sigma**2)
 
