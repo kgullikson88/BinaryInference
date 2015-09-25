@@ -3,6 +3,7 @@ import logging
 import numpy as np
 from scipy.optimize import minimize
 from scipy.stats import truncnorm, gaussian_kde
+from scipy.integrate import quad
 
 import Fitters
 import Mamajek_Table
@@ -226,3 +227,82 @@ class OrbitPrior(object):
     def __call__(self, q, a, e):
         return self.evaluate(q, a, e)
 
+
+class CensoredCompleteness(object):
+    """ A class for calculating the completeness function that varies based on the star
+        In this case, it assumes each star has a completeness function of shape
+    """
+
+    def __init__(self, alpha_vals, beta_vals):
+        """
+        A helper function for calculating the completeness function and corresponding integral.
+        The completeness is defined as:
+
+        .. math::
+            Q(q|\alpha, \beta) = \frac{1}{1+e^{-\alpha (q-\beta)}}
+
+        Parameters:
+        ============
+         - alpha_vals:  An iterable of length N
+                        Holds all the values for alpha
+
+         - beta_vals:   An iterable of length N
+                        Holds all the values for beta
+        """
+        self.alpha_vals = np.atleast_1d(alpha_vals)
+        self.beta_vals = np.atleast_1d(beta_vals)
+        assert len(alpha_vals) == len(beta_vals), 'alpha_vals and beta_vals must be the same length!'
+
+        import ctypes
+        import os
+
+        lib = ctypes.CDLL('{}/School/Research/BinaryInference/integrandlib.so'.format(os.environ['HOME']))
+        self.c_integrand = lib.q_integrand_logisticQ  # Assign specific function to name c_integrand (for simplicity)
+        self.c_integrand.restype = ctypes.c_double
+        self.c_integrand.argtypes = (ctypes.c_int, ctypes.c_double)
+        self.sigmoid = lambda q, alpha, beta: 1.0 / (1.0 + np.exp(-alpha * (q - beta)))
+
+
+    def integral(self, gamma, mu, sigma, eta):
+        """
+        Returns the integral normalization factor in Equation 11
+
+        Parameters:
+        ===========
+         - gamma:    float
+                     The mass-ratio power law exponent
+         - mu:       float
+                     The semimajor-axis log-normal mean
+         - sigma:    float
+                     The semimajor-axis log-normal width
+         - eta:      float
+                     The eccentricity power law exponent
+
+        Returns:
+        =========
+         float - the value of the integral for the input set of parameters
+        """
+        return np.sum([quad(self.c_integrand, 0, 1, args=(gamma, alpha, beta))[0] for alpha, beta in
+                       zip(self.alpha_vals, self.beta_vals)])
+
+
+    def __call__(self, q, a, e):
+        """
+        Gives the average completeness over the whole sample
+
+        Parameters:
+        ===========
+         - q:    float, or numpy.ndarray
+                 The mass-ratio
+
+         - a:    float, or numpy.ndarray
+                 The semimajor-axis (in AU)
+
+         - e:    float, or numpy.ndarray
+                 The eccentricity
+
+        Returns:
+        =========
+         float, or numpy.ndarray of the same shape as the inputs, containing the completeness
+        """
+        return np.sum([self.sigmoid(q, alpha, beta) for alpha, beta in zip(self.alpha_vals, self.beta_vals)])
