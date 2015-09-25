@@ -2,8 +2,14 @@ import logging
 
 import numpy as np
 from scipy.optimize import minimize
+from scipy.stats import truncnorm, gaussian_kde
 
 import Fitters
+import Mamajek_Table
+
+MT = Mamajek_Table.MamajekTable()
+teff2mass = MT.get_interpolator('Teff', 'Msun')
+mass2teff = MT.get_interpolator('Msun', 'Teff')
 
 
 class DistributionFitter(Fitters.Bayesian_LS):
@@ -164,4 +170,59 @@ class DistributionFitter(Fitters.Bayesian_LS):
         self.guess_pars = out.x
         return out.x
 
+
+class OrbitPrior(object):
+    """ Object to compute the prior on my parameters, including the empirical mass-ratio distribution prior
+        from the companion temperature.
+        TODO: This should be able to take 2d arrays for M1_vals and T2_vals, and then forego the random sampling
+              (i.e. give it samples from the primary star mass and companion temperature using whatever distributions
+              I want).
+        TODO: Allow user to give custom function for teff2mass (using evolutionary tracks or something)
+    """
+
+    def __init__(self, M1_vals, T2_vals, N_samp=10000, gamma=0.4):
+        """Initialize the orbit prior object
+
+        Parameters:
+        ===========
+        - M1_vals:     numpy array, or float
+                       The primary star masses
+
+        - T2_vals:     numpy array of same shape as M1_vals, or float
+                       The companion star temperatures
+
+        - N_samp:      The number of random samples to take for computing the mass-ratio distribution samples
+
+        - gamma:       The mass-ratio distribution power-law exponent
+
+        Returns:
+        =========
+        None
+        """
+        M1_vals = np.atleast_1d(M1_vals)
+        T2_vals = np.atleast_1d(T2_vals)
+
+        # Estimate the mass-ratio prior
+        M1_std = np.maximum(0.5, 0.2 * M1_vals)
+        a, b = (1.5 - M1_vals) / M1_std, np.ones_like(M1_vals) * np.inf
+        M1_samples = np.array(
+            [truncnorm.rvs(a=a[i], b=b[i], loc=M1_vals[i], scale=M1_std[i], size=N_samp) for i in range(M1_vals.size)])
+        T2_samples = np.array([np.random.normal(loc=T2_vals[i], scale=200, size=N_samp) for i in range(T2_vals.size)])
+        M2_samples = teff2mass(T2_samples)
+        q_samples = M2_samples / M1_samples
+
+        self.empirical_q_prior = [gaussian_kde(q_samples[i, :]) for i in range(q_samples.shape[0])]
+        self.gamma = gamma
+
+    def _evaluate_empirical_q_prior(self, q):
+        q = np.atleast_1d(q)
+        assert q.shape[0] == len(self.empirical_q_prior)
+        return np.array([self.empirical_q_prior[i](q[i]) for i in range(q.shape[0])])
+
+    def evaluate(self, q, a, e):
+        empirical_prior = self._evaluate_empirical_q_prior(q)
+        return (1 - self.gamma) * q ** (-self.gamma) * empirical_prior / (120 * a * e * np.log(10) ** 2)
+
+    def __call__(self, q, a, e):
+        return self.evaluate(q, a, e)
 
