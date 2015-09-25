@@ -164,3 +164,4 @@ class DistributionFitter(Fitters.Bayesian_LS):
         self.guess_pars = out.x
         return out.x
 
+

@@ -1,14 +1,3 @@
-
-# coding: utf-8
-
-# #Forward Modeling
-# This notebook makes a toy model similar to my experiment, to check that I know what I am doing and that I get the right answer.
-# 
-# ## Status as of Thursday Evening:
-#   - The ForwardModeler class seems to work as expected, and I can reproduce Malmquist bias.
-#   - TODO: Add information about detection rate as a function of mass-ratio, and randomly decide if I detect a given binary system using the detection rate.
-
-
 import numpy as np
 import scipy.stats
 from astropy import units as u, constants
@@ -18,6 +7,7 @@ import pandas as pd
 import HelperFunctions
 import IMF_utils
 from Mamajek_Table import MamajekTable
+import Orbit
 
 
 def truncated_expon(scale=0.0, Nsamp=100):
@@ -243,3 +233,45 @@ def make_malmquist_sample(gamma, mu, sigma, eta, size=1, min_mass=1.5, max_mass=
     return sample.loc[sample.Vmag < Vlim].sample(size).reset_index().copy()
 
 
+def sample_orbit(star, N_rv, N_imag, rv1_err=None, rv2_err=None, pos_err=None, distance=100):
+    """ Sample the binary orbit represented by the 'star' structure at N_rv random times for
+    RV measurements, and N_imag random times for imaging measurements
+
+    Parameters:
+    ===========
+    - star:    a pandas DataFrame with the orbital parameters (such as returned by make_representative_sample)
+    - N_rv, N_image:  The number of radial velocity and imaging observations.
+    - rv1_err: Uncertainty on the primary star velocity measurements (in km/s or velocity Quantity)
+    - rv2_err: Uncertainty on the secondary star velocity measurements (in km/s or velocity Quantity)
+    - pos_err: On-sky positional error (in arcseconds or angle Quantity)
+    - distance: The distance to the star (in parsecs or a distance Quantity)
+
+    Returns:
+    ========
+    - Times of RV observations, primary and secondary rv measurements,
+      times of imaging observations, rho/theta measurements.
+    """
+    orbit = Orbit.OrbitCalculator(P=star['Period'], M0=star['M0'], a=star['a'], e=star['e'],
+                                  big_omega=star['big_omega'], little_omega=star['little_omega'],
+                                  i=star['i'], q=star['q'], primary_mass=star['M_prim'])
+    print('K1 = {}\nK2 = {}'.format(orbit.K1, orbit.K2))
+    rv_times = np.random.uniform(0, star['Period'], size=N_rv)
+    image_times = np.random.uniform(0, star['Period'], size=N_imag)
+    rv_primary_measurements = orbit.get_rv(rv_times, component='primary')
+    rv_secondary_measurements = -rv_primary_measurements * orbit.K2 / orbit.K1
+    rho_measurements, theta_measurements = orbit.get_imaging_observables(image_times, distance=distance)
+
+    # Add errors where requested
+    if rv1_err is not None:
+        rv_primary_measurements += np.random.normal(loc=0, scale=rv1_err, size=len(rv_times))
+    if rv2_err is not None:
+        rv_secondary_measurements += np.random.normal(loc=0, scale=rv2_err, size=len(rv_times))
+    if pos_err is not None:
+        x = rho_measurements * np.cos(theta_measurements) + np.random.normal(loc=0, scale=pos_err,
+                                                                             size=len(image_times))
+        y = rho_measurements * np.sin(theta_measurements) + np.random.normal(loc=0, scale=pos_err,
+                                                                             size=len(image_times))
+        rho_measurements = np.sqrt(x ** 2 + y ** 2)
+        theta_measurements = np.arctan2(y, x)
+
+    return rv_times, rv_primary_measurements, rv_secondary_measurements, image_times, rho_measurements, theta_measurements, orbit.K1, orbit.K2
