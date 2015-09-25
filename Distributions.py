@@ -2,8 +2,15 @@ import logging
 
 import numpy as np
 from scipy.optimize import minimize
+from scipy.stats import truncnorm, gaussian_kde
+from scipy.integrate import quad
 
 import Fitters
+import Mamajek_Table
+
+MT = Mamajek_Table.MamajekTable()
+teff2mass = MT.get_interpolator('Teff', 'Msun')
+mass2teff = MT.get_interpolator('Msun', 'Teff')
 
 
 class DistributionFitter(Fitters.Bayesian_LS):
@@ -164,3 +171,141 @@ class DistributionFitter(Fitters.Bayesian_LS):
         self.guess_pars = out.x
         return out.x
 
+
+class OrbitPrior(object):
+    """ Object to compute the prior on my parameters, including the empirical mass-ratio distribution prior
+        from the companion temperature.
+        TODO: This should be able to take 2d arrays for M1_vals and T2_vals, and then forego the random sampling
+              (i.e. give it samples from the primary star mass and companion temperature using whatever distributions
+              I want).
+        TODO: Allow user to give custom function for teff2mass (using evolutionary tracks or something)
+    """
+
+    def __init__(self, M1_vals, T2_vals, N_samp=10000, gamma=0.4):
+        """Initialize the orbit prior object
+
+        Parameters:
+        ===========
+        - M1_vals:     numpy array, or float
+                       The primary star masses
+
+        - T2_vals:     numpy array of same shape as M1_vals, or float
+                       The companion star temperatures
+
+        - N_samp:      The number of random samples to take for computing the mass-ratio distribution samples
+
+        - gamma:       The mass-ratio distribution power-law exponent
+
+        Returns:
+        =========
+        None
+        """
+        M1_vals = np.atleast_1d(M1_vals)
+        T2_vals = np.atleast_1d(T2_vals)
+
+        # Estimate the mass-ratio prior
+        M1_std = np.maximum(0.5, 0.2 * M1_vals)
+        a, b = (1.5 - M1_vals) / M1_std, np.ones_like(M1_vals) * np.inf
+        M1_samples = np.array(
+            [truncnorm.rvs(a=a[i], b=b[i], loc=M1_vals[i], scale=M1_std[i], size=N_samp) for i in range(M1_vals.size)])
+        T2_samples = np.array([np.random.normal(loc=T2_vals[i], scale=200, size=N_samp) for i in range(T2_vals.size)])
+        M2_samples = teff2mass(T2_samples)
+        q_samples = M2_samples / M1_samples
+
+        self.empirical_q_prior = [gaussian_kde(q_samples[i, :]) for i in range(q_samples.shape[0])]
+        self.gamma = gamma
+
+    def _evaluate_empirical_q_prior(self, q):
+        q = np.atleast_1d(q)
+        assert q.shape[0] == len(self.empirical_q_prior)
+        return np.array([self.empirical_q_prior[i](q[i]) for i in range(q.shape[0])])
+
+    def evaluate(self, q, a, e):
+        empirical_prior = self._evaluate_empirical_q_prior(q)
+        return (1 - self.gamma) * q ** (-self.gamma) * empirical_prior / (120 * a * e * np.log(10) ** 2)
+
+    def __call__(self, q, a, e):
+        return self.evaluate(q, a, e)
+
+
+class CensoredCompleteness(object):
+    """ A class for calculating the completeness function that varies based on the star
+        In this case, it assumes each star has a completeness function of shape
+    """
+
+    def __init__(self, alpha_vals, beta_vals):
+        """
+        A helper function for calculating the completeness function and corresponding integral.
+        The completeness is defined as:
+
+        .. math::
+            Q(q|\alpha, \beta) = \frac{1}{1+e^{-\alpha (q-\beta)}}
+
+        Parameters:
+        ============
+         - alpha_vals:  An iterable of length N
+                        Holds all the values for alpha
+
+         - beta_vals:   An iterable of length N
+                        Holds all the values for beta
+        """
+        self.alpha_vals = np.atleast_1d(alpha_vals)
+        self.beta_vals = np.atleast_1d(beta_vals)
+        assert len(alpha_vals) == len(beta_vals), 'alpha_vals and beta_vals must be the same length!'
+
+        import ctypes
+        import os
+
+        lib = ctypes.CDLL('{}/School/Research/BinaryInference/integrandlib.so'.format(os.environ['HOME']))
+        self.c_integrand = lib.q_integrand_logisticQ  # Assign specific function to name c_integrand (for simplicity)
+        self.c_integrand.restype = ctypes.c_double
+        self.c_integrand.argtypes = (ctypes.c_int, ctypes.c_double)
+
+
+    @classmethod
+    def sigmoid(cls, q, alpha, beta):
+        return 1.0 / (1.0 + np.exp(-alpha * (q - beta)))
+
+    def integral(self, gamma, mu, sigma, eta):
+        """
+        Returns the integral normalization factor in Equation 11
+
+        Parameters:
+        ===========
+         - gamma:    float
+                     The mass-ratio power law exponent
+         - mu:       float
+                     The semimajor-axis log-normal mean
+         - sigma:    float
+                     The semimajor-axis log-normal width
+         - eta:      float
+                     The eccentricity power law exponent
+
+        Returns:
+        =========
+         float - the value of the integral for the input set of parameters
+        """
+        return np.sum([quad(self.c_integrand, 0, 1, args=(gamma, alpha, beta))[0] for alpha, beta in
+                       zip(self.alpha_vals, self.beta_vals)])
+
+
+    def __call__(self, q, a, e):
+        """
+        Gives the average completeness over the whole sample
+
+        Parameters:
+        ===========
+         - q:    float, or numpy.ndarray
+                 The mass-ratio
+
+         - a:    float, or numpy.ndarray
+                 The semimajor-axis (in AU)
+
+         - e:    float, or numpy.ndarray
+                 The eccentricity
+
+        Returns:
+        =========
+         float, or numpy.ndarray of the same shape as the inputs, containing the completeness
+        """
+        return np.sum([self.sigmoid(q, alpha, beta) for alpha, beta in zip(self.alpha_vals, self.beta_vals)])
