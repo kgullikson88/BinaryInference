@@ -260,8 +260,11 @@ class CensoredCompleteness(object):
         self.c_integrand = lib.q_integrand_logisticQ  # Assign specific function to name c_integrand (for simplicity)
         self.c_integrand.restype = ctypes.c_double
         self.c_integrand.argtypes = (ctypes.c_int, ctypes.c_double)
-        self.sigmoid = lambda q, alpha, beta: 1.0 / (1.0 + np.exp(-alpha * (q - beta)))
 
+
+    @classmethod
+    def sigmoid(cls, q, alpha, beta):
+        return 1.0 / (1.0 + np.exp(-alpha * (q - beta)))
 
     def integral(self, gamma, mu, sigma, eta):
         """
