@@ -222,10 +222,14 @@ class OrbitPrior(object):
 
     def evaluate(self, q, a, e):
         empirical_prior = self._evaluate_empirical_q_prior(q)
-        return (1 - self.gamma) * q ** (-self.gamma) * empirical_prior / (120 * a * e * np.log(10) ** 2)
+        return (1 - self.gamma) * q ** (-self.gamma) * empirical_prior / (200 * a * e * np.log(10) ** 2)
 
-    def __call__(self, q, a, e):
-        return self.evaluate(q, a, e)
+    def log_evaluate(self, lnq, lna, lne):
+        empirical_prior = np.log(self._evaluate_empirical_q_prior(np.exp(lnq)))
+        return empirical_prior + np.log(1-self.gamma) - self.gamma*lnq - np.log(200*np.log(10)**2) - lna - lne 
+
+    def __call__(self, lnq, lna, lne):
+        return self.log_evaluate(lnq, lna, lne)
 
 
 class CensoredCompleteness(object):
