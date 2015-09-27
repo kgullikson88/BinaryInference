@@ -184,10 +184,12 @@ def read_orbit_samples(hdf5_file, group_name, sample_parameters=None, censor=Fal
 
     # Put all the relevant samples in a numpy array, censoring to "not detect" anything with q < 0.1.
     with h5py.File(hdf5_file, 'r') as f:
+        n_datasets = len(f[group_name])
+        maxlen = np.max([ds.shape[0] for _, ds in f[group_name].iteritems()])
+        detected = np.zeros(n_datasets, dtype=np.bool)
+
         if censor:
             # Loop through to determine which companions are detected
-            maxlen = 0
-            detected = np.zeros(len(f[group_name]))
             for ds_name, dataset in f[group_name].iteritems():
                 idx = int(ds_name[2:])
                 alpha = sample_parameters.ix[idx]['alpha']
@@ -196,14 +198,7 @@ def read_orbit_samples(hdf5_file, group_name, sample_parameters=None, censor=Fal
                 r = np.random.uniform()
                 if r < Q:
                     # Detected!
-                    detected[idx] = 1
-                    if dataset.shape[0] > maxlen:
-                        maxlen = dataset.shape[0]
-            n_datasets = detected.sum()
-        else:
-            n_datasets = len(f[group_name])
-            maxlen = np.max([ds.shape[0] for _, ds in f[group_name].iteritems()])
-            detected = np.ones(n_datasets, dtype=np.bool)
+                    detected[idx] = True
 
         # Make a big numpy array filled with NaNs of max shape
         data = np.ones((n_datasets, maxlen, 3)) * np.nan
@@ -214,21 +209,18 @@ def read_orbit_samples(hdf5_file, group_name, sample_parameters=None, censor=Fal
 
         # Fill the numpy array where possible
         i = 0
-        for ds_name, dataset in f[group_name].iteritems():
-            idx = int(ds_name[2:])
+        for i, (ds_name, dataset) in enumerate(f[group_name].iteritems()):
+            M_prim[i] = dataset.attrs['M_prim']
+            M_sec[i] = M1 * dataset.attrs['q']
+            a[i] = dataset.attrs['a']
+            e[i] = dataset.attrs['e']
+
             if detected[idx]:
                 length = dataset.shape[0]
                 df = pd.DataFrame(data=dataset.value, columns=dataset.attrs['df_columns'])
-                M1 = dataset.attrs['M_prim']
-                df['a'] = 10 ** (df['Period'] * (2. / 3.)) * (M1 * (1 + df['q'])) ** (1. / 3.)
-                df['e'] = 10 ** (df['e'])
+                df['a'] = 10**df['$\log{a}$']
+                df['e'] = 10**(df['$\log{e}'])
                 values = df[['q', 'a', 'e']]
-
-                data[i, :length, :] = values
-                M_prim[i] = M1
-                M_sec[i] = M1 * dataset.attrs['q']
-                a[i] = dataset.attrs['a']
-                e[i] = dataset.attrs['e']
-                i += 1
+            
 
     return data, M_prim, M_sec, a, e
