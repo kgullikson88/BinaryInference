@@ -56,8 +56,6 @@ class DistributionFitter(Fitters.Bayesian_LS):
         self.a = mcmc_samples[:, :, 1]
         self.e = mcmc_samples[:, :, 2]
         self.malm_pars = np.atleast_1d(malm_pars)
-        #self.prior = prior_fcn(self.q, self.a, self.e) if prior_fcn is not None else 1.0
-        #self.completeness = completeness_fcn(self.q, self.a, self.e) if completeness_fcn is not None else 1.0
         
         # Pre-compute logs
         self.lnq = np.log(self.q)
@@ -68,6 +66,10 @@ class DistributionFitter(Fitters.Bayesian_LS):
         self.lnp = prior_fcn(self.lnq, self.lna, self.lne) if prior_fcn is not None else 0.0
         self.completeness = completeness_fcn(self.q, self.a, self.e) if completeness_fcn is not None else 1.0
         self.ln_completeness = np.log(self.completeness)
+
+        # Compute the number of MCMC samples for each star's orbit fit
+        self.N_k = self.q.shape[1] - np.isnan(self.q).sum(axis=1)
+        self.good_idx = self.N_k > 0
 
         # Register the integral function
         if integral_fcn is not None:
@@ -116,8 +118,8 @@ class DistributionFitter(Fitters.Bayesian_LS):
         ln_gamma = ln_gamma_q + ln_gamma_e + ln_gamma_a
         #ln_gamma = ln_gamma_q
         ln_summand = ln_gamma + self.ln_completeness - self.lnp
-        N_k = self.q.shape[1] - np.isnan(self.q).sum(axis=1)
-        return np.sum(np.log(np.nansum(np.exp(ln_summand), axis=1)) - np.log(N_k)) - self.integral_fcn(gamma, mu, sigma, eta)
+        #N_k = self.q.shape[1] - np.isnan(self.q).sum(axis=1)
+        return np.sum(np.log(np.nansum(np.exp(ln_summand[self.good_idx]), axis=1)) - np.log(self.N_k[self.good_idx])) - self.integral_fcn(gamma, mu, sigma, eta)
         #return np.sum(np.log(np.nansum(ln_summand, axis=1)) - np.log(N_k)) - self.integral_fcn(gamma, mu, sigma, eta)  # GIVES NANS ALWAYS
 
 
@@ -305,4 +307,7 @@ class CensoredCompleteness(object):
         =========
          float, or numpy.ndarray of the same shape as the inputs, containing the completeness
         """
-        return np.sum([self.sigmoid(q, alpha, beta) for alpha, beta in zip(self.alpha_vals, self.beta_vals)])
+        completeness = np.zeros_like(q)
+        for alpha, beta in zip(self.alpha_vals, self.beta_vals):
+            completeness += self.sigmoid(q, alpha, beta)
+        return completeness

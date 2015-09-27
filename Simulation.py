@@ -27,7 +27,7 @@ def make_comparison_plot(true_vals, fitted_vals, low=0, high=1, axes=None):
     ks_stat, p_value = ks_2samp(true_vals, fitted_vals)
     print('KS-test p-value = {:.3g}'.format(p_value))
 
-    return fig, axes
+    return axes
 
 
 def comparison_plots(mcmc_samples, true_q, true_a, true_e):
@@ -42,6 +42,7 @@ def comparison_plots(mcmc_samples, true_q, true_a, true_e):
     fig, axes = plt.subplots(nrows=3, ncols=2, figsize=(15, 21))
 
     # Mass-ratio
+    print('\nMass-ratio comparison: ')
     axes[0] = make_comparison_plot(true_q, q, axes=axes[0])
     axes[0][0].set_xlabel('True Mass-Ratio')
     axes[0][0].set_ylabel('Fitted Mass-Ratio')
@@ -49,6 +50,7 @@ def comparison_plots(mcmc_samples, true_q, true_a, true_e):
     axes[0][1].set_ylabel('Cumulative Frequency')
 
     # Mass-ratio
+    print('\nSemi-major axis comparison: ')
     axes[1] = make_comparison_plot(np.log10(true_a), loga, axes=axes[1], low=-2, high=8)
     axes[1][0].set_xlabel('True semimajor axis (log)')
     axes[1][0].set_ylabel('Fitted semimajor axis (log)')
@@ -56,6 +58,7 @@ def comparison_plots(mcmc_samples, true_q, true_a, true_e):
     axes[1][1].set_ylabel('Cumulative Frequency')
 
     # Mass-ratio
+    print('\nEccentricity comparison: ')
     axes[2] = make_comparison_plot(np.log10(true_e), loge, axes=axes[2], low=-20, high=0)
     axes[2][0].set_xlabel('True log-eccentricity')
     axes[2][0].set_ylabel('Fitted log-eccentricity')
@@ -190,15 +193,14 @@ def read_orbit_samples(hdf5_file, group_name, sample_parameters=None, censor=Fal
 
         if censor:
             # Loop through to determine which companions are detected
-            for ds_name, dataset in f[group_name].iteritems():
-                idx = int(ds_name[2:])
-                alpha = sample_parameters.ix[idx]['alpha']
-                beta = sample_parameters.ix[idx]['beta']
+            for i, (ds_name, dataset) in enumerate(f[group_name].iteritems()):
+                alpha = sample_parameters.ix[i]['alpha']
+                beta = sample_parameters.ix[i]['beta']
                 Q = CensoredCompleteness.sigmoid(dataset.attrs['q'], alpha, beta)
                 r = np.random.uniform()
                 if r < Q:
                     # Detected!
-                    detected[idx] = True
+                    detected[i] = True
 
         # Make a big numpy array filled with NaNs of max shape
         data = np.ones((n_datasets, maxlen, 3)) * np.nan
@@ -208,19 +210,19 @@ def read_orbit_samples(hdf5_file, group_name, sample_parameters=None, censor=Fal
         e = np.ones(n_datasets) * np.nan
 
         # Fill the numpy array where possible
-        i = 0
         for i, (ds_name, dataset) in enumerate(f[group_name].iteritems()):
             M_prim[i] = dataset.attrs['M_prim']
-            M_sec[i] = M1 * dataset.attrs['q']
+            M_sec[i] = dataset.attrs['M_prim'] * dataset.attrs['q']
             a[i] = dataset.attrs['a']
             e[i] = dataset.attrs['e']
 
-            if detected[idx]:
+            if detected[i]:
                 length = dataset.shape[0]
                 df = pd.DataFrame(data=dataset.value, columns=dataset.attrs['df_columns'])
                 df['a'] = 10**df['$\log{a}$']
                 df['e'] = 10**(df['$\log{e}'])
-                values = df[['q', 'a', 'e']]
+
+                data[i, :length, :] = df[['q', 'a', 'e']]
             
 
     return data, M_prim, M_sec, a, e
