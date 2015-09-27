@@ -30,8 +30,8 @@ class DistributionFitter(Fitters.Bayesian_LS):
                       >>> a = mcmc_samples[:, :, 1]
                       >>> e = mcmc_samples[:, :, 2]
 
-    - prior_fcn:      A callable that takes the arguments q, a, e
-                      Returns the prior probability function for the semimajor axis, eccentricity, and mass-ratio.
+    - prior_fcn:      A callable that takes the arguments lnq, lna, lne
+                      Returns the log-prior probability function for the mass-ratio, semimajor axis, and eccentricity.
                       This should encode the (normalized) priors you used to get the MCMC samples,
                       and is different from the prior on the distribution parameters (gamma, mu, sigma, and eta).
 
@@ -56,14 +56,17 @@ class DistributionFitter(Fitters.Bayesian_LS):
         self.a = mcmc_samples[:, :, 1]
         self.e = mcmc_samples[:, :, 2]
         self.malm_pars = np.atleast_1d(malm_pars)
-        self.prior = prior_fcn(self.q, self.a, self.e) if prior_fcn is not None else 1.0
-        self.completeness = completeness_fcn(self.q, self.a, self.e) if completeness_fcn is not None else 1.0
+        #self.prior = prior_fcn(self.q, self.a, self.e) if prior_fcn is not None else 1.0
+        #self.completeness = completeness_fcn(self.q, self.a, self.e) if completeness_fcn is not None else 1.0
         
         # Pre-compute logs
         self.lnq = np.log(self.q)
         self.lna = np.log(self.a)
         self.lne = np.log(self.e)
-        self.lnp = np.log(self.prior)
+
+        # Compute the prior and completeness (neither depend on the parameters)
+        self.lnp = prior_fcn(self.lnq, self.lna, self.lne) if prior_fcn is not None else 0.0
+        self.completeness = completeness_fcn(self.q, self.a, self.e) if completeness_fcn is not None else 1.0
         self.ln_completeness = np.log(self.completeness)
 
         # Register the integral function
@@ -98,16 +101,6 @@ class DistributionFitter(Fitters.Bayesian_LS):
                                                      lambda x, y: -3, lambda x, y: 20,
                                                      args=(gamma, mu, sigma, eta))
 
-
-    def _lnlike_normal(self, pars):
-        gamma, mu, sigma, eta = pars
-        Gamma_q = (1 - gamma) * self.q ** (-gamma)
-        Gamma_e = (1 - eta) * self.e ** (-eta)
-        Gamma_a = 1. / (sigma * np.sqrt(2 * np.pi)) * np.exp(-0.5 * (np.log(self.a) - mu) ** 2 / sigma ** 2)
-
-        #Gamma = Gamma_q * Gamma_e * Gamma_a * self.completeness / self.prior
-        Gamma = Gamma_q * self.completeness / self.prior
-        return np.sum(np.log(np.nanmean(Gamma, axis=1))) - self.integral_fcn(gamma, mu, sigma, eta)
 
 
     def _lnlike_stable(self, pars):
@@ -295,7 +288,7 @@ class CensoredCompleteness(object):
 
     def __call__(self, q, a, e):
         """
-        Gives the average completeness over the whole sample
+        Gives the overall completeness over the whole sample
 
         Parameters:
         ===========
