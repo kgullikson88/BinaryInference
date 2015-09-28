@@ -116,7 +116,7 @@ class DistributionFitter(Fitters.Bayesian_LS):
         ln_gamma_q += np.log(malm_func(self.q)) - np.log(denominator)  # This could probably be made more efficient...
 
         ln_gamma = ln_gamma_q + ln_gamma_e + ln_gamma_a
-        #ln_gamma = ln_gamma_q
+        #ln_gamma = ln_gamma_q + ln_gamma_a
         ln_summand = ln_gamma + self.ln_completeness - self.lnp
         #N_k = self.q.shape[1] - np.isnan(self.q).sum(axis=1)
         return np.sum(np.log(np.nansum(np.exp(ln_summand[self.good_idx]), axis=1)) - np.log(self.N_k[self.good_idx])) - self.integral_fcn(gamma, mu, sigma, eta)
@@ -176,7 +176,7 @@ class OrbitPrior(object):
         TODO: Allow user to give custom function for teff2mass (using evolutionary tracks or something)
     """
 
-    def __init__(self, M1_vals, T2_vals, N_samp=10000, gamma=0.4):
+    def __init__(self, M1_vals, T2_vals, N_samp=10000, gamma=0.4, cache=True):
         """Initialize the orbit prior object
 
         Parameters:
@@ -190,6 +190,10 @@ class OrbitPrior(object):
         - N_samp:      The number of random samples to take for computing the mass-ratio distribution samples
 
         - gamma:       The mass-ratio distribution power-law exponent
+
+        - cache:       boolean
+                       Should we cache the empirical prior to make lookups faster?
+                       If the input q changes, this will give THE WRONG ANSWER!
 
         Returns:
         =========
@@ -209,11 +213,18 @@ class OrbitPrior(object):
 
         self.empirical_q_prior = [gaussian_kde(q_samples[i, :]) for i in range(q_samples.shape[0])]
         self.gamma = gamma
+        self._cache_empirical = cache
+        self._cache = None
 
     def _evaluate_empirical_q_prior(self, q):
+        if self._cache_empirical and self._cache is not None:
+            return self._cache
         q = np.atleast_1d(q)
         assert q.shape[0] == len(self.empirical_q_prior)
-        return np.array([self.empirical_q_prior[i](q[i]) for i in range(q.shape[0])])
+        emp_prior = np.array([self.empirical_q_prior[i](q[i]) for i in range(q.shape[0])])
+        if self._cache_empirical:
+            self._cache = emp_prior
+        return emp_prior
 
     def evaluate(self, q, a, e):
         empirical_prior = self._evaluate_empirical_q_prior(q)
