@@ -176,7 +176,7 @@ class OrbitPrior(object):
         TODO: Allow user to give custom function for teff2mass (using evolutionary tracks or something)
     """
 
-    def __init__(self, M1_vals, T2_vals, N_samp=10000, gamma=0.4, cache=True):
+    def __init__(self, M1_vals, T2_vals, N_samp=10000, gamma=0.4, cache=False):
         """Initialize the orbit prior object
 
         Parameters:
