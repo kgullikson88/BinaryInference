@@ -2,3 +2,13 @@
 *.pyc
 .idea
 *.so
+*.h5
+Psi1Dra_Referee.ipynb
+distribution_fitter_mn
+fitting_test
+mn_unconstrained_qprior_production
+mn_unconstrained_qprior_test
+mn_unconstrained_test
+unconstrained_mn_malmquist
+unconstrained_mn_qprior
+unconstrained_mn_qprior2
