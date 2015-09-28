@@ -432,7 +432,7 @@ class SpectroscopicOrbitFitter(Fitters.Bayesian_LS):
         yerr = dict(rv1=rv1_err, rv2=rv2_err)
 
         # List the parameter names
-        parnames = ['$\log{a}$', '$M_0$', '$\log{e}', '$\omega$', '$\log{K_1}$', 'q', 'dv1']
+        parnames = ['$\log{a}$', '$M_0$', '$\log{e}$', '$\omega$', '$\log{K_1}$', 'q', 'dv1']
 
         super(SpectroscopicOrbitFitter, self).__init__(x, y, yerr, param_names=parnames)
         self.gamma = gamma
