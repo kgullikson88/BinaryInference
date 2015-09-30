@@ -224,10 +224,14 @@ def read_orbit_samples(hdf5_file, group_name, sample_parameters=None, censor=Fal
                 df = pd.DataFrame(data=dataset.value, columns=dataset.attrs['df_columns'])
                 try:
                     df['a'] = 10**df['$\log{a}$']
-                    df['e'] = 10**(df['$\log{e}'])
+                    df['e'] = 10 ** (df['$\log{e}$'])
                 except KeyError:
-                    df['a'] = 10**(1./3.*(2*df['Period']+np.log10(M_prim[i]) + np.log10(1+df['q'])))
-                    df['e'] = 10**df['e']
+                    try:
+                        df['a'] = 10 ** df['$\log{a}$']
+                        df['e'] = 10 ** (df['$\log{e}'])
+                    except KeyError:
+                        df['a'] = 10 ** (1. / 3. * (2 * df['Period'] + np.log10(M_prim[i]) + np.log10(1 + df['q'])))
+                        df['e'] = 10 ** df['e']
 
                 data[i, :length, :] = df[['q', 'a', 'e']]
             
