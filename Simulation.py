@@ -196,13 +196,14 @@ def read_orbit_samples(hdf5_file, group_name, sample_parameters=None, censor=Fal
         if censor:
             # Loop through to determine which companions are detected
             for i, (ds_name, dataset) in enumerate(f[group_name].iteritems()):
-                alpha = sample_parameters.ix[i]['alpha']
-                beta = sample_parameters.ix[i]['beta']
-                Q = CensoredCompleteness.sigmoid(dataset.attrs['q'], alpha, beta)
-                r = np.random.uniform()
-                if r < Q:
-                    # Detected!
-                    detected[i] = True
+                if i in sample_parameters.index:
+                    alpha = sample_parameters.ix[i]['alpha']
+                    beta = sample_parameters.ix[i]['beta']
+                    Q = CensoredCompleteness.sigmoid(dataset.attrs['q'], alpha, beta)
+                    r = np.random.uniform()
+                    if r < Q:
+                        # Detected!
+                        detected[i] = True
 
         # Make a big numpy array filled with NaNs of max shape
         data = np.ones((n_datasets, maxlen, 3)) * np.nan
@@ -246,13 +247,13 @@ def fit_distribution_parameters(hdf5_file, group_name, sample_parameters=None, c
     - group_name:        string
                          The group name in the HDF5 file 'hdf5_file', where the samples can be found
 
-    sample_parameters:   pandas DataFrame
+    - sample_parameters: pandas DataFrame
                          This should have the same length as the sample parameters given in the corresponding call
                          to fit_orbits_multinest, and have the columns 'alpha' and 'beta'. The meaning of alpha
                          and beta are described in Distributions.OrbitPrior, but describe which mass-ratios are
                          detectable. This MUST be given if censor=True
 
-    censor:              boolean
+    - censor:            boolean
                          Should we censor the dataset? (i.e. decide whether a given companion was detected based
                          one its mass-ratio?)
 
@@ -287,4 +288,12 @@ def fit_distribution_parameters(hdf5_file, group_name, sample_parameters=None, c
     return fitter
 
 
+if __name__ == '__main__':
+    tmp = dict(alpha=np.random.normal(loc=30, scale=5, size=400),
+               beta=np.random.normal(loc=0.1, scale=0.03, size=400))
+    sample_parameters = pd.DataFrame(data=tmp)
+
+    fitter = fit_distribution_parameters('Simulation_Data.h5', 'malmquist_pool',
+                                         sample_parameters=sample_parameters, censor=True,
+                                         backend='multinest', basename='dist_fitting/malmquist1-', overwrite=False)
 
