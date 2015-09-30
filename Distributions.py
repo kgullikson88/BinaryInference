@@ -143,7 +143,7 @@ class DistributionFitter(Fitters.Bayesian_LS):
         return -np.inf
 
     def mnest_prior(self, cube, ndim, nparams):
-        cube[1] = cube[1] * 10  # Uniform in mean (log) separation
+        cube[1] = cube[1] * 20 + 1e-3  # Uniform in mean (log) separation
         cube[2] = cube[2] * 10 + 1e-3  # Uniform in (log) separation spread
         # cube[0] and cube[3] encode the gamma and eta parameters, which are uniform on [0,1]
         return
