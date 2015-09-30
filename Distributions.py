@@ -108,8 +108,8 @@ class DistributionFitter(Fitters.Bayesian_LS):
     def _lnlike_stable(self, pars):
         gamma, mu, sigma, eta = pars
         ln_gamma_q = np.log(1 - gamma) - gamma * self.lnq
-        ln_gamma_e = np.log(1-eta) - eta*self.lne# - np.log(1.0 - 10**(-20*(1-eta)))
-        ln_gamma_a = -0.5*(self.lna-mu)**2/sigma**2 - 0.5*np.log(2*np.pi*sigma**2)
+        ln_gamma_e = np.log(1-eta) - eta*self.lne
+        ln_gamma_a = -0.5*(self.lna-mu)**2/sigma**2 - 0.5*np.log(2*np.pi*sigma**2) - self.lna
 
         # Adjust for malmquist bias
         malm_func, denominator = self._malmquist(gamma)
