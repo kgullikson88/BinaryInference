@@ -9,6 +9,8 @@ import numpy as np
 import pandas as pd
 
 import ForwardModeling
+
+import Distributions
 from Distributions import mass2teff, OrbitPrior, CensoredCompleteness
 import Orbit
 
@@ -230,3 +232,59 @@ def read_orbit_samples(hdf5_file, group_name, sample_parameters=None, censor=Fal
             
 
     return data, M_prim, M_sec, a, e
+
+
+def fit_distribution_parameters(hdf5_file, group_name, sample_parameters=None, censor=False, **fit_kws):
+    """
+    Fit distribution parameters using pre-computed MCMC orbit samples
+
+    Parameters:
+    ===========
+    - hdf5_file:         string:
+                         The filename of an HDF5 file where we can find the MCMC samples.
+
+    - group_name:        string
+                         The group name in the HDF5 file 'hdf5_file', where the samples can be found
+
+    sample_parameters:   pandas DataFrame
+                         This should have the same length as the sample parameters given in the corresponding call
+                         to fit_orbits_multinest, and have the columns 'alpha' and 'beta'. The meaning of alpha
+                         and beta are described in Distributions.OrbitPrior, but describe which mass-ratios are
+                         detectable. This MUST be given if censor=True
+
+    censor:              boolean
+                         Should we censor the dataset? (i.e. decide whether a given companion was detected based
+                         one its mass-ratio?)
+
+    Returns:
+    =========
+    Distributions.DistributionFitter instance
+    """
+
+    # Read in the samples
+    logging.info('Reading samples')
+    samples, M_prim, M_sec, a, e = read_orbit_samples(hdf5_file, group_name,
+                                                      censor=censor, sample_parameters=sample_parameters)
+
+    # Set up the prior, etc functions and the fitter
+    logging.info('Setting up fitter')
+    T_sec = Distributions.mass2teff(M_sec)
+    prior = Distributions.OrbitPrior(M_prim, T_sec, gamma=0.0, cache=True)
+    Completeness = Distributions.CensoredCompleteness(sample_parameters.alpha, sample_parameters.beta)
+    completeness = Completeness
+    integral = Completeness.integral
+
+    fit_coeffs = np.array([0.02531589, -0.0671797, 0.06498872, -0.01197892, 0.0016379, 0.00601911])
+    fitter = Distributions.DistributionFitter(samples,
+                                              prior_fcn=prior,
+                                              completeness_fcn=completeness,
+                                              integral_fcn=integral,
+                                              malm_pars=fit_coeffs[::-1])
+
+    logging.info('Fitting...')
+    fitter.fit(**fit_kws)
+
+    return fitter
+
+
+
