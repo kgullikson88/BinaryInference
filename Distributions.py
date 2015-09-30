@@ -50,7 +50,7 @@ class DistributionFitter(Fitters.Bayesian_LS):
     """
 
     def __init__(self, mcmc_samples, prior_fcn=None, completeness_fcn=None, integral_fcn=None, malm_pars=(1.0,)):
-        self.param_names = ['$\gamma$', '$\mu$', '$\sigma$', '$\eta$']
+        self.param_names = [r'$f_{\rm bin}$', '$\gamma$', '$\mu$', '$\sigma$', '$\eta$']
         self.n_params = len(self.param_names)
         self.q = mcmc_samples[:, :, 0]
         self.a = mcmc_samples[:, :, 1]
@@ -106,7 +106,7 @@ class DistributionFitter(Fitters.Bayesian_LS):
 
 
     def _lnlike_stable(self, pars):
-        gamma, mu, sigma, eta = pars
+        f_bin, gamma, mu, sigma, eta = pars
         ln_gamma_q = np.log(1 - gamma) - gamma * self.lnq
         ln_gamma_e = np.log(1-eta) - eta*self.lne
         ln_gamma_a = -0.5*(self.lna-mu)**2/sigma**2 - 0.5*np.log(2*np.pi*sigma**2) - self.lna
@@ -115,11 +115,12 @@ class DistributionFitter(Fitters.Bayesian_LS):
         malm_func, denominator = self._malmquist(gamma)
         ln_gamma_q += np.log(malm_func(self.q)) - np.log(denominator)  # This could probably be made more efficient...
 
-        ln_gamma = ln_gamma_q + ln_gamma_e + ln_gamma_a
+        ln_gamma = ln_gamma_q + ln_gamma_e + ln_gamma_a + np.log(f_bin)
         #ln_gamma = ln_gamma_q + ln_gamma_a
         ln_summand = ln_gamma + self.ln_completeness - self.lnp
         #N_k = self.q.shape[1] - np.isnan(self.q).sum(axis=1)
-        return np.sum(np.log(np.nansum(np.exp(ln_summand[self.good_idx]), axis=1)) - np.log(self.N_k[self.good_idx])) - self.integral_fcn(gamma, mu, sigma, eta)
+        return np.sum(np.log(np.nansum(np.exp(ln_summand[self.good_idx]), axis=1)) - np.log(self.N_k[self.good_idx])) - \
+               self.integral_fcn(f_bin, gamma, mu, sigma, eta)
         #return np.sum(np.log(np.nansum(ln_summand, axis=1)) - np.log(N_k)) - self.integral_fcn(gamma, mu, sigma, eta)  # GIVES NANS ALWAYS
 
 
@@ -276,18 +277,24 @@ class CensoredCompleteness(object):
     def sigmoid(cls, q, alpha, beta):
         return 1.0 / (1.0 + np.exp(-alpha * (q - beta)))
 
-    def integral(self, gamma, mu, sigma, eta):
+    def integral(self, f_bin, gamma, mu, sigma, eta):
         """
         Returns the integral normalization factor in Equation 11
 
         Parameters:
         ===========
+         - f_bin:    float
+                     The overall binary fraction
+
          - gamma:    float
                      The mass-ratio power law exponent
+
          - mu:       float
                      The semimajor-axis log-normal mean
+
          - sigma:    float
                      The semimajor-axis log-normal width
+
          - eta:      float
                      The eccentricity power law exponent
 
@@ -295,7 +302,7 @@ class CensoredCompleteness(object):
         =========
          float - the value of the integral for the input set of parameters
         """
-        return np.sum([quad(self.c_integrand, 0, 1, args=(gamma, alpha, beta))[0] for alpha, beta in
+        return f_bin * np.sum([quad(self.c_integrand, 0, 1, args=(gamma, alpha, beta))[0] for alpha, beta in
                        zip(self.alpha_vals, self.beta_vals)])
 
 
