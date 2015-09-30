@@ -146,7 +146,7 @@ def fit_orbits_multinest(output_base, outfilename, sample_parameters, rv1_err=0.
     return
 
 
-def read_orbit_samples(hdf5_file, group_name, sample_parameters=None, censor=False):
+def read_orbit_samples(hdf5_file, group_name, sample_parameters=None, censor=False, f_bin=1.0):
     """
     Read in orbit MCMC samples computed by fit_orbits_multinest
 
@@ -167,6 +167,9 @@ def read_orbit_samples(hdf5_file, group_name, sample_parameters=None, censor=Fal
     censor:              boolean
                          Should we censor the dataset? (i.e. decide whether a given companion was detected based
                          one its mass-ratio?)
+
+    f_bin:               float in range [0,1]
+                         The true binary occurence rate. It will remove samples according to the rate.
 
     Returns:
     ========
@@ -216,7 +219,7 @@ def read_orbit_samples(hdf5_file, group_name, sample_parameters=None, censor=Fal
             a[i] = dataset.attrs['a']
             e[i] = dataset.attrs['e']
 
-            if detected[i]:
+            if detected[i] and np.random.uniform() < f_bin:
                 length = dataset.shape[0]
                 df = pd.DataFrame(data=dataset.value, columns=dataset.attrs['df_columns'])
                 try:
