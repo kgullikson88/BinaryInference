@@ -7,8 +7,12 @@ import h5py
 from scipy.stats import ks_2samp
 import numpy as np
 import pandas as pd
+import numpy as np
+import matplotlib.pyplot as plt
 
 import ForwardModeling
+
+import Distributions
 from Distributions import mass2teff, OrbitPrior, CensoredCompleteness
 import Orbit
 
@@ -194,13 +198,14 @@ def read_orbit_samples(hdf5_file, group_name, sample_parameters=None, censor=Fal
         if censor:
             # Loop through to determine which companions are detected
             for i, (ds_name, dataset) in enumerate(f[group_name].iteritems()):
-                alpha = sample_parameters.ix[i]['alpha']
-                beta = sample_parameters.ix[i]['beta']
-                Q = CensoredCompleteness.sigmoid(dataset.attrs['q'], alpha, beta)
-                r = np.random.uniform()
-                if r < Q:
-                    # Detected!
-                    detected[i] = True
+                if i in sample_parameters.index:
+                    alpha = sample_parameters.ix[i]['alpha']
+                    beta = sample_parameters.ix[i]['beta']
+                    Q = CensoredCompleteness.sigmoid(dataset.attrs['q'], alpha, beta)
+                    r = np.random.uniform()
+                    if r < Q:
+                        # Detected!
+                        detected[i] = True
 
         # Make a big numpy array filled with NaNs of max shape
         data = np.ones((n_datasets, maxlen, 3)) * np.nan
@@ -221,12 +226,91 @@ def read_orbit_samples(hdf5_file, group_name, sample_parameters=None, censor=Fal
                 df = pd.DataFrame(data=dataset.value, columns=dataset.attrs['df_columns'])
                 try:
                     df['a'] = 10**df['$\log{a}$']
-                    df['e'] = 10**(df['$\log{e}'])
+                    df['e'] = 10 ** (df['$\log{e}$'])
                 except KeyError:
-                    df['a'] = 10**(1./3.*(2*df['Period']+np.log10(M_prim[i]) + np.log10(1+df['q'])))
-                    df['e'] = 10**df['e']
+                    try:
+                        df['a'] = 10 ** df['$\log{a}$']
+                        df['e'] = 10 ** (df['$\log{e}'])
+                    except KeyError:
+                        df['a'] = 10 ** (1. / 3. * (2 * df['Period'] + np.log10(M_prim[i]) + np.log10(1 + df['q'])))
+                        df['e'] = 10 ** df['e']
 
                 data[i, :length, :] = df[['q', 'a', 'e']]
             
 
     return data, M_prim, M_sec, a, e
+
+
+def fit_distribution_parameters(hdf5_file, group_name, sample_parameters=None, censor=False, **fit_kws):
+    """
+    Fit distribution parameters using pre-computed MCMC orbit samples
+
+    Parameters:
+    ===========
+    - hdf5_file:         string:
+                         The filename of an HDF5 file where we can find the MCMC samples.
+
+    - group_name:        string
+                         The group name in the HDF5 file 'hdf5_file', where the samples can be found
+
+    - sample_parameters: pandas DataFrame
+                         This should have the same length as the sample parameters given in the corresponding call
+                         to fit_orbits_multinest, and have the columns 'alpha' and 'beta'. The meaning of alpha
+                         and beta are described in Distributions.OrbitPrior, but describe which mass-ratios are
+                         detectable. This MUST be given if censor=True
+
+    - censor:            boolean
+                         Should we censor the dataset? (i.e. decide whether a given companion was detected based
+                         one its mass-ratio?)
+
+    Returns:
+    =========
+    Distributions.DistributionFitter instance
+    """
+
+    # Read in the samples
+    logging.info('Reading samples')
+    samples, M_prim, M_sec, a, e = read_orbit_samples(hdf5_file, group_name,
+                                                      censor=censor, sample_parameters=sample_parameters)
+
+    # Set up the prior, etc functions and the fitter
+    logging.info('Setting up fitter')
+    T_sec = Distributions.mass2teff(M_sec)
+    prior = Distributions.OrbitPrior(M_prim, T_sec, gamma=0.0, cache=True)
+    Completeness = Distributions.CensoredCompleteness(sample_parameters.alpha, sample_parameters.beta)
+    completeness = Completeness
+    integral = Completeness.integral
+
+    fit_coeffs = np.array([0.02531589, -0.0671797, 0.06498872, -0.01197892, 0.0016379, 0.00601911])
+    fitter = Distributions.DistributionFitter(samples,
+                                              prior_fcn=prior,
+                                              completeness_fcn=completeness,
+                                              integral_fcn=integral,
+                                              malm_pars=fit_coeffs[::-1])
+
+    logging.info('Fitting...')
+    fitter.fit(**fit_kws)
+
+    return fitter
+
+
+if __name__ == '__main__':
+    logger = logging.getLogger()
+    logger.setLevel(logging.INFO)
+  
+    tmp = dict(alpha=np.random.normal(loc=30, scale=5, size=400),
+               beta=np.random.normal(loc=0.1, scale=0.03, size=400))
+    sample_parameters = pd.DataFrame(data=tmp)
+
+    par_ranges = [[0, 0.999], [1e-3, 10], [1e-3, 10], [0, 0.999] ]
+    fitter = fit_distribution_parameters('Simulation_Data.h5', 'malmquist_pool',
+                                         sample_parameters=sample_parameters, censor=True,
+                                         backend='emcee', nwalkers=100, n_burn=200, n_prod=300, 
+					 guess=False, initial_pars=par_ranges)
+
+    np.save('emcee_chain.npy', fitter.sampler.chain)
+    np.save('emcee_lnprob.npy', fitter.sampler.lnprobability)
+
+    fitter.triangle(truths=[0.4, np.log(200), np.log(10), 0.7])
+    plt.savefig('triangle_test.png')
+
