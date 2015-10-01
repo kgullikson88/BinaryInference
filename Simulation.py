@@ -7,6 +7,8 @@ import h5py
 from scipy.stats import ks_2samp
 import numpy as np
 import pandas as pd
+import numpy as np
+import matplotlib.pyplot as plt
 
 import ForwardModeling
 
@@ -297,7 +299,15 @@ if __name__ == '__main__':
                beta=np.random.normal(loc=0.1, scale=0.03, size=400))
     sample_parameters = pd.DataFrame(data=tmp)
 
+    par_ranges = [[0, 0.999], [1e-3, 10], [1e-3, 10], [0, 0.999] ]
     fitter = fit_distribution_parameters('Simulation_Data.h5', 'malmquist_pool',
                                          sample_parameters=sample_parameters, censor=True,
-                                         backend='multinest', basename='dist_fitting/malmquist1-', overwrite=False)
+                                         backend='emcee', nwalkers=100, n_burn=200, n_prod=300, 
+					 guess=False, initial_pars=par_ranges)
+
+    np.save('emcee_chain.npy', fitter.sampler.chain)
+    np.save('emcee_lnprob.npy', fitter.sampler.lnprobability)
+
+    fitter.triangle(truths=[0.4, np.log(200), np.log(10), 0.7])
+    plt.savefig('triangle_test.png')
 
