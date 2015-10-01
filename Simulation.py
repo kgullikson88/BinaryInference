@@ -295,6 +295,9 @@ def fit_distribution_parameters(hdf5_file, group_name, sample_parameters=None, c
 
 
 if __name__ == '__main__':
+    logger = logging.getLogger()
+    logger.setLevel(logging.INFO)
+  
     tmp = dict(alpha=np.random.normal(loc=30, scale=5, size=400),
                beta=np.random.normal(loc=0.1, scale=0.03, size=400))
     sample_parameters = pd.DataFrame(data=tmp)
