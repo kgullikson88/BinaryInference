@@ -289,9 +289,9 @@ def fit_distribution_parameters(hdf5_file, group_name, sample_parameters=None, c
                                               malm_pars=fit_coeffs[::-1])
 
     logging.info('Fitting...')
-    fitter.fit(**fit_kws)
+    #fitter.fit(**fit_kws)
 
-    return fitter
+    return fitter, prior, Completeness
 
 
 if __name__ == '__main__':
@@ -306,7 +306,7 @@ if __name__ == '__main__':
     fitter = fit_distribution_parameters('Simulation_Data.h5', 'malmquist_pool',
                                          sample_parameters=sample_parameters, censor=True,
                                          backend='emcee', nwalkers=100, n_burn=200, n_prod=300, 
-					 guess=False, initial_pars=par_ranges)
+                                         guess=False, initial_pars=par_ranges)
 
     np.save('emcee_chain.npy', fitter.sampler.chain)
     np.save('emcee_lnprob.npy', fitter.sampler.lnprobability)
