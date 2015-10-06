@@ -138,8 +138,8 @@ class DistributionFitter(Fitters.Bayesian_LS):
 
 
     def lnprior(self, pars):
-        gamma, mu, sigma, eta = pars
-        if gamma < 1 and mu > 0 and sigma > 0 and eta < 1:
+        f_bin, gamma, mu, sigma, eta = pars
+        if 0 < f_bin < 1 and gamma < 1 and mu > 0 and sigma > 0 and eta < 1:
             return 0.0
         return -np.inf
 
@@ -162,8 +162,8 @@ class DistributionFitter(Fitters.Bayesian_LS):
             logging.info(p)
             return lnl if np.isfinite(lnl) else np.sign(lnl) * 9e9
 
-        initial_pars = [0.5, 5, 5, 0.5]
-        out = minimize(errfcn, initial_pars, bounds=[[0, 0.999], [0, 100], [1e-3, 100], [0, 0.999]])
+        initial_pars = [0.5, 0.5, 5, 5, 0.5]
+        out = minimize(errfcn, initial_pars, bounds=[[0.0, 1.0], [0, 0.999], [0, 100], [1e-3, 100], [0, 0.999]])
         self.guess_pars = out.x
         return out.x
 
