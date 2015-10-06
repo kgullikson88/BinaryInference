@@ -267,7 +267,10 @@ class CensoredCompleteness(object):
         import ctypes
         import os
 
-        lib = ctypes.CDLL('{}/School/Research/BinaryInference/integrandlib.so'.format(os.environ['HOME']))
+        try:
+            lib = ctypes.CDLL('{}/School/Research/BinaryInference/integrandlib.so'.format(os.environ['HOME']))
+        except OSError:
+            lib = ctypes.CDLL('{}/integrandlib.so'.format(os.getcwd()))
         self.c_integrand = lib.q_integrand_logisticQ  # Assign specific function to name c_integrand (for simplicity)
         self.c_integrand.restype = ctypes.c_double
         self.c_integrand.argtypes = (ctypes.c_int, ctypes.c_double)
