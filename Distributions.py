@@ -271,7 +271,7 @@ class CensoredCompleteness(object):
             lib = ctypes.CDLL('{}/School/Research/BinaryInference/integrandlib.so'.format(os.environ['HOME']))
         except OSError:
             lib = ctypes.CDLL('{}/integrandlib.so'.format(os.getcwd()))
-        self.c_integrand = lib.q_integrand_logisticQ  # Assign specific function to name c_integrand (for simplicity)
+        self.c_integrand = lib.q_integrand_logisticQ_malmquist  # Assign specific function to name c_integrand (for simplicity)
         self.c_integrand.restype = ctypes.c_double
         self.c_integrand.argtypes = (ctypes.c_int, ctypes.c_double)
 
@@ -280,7 +280,7 @@ class CensoredCompleteness(object):
     def sigmoid(cls, q, alpha, beta):
         return 1.0 / (1.0 + np.exp(-alpha * (q - beta)))
 
-    def integral(self, f_bin, gamma, mu, sigma, eta):
+    def integral(self, f_bin, gamma, mu, sigma, eta, malm_pars=np.array([1.])):
         """
         Returns the integral normalization factor in Equation 11
 
@@ -305,8 +305,14 @@ class CensoredCompleteness(object):
         =========
          float - the value of the integral for the input set of parameters
         """
-        return f_bin * np.sum([quad(self.c_integrand, 0, 1, args=(gamma, alpha, beta))[0] for alpha, beta in
-                       zip(self.alpha_vals, self.beta_vals)])
+        s = 0.0
+        for alpha, beta in zip(self.alpha_vals, self.beta_vals):
+            arg_list = [gamma, alpha, beta, len(malm_pars)]
+            arg_list.extend(malm_pars[::-1])
+            s += quad(self.c_integrand, 0, 1, args=tuple(arg_list))[0]
+        return s*f_bin
+        #return f_bin * np.sum([quad(self.c_integrand, 0, 1, args=arg_list)[0] for alpha, beta in
+        #               zip(self.alpha_vals, self.beta_vals)])
 
 
     def __call__(self, q, a, e):
