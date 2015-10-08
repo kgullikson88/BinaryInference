@@ -151,8 +151,12 @@ class DistributionFitter(Fitters.Bayesian_LS):
 
 
     def lnprior(self, pars):
-        f_bin, gamma, mu, sigma, eta = pars
-        if 0 < f_bin < 1 and gamma < 1 and mu > 0 and sigma > 0 and eta < 1:
+        if self.vary_bin_frac:
+            f_bin, gamma, mu, sigma, eta = pars
+        else:
+            gamma, mu, sigma, eta = pars
+            f_bin = 1.0
+        if 0 <= f_bin <= 1 and gamma < 1 and mu > 0 and sigma > 0 and eta < 1:
             return 0.0
         return -np.inf
 
