@@ -47,10 +47,19 @@ class DistributionFitter(Fitters.Bayesian_LS):
                         such that the probability of observing a mass-ratio q is given
                         (up to a normalization constant) by
                         P(q) = f(q)Gamma(q)
+
+    - fix_bin_frac:     boolean, default=True 
+                        Should the overall binary fraction be fixed to 1.0? If not, you can estimate it but it is
+                        rather degenerate with the mass-ratio distribution, especially in a malmquist-biased sample!
     """
 
-    def __init__(self, mcmc_samples, prior_fcn=None, completeness_fcn=None, integral_fcn=None, malm_pars=(1.0,)):
-        self.param_names = [r'$f_{\rm bin}$', '$\gamma$', '$\mu$', '$\sigma$', '$\eta$']
+    def __init__(self, mcmc_samples, prior_fcn=None, completeness_fcn=None, integral_fcn=None, malm_pars=(1.0,), fix_bin_frac=True):
+        if fix_bin_frac:
+            self.param_names = ['$\gamma$', '$\mu$', '$\sigma$', '$\eta$']
+        else:
+            self.param_names = [r'$f_{\rm bin}$', '$\gamma$', '$\mu$', '$\sigma$', '$\eta$']
+
+        self.vary_bin_frac = not fix_bin_frac
         self.n_params = len(self.param_names)
         self.q = mcmc_samples[:, :, 0]
         self.a = mcmc_samples[:, :, 1]
@@ -106,7 +115,11 @@ class DistributionFitter(Fitters.Bayesian_LS):
 
 
     def _lnlike_stable(self, pars):
-        f_bin, gamma, mu, sigma, eta = pars
+        if self.vary_bin_frac:
+            f_bin, gamma, mu, sigma, eta = pars
+        else:
+            gamma, mu, sigma, eta = pars
+            f_bin = 1.0
         ln_gamma_q = np.log(1 - gamma) - gamma * self.lnq
         ln_gamma_e = np.log(1-eta) - eta*self.lne
         ln_gamma_a = -0.5*(self.lna-mu)**2/sigma**2 - 0.5*np.log(2*np.pi*sigma**2) - self.lna
@@ -120,7 +133,7 @@ class DistributionFitter(Fitters.Bayesian_LS):
         ln_summand = ln_gamma + self.ln_completeness - self.lnp
         #N_k = self.q.shape[1] - np.isnan(self.q).sum(axis=1)
         return np.sum(np.log(np.nansum(np.exp(ln_summand[self.good_idx]), axis=1)) - np.log(self.N_k[self.good_idx])) - \
-               self.integral_fcn(f_bin, gamma, mu, sigma, eta)
+               self.integral_fcn(f_bin, gamma, mu, sigma, eta, self.malm_pars)
         #return np.sum(np.log(np.nansum(ln_summand, axis=1)) - np.log(N_k)) - self.integral_fcn(gamma, mu, sigma, eta)  # GIVES NANS ALWAYS
 
 
@@ -308,7 +321,7 @@ class CensoredCompleteness(object):
         s = 0.0
         for alpha, beta in zip(self.alpha_vals, self.beta_vals):
             arg_list = [gamma, alpha, beta, len(malm_pars)]
-            arg_list.extend(malm_pars[::-1])
+            arg_list.extend(malm_pars)
             s += quad(self.c_integrand, 0, 1, args=tuple(arg_list))[0]
         return s*f_bin
         #return f_bin * np.sum([quad(self.c_integrand, 0, 1, args=arg_list)[0] for alpha, beta in
