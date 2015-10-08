@@ -175,8 +175,13 @@ class DistributionFitter(Fitters.Bayesian_LS):
             logging.info(p)
             return lnl if np.isfinite(lnl) else np.sign(lnl) * 9e9
 
-        initial_pars = [0.5, 0.5, 5, 5, 0.5]
-        out = minimize(errfcn, initial_pars, bounds=[[0.0, 1.0], [0, 0.999], [0, 100], [1e-3, 100], [0, 0.999]])
+        if self.vary_bin_frac:
+            initial_pars = [0.5, 0.5, 5, 5, 0.5]
+            bounds_list = [[0.0, 1.0], [0, 0.999], [0, 100], [1e-3, 100], [0, 0.999]]
+        else:
+            initial_pars = [0.5, 5, 5, 0.5]
+            bounds_list = [[0, 0.999], [0, 100], [1e-3, 100], [0, 0.999]]
+        out = minimize(errfcn, initial_pars, bounds=bounds_list)
         self.guess_pars = out.x
         return out.x
 
