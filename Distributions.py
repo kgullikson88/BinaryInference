@@ -47,10 +47,19 @@ class DistributionFitter(Fitters.Bayesian_LS):
                         such that the probability of observing a mass-ratio q is given
                         (up to a normalization constant) by
                         P(q) = f(q)Gamma(q)
+
+    - fix_bin_frac:     boolean, default=True 
+                        Should the overall binary fraction be fixed to 1.0? If not, you can estimate it but it is
+                        rather degenerate with the mass-ratio distribution, especially in a malmquist-biased sample!
     """
 
-    def __init__(self, mcmc_samples, prior_fcn=None, completeness_fcn=None, integral_fcn=None, malm_pars=(1.0,)):
-        self.param_names = ['$\gamma$', '$\mu$', '$\sigma$', '$\eta$']
+    def __init__(self, mcmc_samples, prior_fcn=None, completeness_fcn=None, integral_fcn=None, malm_pars=(1.0,), fix_bin_frac=True):
+        if fix_bin_frac:
+            self.param_names = ['$\gamma$', '$\mu$', '$\sigma$', '$\eta$']
+        else:
+            self.param_names = [r'$f_{\rm bin}$', '$\gamma$', '$\mu$', '$\sigma$', '$\eta$']
+
+        self.vary_bin_frac = not fix_bin_frac
         self.n_params = len(self.param_names)
         self.q = mcmc_samples[:, :, 0]
         self.a = mcmc_samples[:, :, 1]
@@ -106,7 +115,11 @@ class DistributionFitter(Fitters.Bayesian_LS):
 
 
     def _lnlike_stable(self, pars):
-        gamma, mu, sigma, eta = pars
+        if self.vary_bin_frac:
+            f_bin, gamma, mu, sigma, eta = pars
+        else:
+            gamma, mu, sigma, eta = pars
+            f_bin = 1.0
         ln_gamma_q = np.log(1 - gamma) - gamma * self.lnq
         ln_gamma_e = np.log(1-eta) - eta*self.lne
         ln_gamma_a = -0.5*(self.lna-mu)**2/sigma**2 - 0.5*np.log(2*np.pi*sigma**2) - self.lna
@@ -115,11 +128,12 @@ class DistributionFitter(Fitters.Bayesian_LS):
         malm_func, denominator = self._malmquist(gamma)
         ln_gamma_q += np.log(malm_func(self.q)) - np.log(denominator)  # This could probably be made more efficient...
 
-        ln_gamma = ln_gamma_q + ln_gamma_e + ln_gamma_a
+        ln_gamma = ln_gamma_q + ln_gamma_e + ln_gamma_a + np.log(f_bin)
         #ln_gamma = ln_gamma_q + ln_gamma_a
         ln_summand = ln_gamma + self.ln_completeness - self.lnp
         #N_k = self.q.shape[1] - np.isnan(self.q).sum(axis=1)
-        return np.sum(np.log(np.nansum(np.exp(ln_summand[self.good_idx]), axis=1)) - np.log(self.N_k[self.good_idx])) - self.integral_fcn(gamma, mu, sigma, eta)
+        return np.sum(np.log(np.nansum(np.exp(ln_summand[self.good_idx]), axis=1)) - np.log(self.N_k[self.good_idx])) - \
+               self.integral_fcn(f_bin, gamma, mu, sigma, eta, self.malm_pars)
         #return np.sum(np.log(np.nansum(ln_summand, axis=1)) - np.log(N_k)) - self.integral_fcn(gamma, mu, sigma, eta)  # GIVES NANS ALWAYS
 
 
@@ -137,8 +151,12 @@ class DistributionFitter(Fitters.Bayesian_LS):
 
 
     def lnprior(self, pars):
-        gamma, mu, sigma, eta = pars
-        if gamma < 1 and mu > 0 and sigma > 0 and eta < 1:
+        if self.vary_bin_frac:
+            f_bin, gamma, mu, sigma, eta = pars
+        else:
+            gamma, mu, sigma, eta = pars
+            f_bin = 1.0
+        if 0 <= f_bin <= 1 and gamma < 1 and mu > 0 and sigma > 0 and eta < 1:
             return 0.0
         return -np.inf
 
@@ -161,8 +179,13 @@ class DistributionFitter(Fitters.Bayesian_LS):
             logging.info(p)
             return lnl if np.isfinite(lnl) else np.sign(lnl) * 9e9
 
-        initial_pars = [0.5, 5, 5, 0.5]
-        out = minimize(errfcn, initial_pars, bounds=[[0, 0.999], [0, 100], [1e-3, 100], [0, 0.999]])
+        if self.vary_bin_frac:
+            initial_pars = [0.5, 0.5, 5, 5, 0.5]
+            bounds_list = [[0.0, 1.0], [0, 0.999], [0, 100], [1e-3, 100], [0, 0.999]]
+        else:
+            initial_pars = [0.5, 5, 5, 0.5]
+            bounds_list = [[0, 0.999], [0, 100], [1e-3, 100], [0, 0.999]]
+        out = minimize(errfcn, initial_pars, bounds=bounds_list)
         self.guess_pars = out.x
         return out.x
 
@@ -270,7 +293,7 @@ class CensoredCompleteness(object):
             lib = ctypes.CDLL('{}/School/Research/BinaryInference/integrandlib.so'.format(os.environ['HOME']))
         except OSError:
             lib = ctypes.CDLL('{}/integrandlib.so'.format(os.getcwd()))
-        self.c_integrand = lib.q_integrand_logisticQ  # Assign specific function to name c_integrand (for simplicity)
+        self.c_integrand = lib.q_integrand_logisticQ_malmquist  # Assign specific function to name c_integrand (for simplicity)
         self.c_integrand.restype = ctypes.c_double
         self.c_integrand.argtypes = (ctypes.c_int, ctypes.c_double)
 
@@ -279,18 +302,24 @@ class CensoredCompleteness(object):
     def sigmoid(cls, q, alpha, beta):
         return 1.0 / (1.0 + np.exp(-alpha * (q - beta)))
 
-    def integral(self, gamma, mu, sigma, eta):
+    def integral(self, f_bin, gamma, mu, sigma, eta, malm_pars=np.array([1.])):
         """
         Returns the integral normalization factor in Equation 11
 
         Parameters:
         ===========
+         - f_bin:    float
+                     The overall binary fraction
+
          - gamma:    float
                      The mass-ratio power law exponent
+
          - mu:       float
                      The semimajor-axis log-normal mean
+
          - sigma:    float
                      The semimajor-axis log-normal width
+
          - eta:      float
                      The eccentricity power law exponent
 
@@ -298,8 +327,14 @@ class CensoredCompleteness(object):
         =========
          float - the value of the integral for the input set of parameters
         """
-        return np.sum([quad(self.c_integrand, 0, 1, args=(gamma, alpha, beta))[0] for alpha, beta in
-                       zip(self.alpha_vals, self.beta_vals)])
+        s = 0.0
+        for alpha, beta in zip(self.alpha_vals, self.beta_vals):
+            arg_list = [gamma, alpha, beta, len(malm_pars)]
+            arg_list.extend(malm_pars)
+            s += quad(self.c_integrand, 0, 1, args=tuple(arg_list))[0]
+        return s*f_bin
+        #return f_bin * np.sum([quad(self.c_integrand, 0, 1, args=arg_list)[0] for alpha, beta in
+        #               zip(self.alpha_vals, self.beta_vals)])
 
 
     def __call__(self, q, a, e):
