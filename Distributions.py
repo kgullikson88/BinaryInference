@@ -173,7 +173,7 @@ class DistributionFitter(Fitters.Bayesian_LS):
         """
 
         def errfcn(pars):
-            lnl = -self._lnlike(pars)
+            lnl = -self._lnprob(pars)
             p = list(pars)
             p.append(lnl)
             logging.info(p)
