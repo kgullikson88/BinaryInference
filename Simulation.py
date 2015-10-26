@@ -294,7 +294,7 @@ def fit_distribution_parameters(hdf5_file, group_name, sample_parameters=None, c
     return fitter, prior, Completeness
 
 
-def sample_disk(Rmax, scale_height, Npoints=1e4):
+def sample_disk(Rmax=1e4, scale_height=300.0, Npoints=1e4):
     """ Uniformly sample a disk out to distance Rmax and with a given scale height.
     :param Rmax:
     :param scale_height:
