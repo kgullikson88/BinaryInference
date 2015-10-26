@@ -2,16 +2,13 @@
 """
 import logging
 
-import matplotlib.pyplot as plt
 import h5py
 from scipy.stats import ks_2samp
-import numpy as np
 import pandas as pd
 import numpy as np
 import matplotlib.pyplot as plt
 
 import ForwardModeling
-
 import Distributions
 from Distributions import mass2teff, OrbitPrior, CensoredCompleteness
 import Orbit
@@ -295,6 +292,20 @@ def fit_distribution_parameters(hdf5_file, group_name, sample_parameters=None, c
     #fitter.fit(**fit_kws)
 
     return fitter, prior, Completeness
+
+
+def sample_disk(Rmax, scale_height, Npoints=1e4):
+    """ Uniformly sample a disk out to distance Rmax and with a given scale height.
+    :param Rmax:
+    :param scale_height:
+    :return:
+    """
+    u1 = np.random.uniform(0, 1, Npoints)
+    u2 = np.random.uniform(0, 1, Npoints)
+    u3 = np.random.uniform(-1, 1, Npoints)
+    r = Rmax * np.sqrt(u1)
+    z = -scale_height * np.log(1 - u2)
+    return r, np.sign(u3) * z
 
 
 if __name__ == '__main__':
