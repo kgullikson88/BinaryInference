@@ -10,10 +10,10 @@ SIGMA = np.log(10)
 ETA = 0.7
 MIN_MASS = 2.0  # Minimum primary mass
 MAX_MASS = 20.0  # maximum primary mass
-N_SAMPLE = 1000
+N_SAMPLE = 500
 
 OUTPUT_BASE = 'malmquist_pool'
-OUTFILENAME = 'Simulation_Data.h5'
+OUTFILENAME = 'Simulation_Data_Malmquist.h5'
 
 if __name__ == '__main__':
     # Make the sample
@@ -27,4 +27,4 @@ if __name__ == '__main__':
 
     # Fit all the orbits
     Simulation.fit_orbits_multinest(OUTPUT_BASE, OUTFILENAME, sample_parameters,
-                                    rv1_err=0.1, rv2_err=0.2, use_qprior=True)
+                                    rv1_err=2.5, rv2_err=0.5, use_qprior=True)
