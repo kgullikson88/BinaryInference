@@ -8,6 +8,7 @@ import HelperFunctions
 import IMF_utils
 from Mamajek_Table import MamajekTable
 import Orbit
+import Simulation
 
 
 def truncated_expon(scale=0.0, Nsamp=100):
@@ -102,7 +103,7 @@ class ForwardModeler(object):
         """
         # First, make sure we were given one of N_obs or Vmag_lim
         if N_obs is None and Vmag_lim is None:
-            raise InputError('You must give at least one of N_obs or Vmag_lim!')
+            raise ValueError('You must give at least one of N_obs or Vmag_lim!')
         print(N_obs, Vmag_lim)
         
         # physical parameters
@@ -200,7 +201,11 @@ def make_malmquist_sample(gamma, mu, sigma, eta, size=1, min_mass=1.5, max_mass=
     sample = make_representative_sample(gamma, mu, sigma, eta, size=size * 1000, min_mass=min_mass, max_mass=max_mass)
 
     # Sample distances such that they uniformly fill a sphere
-    distance = (np.random.uniform(size=len(sample))) ** (1. / 3.) * 1000.0
+    # distance = (np.random.uniform(size=len(sample))) ** (1. / 3.) * 1000.0
+    # Sample distances from a milky-way-like disk
+
+    r, z = Simulation.sample_disk(Rmax=1e4, Npoints=len(sample))
+    distance = np.sqrt(r ** 2 + z ** 2)
 
     # Get the mamajek table. Sort by mass, and remove the NaNs
     MT = MamajekTable()
