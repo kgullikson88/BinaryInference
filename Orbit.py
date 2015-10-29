@@ -489,19 +489,8 @@ class SpectroscopicOrbitFitter(Fitters.Bayesian_LS):
     def mnest_prior(self, cube, ndim, nparams):
         # Multinest prior
         # Make the mass-ratio (uniform) and eccentricity (log-uniform)
-        # q = cube[5] ** (1.0 / (1.0 - self.gamma))
         q = cube[5]
         loge = cube[2] * 20 - 20
-        #e = 10 ** loge
-
-        # pretend cube[0] (the period) is actually semimajor axis to calculate inverse CDF
-        # lna = scipy.stats.norm.ppf(cube[0], loc=self.mu, scale=self.sigma)
-        #mass = self.primary_mass * (1 + q)  # Total system mass (depends on mass-ratio)
-        # cube[0] = np.exp(1.5 * lna) / np.sqrt(mass)
-
-        # Period is log-uniform from 10^-3 years (0.3 days) to 10^15 years
-        # cube[0] = 10 ** (cube[0] * 9 - 3)
-        #cube[0] = cube[0] * 18 - 3
         
         # Semi-major axis is log-uniform from 0.01 to 10^8 AU
         cube[0] = cube[0]*10 - 2
@@ -513,13 +502,7 @@ class SpectroscopicOrbitFitter(Fitters.Bayesian_LS):
         # Log-uniform in eccentricity from 10^-20 to 0
         cube[2] = loge
 
-        # The rv semi-amplitude is a bit tricky. We will sample sini uniformly, assume we know M1.
-        # the mass-ratio is in cube[5], and the period is (now) in cube[0]
-        # sini = cube[4]
-        #cube[4] = q * sini / np.sqrt(1 - e ** 2) * (2 * np.pi * G * self.primary_mass * (1 + q) / cube[0]) ** (
-        #1. / 3.) * unit_factor
-
-        # Sample log(K1) uniformly from 10^-3 --> 10^3 km/s
+        # Sample K1 log-uniformly from 10^-3 --> 10^3 km/s
         cube[4] = cube[4] * 6 - 3
         cube[5] = q
 
