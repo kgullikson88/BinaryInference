@@ -198,7 +198,7 @@ def make_malmquist_sample(gamma, mu, sigma, eta, size=1, min_mass=1.5, max_mass=
     """
 
     # Make a representative sample with 10x the size
-    sample = make_representative_sample(gamma, mu, sigma, eta, size=size * 1000, min_mass=min_mass, max_mass=max_mass)
+    sample = make_representative_sample(gamma, mu, sigma, eta, size=size * 1e4, min_mass=min_mass, max_mass=max_mass)
 
     # Sample distances such that they uniformly fill a sphere
     # distance = (np.random.uniform(size=len(sample))) ** (1. / 3.) * 1000.0
