@@ -209,7 +209,7 @@ def make_malmquist_sample(gamma, mu, sigma, eta, size=1, min_mass=1.5, max_mass=
 
     # Get the mamajek table. Sort by mass, and remove the NaNs
     MT = MamajekTable()
-    df = MT.mam_df.dropna(subset=['Msun']).sort('Msun')
+    df = MT.mam_df.dropna(subset=['Msun']).sort_values(by='Msun')
     mass = df['Msun']
     vmag = df['Mv']
 
