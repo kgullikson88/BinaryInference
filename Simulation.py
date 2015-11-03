@@ -281,7 +281,8 @@ def fit_distribution_parameters(hdf5_file, group_name, sample_parameters=None, c
     completeness = Completeness
     integral = Completeness.integral
 
-    fit_coeffs = np.array([0.02531589, -0.0671797, 0.06498872, -0.01197892, 0.0016379, 0.00601911])
+    # fit_coeffs = np.array([0.02531589, -0.0671797, 0.06498872, -0.01197892, 0.0016379, 0.00601911])
+    fit_coeffs = np.array([-0.02425596, 0.05282608, -0.03584157, 0.01834403, -0.00184351, 0.00712734])
     fitter = Distributions.DistributionFitter(samples,
                                               prior_fcn=prior,
                                               completeness_fcn=completeness,
