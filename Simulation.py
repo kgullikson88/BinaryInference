@@ -193,7 +193,7 @@ def read_orbit_samples(hdf5_file, group_name, sample_parameters=None, censor=Fal
     with h5py.File(hdf5_file, 'r') as f:
         n_datasets = len(f[group_name])
         maxlen = np.max([ds.shape[0] for _, ds in f[group_name].iteritems()])
-        detected = np.zeros(n_datasets, dtype=np.bool)
+        detected = np.ones(n_datasets, dtype=np.bool)
 
         if censor:
             # Loop through to determine which companions are detected
@@ -203,9 +203,9 @@ def read_orbit_samples(hdf5_file, group_name, sample_parameters=None, censor=Fal
                     beta = sample_parameters.ix[i]['beta']
                     Q = CensoredCompleteness.sigmoid(dataset.attrs['q'], alpha, beta)
                     r = np.random.uniform()
-                    if r < Q:
+                    if r > Q:
                         # Detected!
-                        detected[i] = True
+                        detected[i] = False
 
         # Make a big numpy array filled with NaNs of max shape
         data = np.ones((n_datasets, maxlen, 3)) * np.nan
