@@ -1,7 +1,7 @@
 import logging
+from astropy import units as u, constants
 
 import numpy as np
-from astropy import units as u, constants
 from scipy.optimize import newton
 import scipy.interpolate
 
@@ -489,7 +489,7 @@ class SpectroscopicOrbitFitter(Fitters.Bayesian_LS):
     def mnest_prior(self, cube, ndim, nparams):
         # Multinest prior
         # Make the mass-ratio (uniform) and eccentricity (log-uniform)
-        q = cube[5]
+        q = cube[5] * 2  # uniform on (0,2). Should be (0,1) but that leads to issues at high mass-ratios...
         loge = cube[2] * 20 - 20
         
         # Semi-major axis is log-uniform from 0.01 to 10^8 AU
