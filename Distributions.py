@@ -7,13 +7,14 @@ from scipy.integrate import quad
 
 import Fitters
 import Mamajek_Table
+import fitters
 
 MT = Mamajek_Table.MamajekTable()
 teff2mass = MT.get_interpolator('Teff', 'Msun')
 mass2teff = MT.get_interpolator('Msun', 'Teff')
 
 
-class DistributionFitter(Fitters.Bayesian_LS):
+class DistributionFitter(fitters.Bayesian_LS):
     """
     Fit parameters to the mass-ratio, separation, and eccentricity distribution from
     a series of orbit fits. This class implements the likelihood function given in
@@ -129,11 +130,14 @@ class DistributionFitter(Fitters.Bayesian_LS):
         ln_gamma_q += np.log(malm_func(self.q)) - np.log(denominator)  # This could probably be made more efficient...
 
         ln_gamma = ln_gamma_q + ln_gamma_e + ln_gamma_a + np.log(f_bin)
-        #ln_gamma = ln_gamma_q + ln_gamma_a
         ln_summand = ln_gamma + self.ln_completeness - self.lnp
-        #N_k = self.q.shape[1] - np.isnan(self.q).sum(axis=1)
-        return np.sum(np.log(np.nansum(np.exp(ln_summand[self.good_idx]), axis=1)) - np.log(self.N_k[self.good_idx])) - \
-               self.integral_fcn(f_bin, gamma, mu, sigma, eta, self.malm_pars)
+        
+        summation = np.nansum(np.exp(ln_summand[self.good_idx]), axis=1)
+        summation[np.isinf(summation)] = 1e300
+        return np.sum(np.log(summation) - np.log(self.N_k[self.good_idx])) - self.integral_fcn(f_bin, gamma, mu, sigma, eta, self.malm_pars)
+
+        #return np.sum(np.log(np.nansum(np.exp(ln_summand[self.good_idx]), axis=1)) - np.log(self.N_k[self.good_idx])) - \
+        #       self.integral_fcn(f_bin, gamma, mu, sigma, eta, self.malm_pars)
         #return np.sum(np.log(np.nansum(ln_summand, axis=1)) - np.log(N_k)) - self.integral_fcn(gamma, mu, sigma, eta)  # GIVES NANS ALWAYS
 
 
