@@ -7,6 +7,7 @@ from scipy.stats import ks_2samp
 import pandas as pd
 import numpy as np
 import matplotlib.pyplot as plt
+from scipy.stats import truncnorm
 
 import ForwardModeling
 import Distributions
@@ -148,6 +149,91 @@ def fit_orbits_multinest(output_base, outfilename, sample_parameters, rv1_err=0.
     return
 
 
+def generate_orbit_samples(sample_parameters, censor=False, f_bin=1.0, teff_err=150, mass_err=0.5, N_samp=1e4,
+                           teff2mass=None):
+    """
+    Generate fake orbit samples by simply sampling the prior distributions for semimajor axis and eccentricity,
+    and sampling the empirical mass-ratio prior (obtained from the companion temperature and primary mass estimates)
+
+    Parameters:
+    ===========
+    - sample_parameters:  pandas DataFrame
+                          Should hold the true parameters for each star and contain the following columns (at least)
+
+                            - q (the mass-ratio of the system)
+                            - M_prim (the primary mass of the system, in solar masses)
+                            - T_sec (optional, and holds the companion temperatures)
+
+
+    - censor:             boolean - default=False
+                          Should we censor the detections? If so, the sample_parameters dataframe
+                          must contain columns 'alpha' and 'beta' describing the censoring function
+
+    - f_bin:              float - default=1.0
+                          The true binary fraction.
+
+    - teff_err:           float - default=150 K
+                          The temperature error to assign to the companions, in Kelvin
+
+    - mass_err:           float in [0, 1] - default=0.5
+                          The fractional error to assign to the primary mass
+
+    - N_samp:             integer - default=10000
+                          The number of samples to take from each distribution
+
+    - teff2mass:          callable
+                          Should give the conversion from temperature to mass.
+                          If not given, it uses main-sequence spectral type relationships.
+
+    Returns:
+    ========
+    mcmc_samples:         Numpy array of shape (N_obs, length, 3)
+                          Contains the MCMC samples for the mass-ratio, semimajor axis, and eccentricity
+                          for each star. To make this an array, extra values are padded as NaNs so make
+                          sure to use nanmean and such to analyze!
+
+    M_prim, M_sec:        numpy arrays of shape (N_obs,)
+                          The true values of the primary and secondary masses
+
+    a, e:                 numpy arrays of shape (N_obs,)
+                          The true values of the period, semimajor axis, and eccentricity
+    """
+    # First, estimate the companion temperatures
+    if 'T_sec' not in sample_parameters.columns:
+        sample_parameters['T_sec'] = mass2teff(sample_parameters['q'] * sample_parameters['M_prim'])
+
+    if teff2mass is None:
+        teff2mass = Distributions.teff2mass
+
+    Nobs = sample_parameters.shape[0]
+
+    # Sample the companion mass and primary mass within the errors given
+    M1_vals = sample_parameters.M_prim.values
+    T2_vals = sample_parameters.T_sec.values
+    M1_std = np.maximum(0.2, mass_err * M1_vals)
+    a, b = (1.5 - M1_vals) / M1_std, np.ones_like(M1_vals) * np.inf
+    M1_samples = np.array(
+        [truncnorm.rvs(a=a[i], b=b[i], loc=M1_vals[i], scale=M1_std[i], size=N_samp) for i in range(M1_vals.size)])
+    T2_samples = np.array([np.random.normal(loc=T2_vals[i], scale=teff_err, size=N_samp) for i in range(T2_vals.size)])
+    M2_samples = teff2mass(T2_samples)
+
+    # Sample the mass-ratio, semimajor axis, and eccentricity
+    q_samples = M2_samples / M1_samples
+    q_samples[q_samples > 1] = 1.0 / q_samples[q_samples > 1]
+    loga = np.random.uniform(-2, 8, N_samp)
+    loge = np.random.uniform(-20, 0, N_samp)
+    a_samples = 10 ** loga
+    e_samples = 10 ** loge
+
+    mcmc_samples = np.empty((Nobs, N_samp, 3))
+    mcmc_samples[:, :, 0] = q_samples
+    mcmc_samples[:, :, 1] = a_samples
+    mcmc_samples[:, :, 2] = e_samples
+
+    return (mcmc_samples, M1_vals, M1_vals * sample_parameters['q'].values,
+            sample_parameters['a'].values, sample_parameters['e'].values)
+
+
 def read_orbit_samples(hdf5_file, group_name, sample_parameters=None, censor=False, f_bin=1.0):
     """
     Read in orbit MCMC samples computed by fit_orbits_multinest
@@ -175,7 +261,7 @@ def read_orbit_samples(hdf5_file, group_name, sample_parameters=None, censor=Fal
 
     Returns:
     ========
-    mcmc_samples:        Numpy array of shape (N_detected, length, 3)
+    mcmc_samples:        Numpy array of shape (N_obs, length, 3)
                          Contains the MCMC samples for the mass-ratio, semimajor axis, and eccentricity
                          for each star. To make this an array, extra values are padded as NaNs so make
                          sure to use nanmean and such to analyze!
@@ -183,7 +269,7 @@ def read_orbit_samples(hdf5_file, group_name, sample_parameters=None, censor=Fal
     M_prim, M_sec:       numpy arrays of shape (N_detected,)
                          The true values of the primary and secondary masses
 
-    a, e:        numpy arrays of shape (N_detected,)
+    a, e:                numpy arrays of shape (N_detected,)
                          The true values of the period, semimajor axis, and eccentricity
     """
     if censor and sample_parameters is None:
