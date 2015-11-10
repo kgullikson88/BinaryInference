@@ -460,6 +460,8 @@ class SpectroscopicOrbitFitter(Fitters.Bayesian_LS):
         period = 10 ** (1.5*loga) / np.sqrt(self.primary_mass*(1+q))
         K1 = 10 ** logK1
         e = 10 ** loge
+        if q > 1.0:
+            q = 1.0 / q
         orbit = OrbitCalculator(P=period, M0=M0, a=1.0, e=e,
                                 big_omega=90.0, little_omega=omega,
                                 i=90.0, K1=K1, K2=K1 / q)
