@@ -203,7 +203,7 @@ class OrbitPrior(object):
         TODO: Allow user to give custom function for teff2mass (using evolutionary tracks or something)
     """
 
-    def __init__(self, M1_vals, T2_vals, N_samp=10000, gamma=0.4, cache=False):
+    def __init__(self, M1_vals, T2_vals, N_samp=10000, gamma=0.4, cache=False, interpolate_qprior=False):
         """Initialize the orbit prior object
 
         Parameters:
@@ -222,6 +222,9 @@ class OrbitPrior(object):
                        Should we cache the empirical prior to make lookups faster?
                        If the input q changes, this will give THE WRONG ANSWER!
 
+        - interpolate_qprior: boolean
+                              Interpolate the q-prior to make a faster function call at the expense of some accuracy?
+
         Returns:
         =========
         None
@@ -239,10 +242,12 @@ class OrbitPrior(object):
         q_samples = M2_samples / M1_samples
         #q_samples[q_samples > 1] = 1.0/q_samples[q_samples > 1]
 
-        from scipy.interpolate import InterpolatedUnivariateSpline as spline
-        q_vals = np.arange(0.01, 2.0, 0.01)
-        self.empirical_q_prior = [spline(q_vals, gaussian_kde(q_samples[i, :])(q_vals)) for i in range(q_samples.shape[0])]
-        #self.empirical_q_prior = [gaussian_kde(q_samples[i, :]) for i in range(q_samples.shape[0])]
+        if interpolate_qprior:
+            from scipy.interpolate import InterpolatedUnivariateSpline as spline
+            q_vals = np.arange(0.01, 2.0, 0.01)
+            self.empirical_q_prior = [spline(q_vals, gaussian_kde(q_samples[i, :])(q_vals)) for i in range(q_samples.shape[0])]
+        else:
+            self.empirical_q_prior = [gaussian_kde(q_samples[i, :]) for i in range(q_samples.shape[0])]
         self.gamma = gamma
         self._cache_empirical = cache
         self._cache = None
