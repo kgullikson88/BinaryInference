@@ -133,7 +133,7 @@ class DistributionFitter(fitters.Bayesian_LS):
         ln_summand = ln_gamma + self.ln_completeness - self.lnp
         
         summation = np.nansum(np.exp(ln_summand[self.good_idx]), axis=1)
-        summation[np.isinf(summation)] = 1e300
+        #summation[np.isinf(summation)] = 1e300
         return np.sum(np.log(summation) - np.log(self.N_k[self.good_idx])) - self.integral_fcn(f_bin, gamma, mu, sigma, eta, self.malm_pars)
 
         #return np.sum(np.log(np.nansum(np.exp(ln_summand[self.good_idx]), axis=1)) - np.log(self.N_k[self.good_idx])) - \
@@ -237,8 +237,12 @@ class OrbitPrior(object):
         T2_samples = np.array([np.random.normal(loc=T2_vals[i], scale=200, size=N_samp) for i in range(T2_vals.size)])
         M2_samples = teff2mass(T2_samples)
         q_samples = M2_samples / M1_samples
+        #q_samples[q_samples > 1] = 1.0/q_samples[q_samples > 1]
 
-        self.empirical_q_prior = [gaussian_kde(q_samples[i, :]) for i in range(q_samples.shape[0])]
+        from scipy.interpolate import InterpolatedUnivariateSpline as spline
+        q_vals = np.arange(0.01, 2.0, 0.01)
+        self.empirical_q_prior = [spline(q_vals, gaussian_kde(q_samples[i, :])(q_vals)) for i in range(q_samples.shape[0])]
+        #self.empirical_q_prior = [gaussian_kde(q_samples[i, :]) for i in range(q_samples.shape[0])]
         self.gamma = gamma
         self._cache_empirical = cache
         self._cache = None
