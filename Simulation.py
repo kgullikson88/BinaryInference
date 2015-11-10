@@ -24,8 +24,8 @@ def make_comparison_plot(true_vals, fitted_vals, low=0, high=1, axes=None):
     axes[0].set_ylabel('Fitted value')
 
     bins = np.linspace(low, high, 10)
-    _, bins, _ = axes[1].hist(true_vals, bins=bins, cumulative=True, histtype='step', normed=True)
-    axes[1].hist(fitted_vals, bins=bins, cumulative=True, histtype='step', normed=True)
+    _, bins, _ = axes[1].hist(true_vals, bins=bins, cumulative=True, histtype='step', normed=True, lw=2)
+    axes[1].hist(fitted_vals, bins=bins, cumulative=True, histtype='step', normed=True, lw=2)
 
     ks_stat, p_value = ks_2samp(true_vals, fitted_vals)
     print('KS-test p-value = {:.3g}'.format(p_value))
