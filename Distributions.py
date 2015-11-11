@@ -5,7 +5,6 @@ from scipy.optimize import minimize
 from scipy.stats import truncnorm, gaussian_kde
 from scipy.integrate import quad
 
-import Fitters
 import Mamajek_Table
 import fitters
 
@@ -52,9 +51,16 @@ class DistributionFitter(fitters.Bayesian_LS):
     - fix_bin_frac:     boolean, default=True 
                         Should the overall binary fraction be fixed to 1.0? If not, you can estimate it but it is
                         rather degenerate with the mass-ratio distribution, especially in a malmquist-biased sample!
+
+    - low_q:            float, default=0.0
+                        What is the lowest mass ratio in the sample? (Used for normalized the PDF)
+
+    - high_q:           float, default=1.0
+                        What is the highest mass ratio in the sample? (Used for normalizing the PDF)
     """
 
-    def __init__(self, mcmc_samples, prior_fcn=None, completeness_fcn=None, integral_fcn=None, malm_pars=(1.0,), fix_bin_frac=True):
+    def __init__(self, mcmc_samples, prior_fcn=None, completeness_fcn=None, integral_fcn=None, malm_pars=(1.0,),
+                 fix_bin_frac=True, low_q=0.0, high_q=1.0):
         if fix_bin_frac:
             self.param_names = ['$\gamma$', '$\mu$', '$\sigma$', '$\eta$']
         else:
@@ -86,6 +92,10 @@ class DistributionFitter(fitters.Bayesian_LS):
             self.integral_fcn = integral_fcn
         else:
             self.integral_fcn = self._setup_generic_integral_function()
+
+        # Save the q-limits
+        self.low_q = low_q
+        self.high_q = high_q
 
 
     def _setup_generic_integral_function(self):
@@ -121,7 +131,8 @@ class DistributionFitter(fitters.Bayesian_LS):
         else:
             gamma, mu, sigma, eta = pars
             f_bin = 1.0
-        ln_gamma_q = np.log(1 - gamma) - (1-gamma)*np.log(2) - gamma * self.lnq
+        ln_gamma_q = np.log(1 - gamma) - np.log(
+            self.high_q ** (1 - gamma) - self.low_q ** (1 - gamma)) - gamma * self.lnq
         ln_gamma_e = np.log(1-eta) - eta*self.lne
         ln_gamma_a = -0.5*(self.lna-mu)**2/sigma**2 - 0.5*np.log(2*np.pi*sigma**2) - self.lna
 
