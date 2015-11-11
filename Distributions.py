@@ -258,7 +258,8 @@ class OrbitPrior(object):
             q_vals = np.arange(0.01, 2.0, 0.01)
             self.empirical_q_prior = [spline(q_vals, gaussian_kde(q_samples[i, :])(q_vals)) for i in range(q_samples.shape[0])]
         else:
-            self.empirical_q_prior = [gaussian_kde(q_samples[i, :]) for i in range(q_samples.shape[0])]
+            # self.empirical_q_prior = [gaussian_kde(q_samples[i, :]) for i in range(q_samples.shape[0])]
+            self.empirical_q_prior = gaussian_kde(q_samples)
         self.gamma = gamma
         self._cache_empirical = cache
         self._cache = None
@@ -267,8 +268,9 @@ class OrbitPrior(object):
         if self._cache_empirical and self._cache is not None:
             return self._cache
         q = np.atleast_1d(q)
-        assert q.shape[0] == len(self.empirical_q_prior)
-        emp_prior = np.array([self.empirical_q_prior[i](q[i]) for i in range(q.shape[0])])
+        # assert q.shape[0] == len(self.empirical_q_prior)
+        #emp_prior = np.array([self.empirical_q_prior[i](q[i]) for i in range(q.shape[0])])
+        emp_prior = self.empirical_q_prior(q)
         if self._cache_empirical:
             self._cache = emp_prior
         return emp_prior
