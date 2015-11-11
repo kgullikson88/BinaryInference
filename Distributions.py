@@ -121,7 +121,7 @@ class DistributionFitter(fitters.Bayesian_LS):
         else:
             gamma, mu, sigma, eta = pars
             f_bin = 1.0
-        ln_gamma_q = np.log(1 - gamma) - gamma * self.lnq
+        ln_gamma_q = np.log(1 - gamma) - (1-gamma)*np.log(2) - gamma * self.lnq
         ln_gamma_e = np.log(1-eta) - eta*self.lne
         ln_gamma_a = -0.5*(self.lna-mu)**2/sigma**2 - 0.5*np.log(2*np.pi*sigma**2) - self.lna
 
