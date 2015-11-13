@@ -2,7 +2,7 @@ import logging
 
 import numpy as np
 from scipy.optimize import minimize
-from scipy.stats import truncnorm, gaussian_kde
+from scipy.stats import truncnorm, gaussian_kde, norm
 from scipy.integrate import quad
 
 import Mamajek_Table
@@ -133,8 +133,9 @@ class DistributionFitter(fitters.Bayesian_LS):
             f_bin = 1.0
         ln_gamma_q = np.log(1 - gamma) - np.log(
             self.high_q ** (1 - gamma) - self.low_q ** (1 - gamma)) - gamma * self.lnq
-        ln_gamma_e = np.log(1-eta) - eta*self.lne
-        ln_gamma_a = -0.5*(self.lna-mu)**2/sigma**2 - 0.5*np.log(2*np.pi*sigma**2) - self.lna
+        ln_gamma_e = np.log(1-eta) - eta*self.lne - np.log(1-10*(-20*(1-eta)))
+        I = norm.cdf(np.log(1e8), loc=mu, scale=sigma) - norm.cdf(np.log(1e-2), loc=mu, scale=sigma)
+        ln_gamma_a = -0.5*(self.lna-mu)**2/sigma**2 - 0.5*np.log(2*np.pi*sigma**2) - np.log(I)
 
         # Adjust for malmquist bias
         malm_func, denominator = self._malmquist(gamma)
@@ -144,12 +145,8 @@ class DistributionFitter(fitters.Bayesian_LS):
         ln_summand = ln_gamma + self.ln_completeness - self.lnp
         
         summation = np.nansum(np.exp(ln_summand[self.good_idx]), axis=1)
-        #summation[np.isinf(summation)] = 1e300
         return np.sum(np.log(summation) - np.log(self.N_k[self.good_idx])) - self.integral_fcn(f_bin, gamma, mu, sigma, eta, self.malm_pars)
 
-        #return np.sum(np.log(np.nansum(np.exp(ln_summand[self.good_idx]), axis=1)) - np.log(self.N_k[self.good_idx])) - \
-        #       self.integral_fcn(f_bin, gamma, mu, sigma, eta, self.malm_pars)
-        #return np.sum(np.log(np.nansum(ln_summand, axis=1)) - np.log(N_k)) - self.integral_fcn(gamma, mu, sigma, eta)  # GIVES NANS ALWAYS
 
 
     def _malmquist(self, gamma):
@@ -255,12 +252,16 @@ class OrbitPrior(object):
 
         if interpolate_qprior:
             from scipy.interpolate import InterpolatedUnivariateSpline as spline
-            q_vals = np.arange(0.01, 2.0, 0.01)
+            q_vals = np.arange(0.0, 2.0, 0.001)
             self.empirical_q_prior = [spline(q_vals, gaussian_kde(q_samples[i, :])(q_vals)) for i in range(q_samples.shape[0])]
         else:
-            # self.empirical_q_prior = [gaussian_kde(q_samples[i, :]) for i in range(q_samples.shape[0])]
-            self.empirical_q_prior = gaussian_kde(q_samples)
+            self.empirical_q_prior = [gaussian_kde(q_samples[i, :]) for i in range(q_samples.shape[0])]
+            #self.empirical_q_prior = gaussian_kde(q_samples)
         self.gamma = gamma
+        self.low_a = np.log(1e-2)
+        self.high_a = np.log(1e8)
+        self.low_e = np.log(1e-20)
+        self.high_e = 0.0
         self._cache_empirical = cache
         self._cache = None
 
@@ -268,9 +269,9 @@ class OrbitPrior(object):
         if self._cache_empirical and self._cache is not None:
             return self._cache
         q = np.atleast_1d(q)
-        # assert q.shape[0] == len(self.empirical_q_prior)
-        #emp_prior = np.array([self.empirical_q_prior[i](q[i]) for i in range(q.shape[0])])
-        emp_prior = self.empirical_q_prior(q)
+        assert q.shape[0] == len(self.empirical_q_prior)
+        emp_prior = np.array([self.empirical_q_prior[i](q[i]) for i in range(q.shape[0])])
+        #emp_prior = self.empirical_q_prior(q)
         if self._cache_empirical:
             self._cache = emp_prior
         return emp_prior
@@ -281,7 +282,8 @@ class OrbitPrior(object):
 
     def log_evaluate(self, lnq, lna, lne):
         empirical_prior = np.log(self._evaluate_empirical_q_prior(np.exp(lnq)))
-        return empirical_prior + np.log(1-self.gamma) - self.gamma*lnq - np.log(200*np.log(10)**2) - lna - lne 
+        #return empirical_prior + np.log(1-self.gamma) - self.gamma*lnq# - np.log(200*np.log(10)**2) - lna - lne 
+        return empirical_prior + np.log(1-self.gamma) - self.gamma*lnq - np.log(self.high_a - self.low_a) - np.log(self.high_e - self.low_e)
 
     def __call__(self, lnq, lna, lne):
         return self.log_evaluate(lnq, lna, lne)
