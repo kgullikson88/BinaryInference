@@ -1,12 +1,13 @@
+import logging
+
+import numpy as np
+from scipy.optimize import minimize
+from scipy.stats import truncnorm, gaussian_kde
+from scipy.integrate import quad
 
 import Mamajek_Table
 import fitters
 
-import numpy as np 
-import logging
-from scipy.optimize import minimize
-from scipy.stats import truncnorm, gaussian_kde
-from scipy.integrate import quad
 
 MT = Mamajek_Table.MamajekTable()
 teff2mass = MT.get_interpolator('Teff', 'Msun')
@@ -94,8 +95,9 @@ class GammaFitter(fitters.Bayesian_LS):
         else:
             gamma = pars
             f_bin = 1.0
-        ln_gamma_q = np.log(1 - gamma) - np.log(
-                            self.high_q ** (1 - gamma) - self.low_q ** (1 - gamma)) - gamma * self.lnq
+        ln_gamma_q = (np.log(1 - gamma)
+                      - np.log(self.high_q ** (1 - gamma) - self.low_q ** (1 - gamma))
+                      - gamma * self.lnq)
 
         # Adjust for malmquist bias
         malm_func, denominator = self._malmquist(gamma)
@@ -104,7 +106,7 @@ class GammaFitter(fitters.Bayesian_LS):
         ln_summand = ln_gamma + self.ln_completeness - self.lnp
         
         summation = np.nanmean(np.exp(ln_summand[self.good_idx]), axis=1)
-        return np.sum(np.log(summation)) - self.integral_fcn(f_bin, gamma, mu, sigma, eta, self.malm_pars)
+        return np.sum(np.log(summation)) - self.integral_fcn(f_bin, gamma, self.malm_pars)
 
     def _malmquist(self, gamma):
         """ Return the malmquist adjustment function as well as the normalization constant
