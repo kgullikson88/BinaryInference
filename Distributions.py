@@ -2,7 +2,7 @@ import logging
 
 import numpy as np
 from scipy.optimize import minimize
-from scipy.stats import truncnorm, gaussian_kde, norm
+from scipy.stats import truncnorm, gaussian_kde, norm, lognorm
 from scipy.integrate import quad
 
 import Mamajek_Table
@@ -125,7 +125,7 @@ class DistributionFitter(fitters.Bayesian_LS):
 
 
 
-    def _lnlike_stable(self, pars):
+    def _lnlike_stable_old(self, pars):
         if self.vary_bin_frac:
             f_bin, gamma, mu, sigma, eta = pars
         else:
@@ -134,19 +134,51 @@ class DistributionFitter(fitters.Bayesian_LS):
         ln_gamma_q = np.log(1 - gamma) - np.log(
             self.high_q ** (1 - gamma) - self.low_q ** (1 - gamma)) - gamma * self.lnq
         ln_gamma_e = np.log(1-eta) - eta*self.lne - np.log(1-10*(-20*(1-eta)))
-        I = norm.cdf(np.log(1e8), loc=mu, scale=sigma) - norm.cdf(np.log(1e-2), loc=mu, scale=sigma)
-        ln_gamma_a = -0.5*(self.lna-mu)**2/sigma**2 - 0.5*np.log(2*np.pi*sigma**2) - np.log(I)
+        #I = norm.cdf(np.log(1e8), loc=mu, scale=sigma) - norm.cdf(np.log(1e-2), loc=mu, scale=sigma)
+        I = lognorm.cdf(1e8, sigma, scale=np.exp(mu)) - lognorm.cdf(1e-2, sigma, scale=np.exp(mu))
+        ln_gamma_a = -0.5*(self.lna-mu)**2/sigma**2 - 0.5*np.log(2*np.pi*sigma**2) - np.log(I) - self.lna
 
         # Adjust for malmquist bias
         malm_func, denominator = self._malmquist(gamma)
         ln_gamma_q += np.log(malm_func(self.q)) - np.log(denominator)  # This could probably be made more efficient...
 
         ln_gamma = ln_gamma_q + ln_gamma_e + ln_gamma_a + np.log(f_bin)
+        #ln_gamma = ln_gamma_q
+        ln_summand = ln_gamma + self.ln_completeness - self.lnp
+        #print(np.nanmin(ln_gamma), np.nanmax(ln_gamma))
+        #print(np.nanmin(ln_gamma_q), np.nanmax(ln_gamma_q))
+        #print(np.nanmin(ln_gamma_a), np.nanmax(ln_gamma_a))
+        #print(np.nanmin(ln_gamma_e), np.nanmax(ln_gamma_e))
+        #print(np.nanmin(self.ln_completeness), np.nanmax(self.ln_completeness))
+        #print(np.nanmin(self.lnp), np.nanmax(self.lnp))
+        
+        #summation = np.nansum(np.exp(ln_summand[self.good_idx]), axis=1)
+        #return np.sum(np.log(summation) - np.log(self.N_k[self.good_idx])) - self.integral_fcn(f_bin, gamma, mu, sigma, eta, self.malm_pars)
+        
+        summation = np.nanmean(np.exp(ln_summand[self.good_idx]), axis=1)
+        return np.sum(np.log(summation)) - self.integral_fcn(f_bin, gamma, mu, sigma, eta, self.malm_pars)
+
+
+    def _lnlike_stable(self, pars):
+        if self.vary_bin_frac:
+            f_bin, gamma, mu, sigma, eta = pars
+        else:
+            gamma, mu, sigma, eta = pars
+            f_bin = 1.0
+        ln_gamma_q = - gamma * self.lnq
+        ln_gamma_e = -eta * self.lne
+        ln_gamma_a = (self.lna-mu)**2/sigma**2 - self.lna
+
+        # Adjust for malmquist bias
+        malm_func, denominator = self._malmquist(gamma)
+        ln_gamma_q += np.log(malm_func(self.q)) - np.log(denominator)  # This could probably be made more efficient...
+
+        ln_gamma = ln_gamma_q + ln_gamma_e + ln_gamma_a + np.log(f_bin)
+        #ln_gamma = ln_gamma_q
         ln_summand = ln_gamma + self.ln_completeness - self.lnp
         
-        summation = np.nansum(np.exp(ln_summand[self.good_idx]), axis=1)
-        return np.sum(np.log(summation) - np.log(self.N_k[self.good_idx])) - self.integral_fcn(f_bin, gamma, mu, sigma, eta, self.malm_pars)
-
+        summation = np.nanmean(np.exp(ln_summand[self.good_idx]), axis=1)
+        return np.sum(np.log(summation)) - self.integral_fcn(f_bin, gamma, mu, sigma, eta, self.malm_pars)/(1-gamma)
 
 
     def _malmquist(self, gamma):
@@ -158,7 +190,7 @@ class DistributionFitter(fitters.Bayesian_LS):
 
 
     
-    def _lnlike(self, pars):
+    def lnlike(self, pars):
         return self._lnlike_stable(pars)
 
 
@@ -211,7 +243,7 @@ class OrbitPrior(object):
         TODO: Allow user to give custom function for teff2mass (using evolutionary tracks or something)
     """
 
-    def __init__(self, M1_vals, T2_vals, N_samp=10000, gamma=0.4, cache=False, interpolate_qprior=False):
+    def __init__(self, M1_vals, T2_vals, N_samp=10000, gamma=0.4, cache=False, interpolate_qprior=False, low_q=0.0, high_q=1.0):
         """Initialize the orbit prior object
 
         Parameters:
@@ -232,6 +264,12 @@ class OrbitPrior(object):
 
         - interpolate_qprior: boolean
                               Interpolate the q-prior to make a faster function call at the expense of some accuracy?
+
+        - low_q:       float, default=0.0
+                       What is the lowest mass ratio in the sample? (Used for normalized the PDF)
+
+        - high_q:      float, default=1.0
+                       What is the highest mass ratio in the sample? (Used for normalizing the PDF)
 
         Returns:
         =========
@@ -262,6 +300,8 @@ class OrbitPrior(object):
         self.high_a = np.log(1e8)
         self.low_e = np.log(1e-20)
         self.high_e = 0.0
+        self.low_q=low_q
+        self.high_q=high_q
         self._cache_empirical = cache
         self._cache = None
 
@@ -283,7 +323,15 @@ class OrbitPrior(object):
     def log_evaluate(self, lnq, lna, lne):
         empirical_prior = np.log(self._evaluate_empirical_q_prior(np.exp(lnq)))
         #return empirical_prior + np.log(1-self.gamma) - self.gamma*lnq# - np.log(200*np.log(10)**2) - lna - lne 
-        return empirical_prior + np.log(1-self.gamma) - self.gamma*lnq - np.log(self.high_a - self.low_a) - np.log(self.high_e - self.low_e)
+        #return empirical_prior - self.gamma*lnq + np.log(1-self.gamma) - np.log(self.high_q**(1-self.gamma) - self.low_q**(1-self.gamma)) - np.log(200*np.log(10)**2) - lna - lne 
+        #return (empirical_prior + 
+        #        np.log(1-self.gamma) - np.log(self.high_q**(1-self.gamma) - self.low_q**(1-self.gamma)) - self.gamma*lnq)# - 
+                #np.log(200*np.log(10)**2) - lna - lne )
+        #return empirical_prior - self.gamma*lnq
+        qprior = empirical_prior + np.log(1-self.gamma) - np.log(self.high_q**(1-self.gamma) - self.low_q**(1-self.gamma)) - self.gamma*lnq
+        aprior = -(lna + np.log(10*np.log(10)))
+        eprior = -(lne + np.log(20*np.log(10)))
+        return qprior + aprior + eprior
 
     def __call__(self, lnq, lna, lne):
         return self.log_evaluate(lnq, lna, lne)
@@ -359,7 +407,7 @@ class CensoredCompleteness(object):
         for alpha, beta in zip(self.alpha_vals, self.beta_vals):
             arg_list = [gamma, alpha, beta, len(malm_pars)]
             arg_list.extend(malm_pars)
-            s += quad(self.c_integrand, 0, 1, args=tuple(arg_list))[0]
+            s += quad(self.c_integrand, 0, 2, args=tuple(arg_list))[0]
         return s*f_bin
         #return f_bin * np.sum([quad(self.c_integrand, 0, 1, args=arg_list)[0] for alpha, beta in
         #               zip(self.alpha_vals, self.beta_vals)])
