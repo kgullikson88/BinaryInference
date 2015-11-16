@@ -215,7 +215,6 @@ class OrbitPrior(object):
         if self._cache_empirical and self._cache is not None:
             return self._cache
         q = np.atleast_1d(q)
-        print(q.shape[0], len(self.empirical_q_prior))
         assert q.shape[0] == len(self.empirical_q_prior)
         emp_prior = np.array([self.empirical_q_prior[i](q[i]) for i in range(q.shape[0])])
         if self._cache_empirical:
