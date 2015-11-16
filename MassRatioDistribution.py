@@ -6,6 +6,7 @@ from scipy.stats import truncnorm, gaussian_kde
 from scipy.integrate import quad
 
 import Mamajek_Table
+
 import fitters
 
 
@@ -112,7 +113,10 @@ class GammaFitter(fitters.Bayesian_LS):
         """ Return the malmquist adjustment function as well as the normalization constant
         """
         func = np.poly1d(self.malm_pars[::-1])
-        denom = np.sum([p * (1.0 - gamma) / (i + 1 - gamma) for i, p in enumerate(self.malm_pars)])
+        const_factor = (1 - gamma) / (self.high_q ** (1 - gamma) - self.low_q ** (1 - gamma))
+        denom = np.sum(
+            [p * const_factor / (i + 1 - gamma) * (self.high_q ** (i + 1 - gamma) - self.low_q ** (i + 1 - gamma))
+             for i, p in enumerate(self.malm_pars)])
         return func, denom
 
 
