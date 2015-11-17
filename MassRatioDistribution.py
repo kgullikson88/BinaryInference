@@ -89,6 +89,19 @@ class GammaFitter(fitters.Bayesian_LS):
         """
         raise NotImplementedError
 
+    def _lnlike_plain(self, pars):
+        if self.vary_bin_frac:
+            f_bin, gamma = pars
+        else:
+            gamma = pars
+            f_bin = 1.0
+
+        gamma_q = (1-gamma) / (self.high_q ** (1 - gamma) - self.low_q ** (1 - gamma)) * self.q**(-gamma)
+        malm_func, denominator = self._malmquist(gamma)
+        gamma_q *= malm_func(self.q) / denominator
+        summand = gamma_q * f_bin * self.completeness / np.exp(self.lnp)
+        summation = np.nanmean(summand[self.good_idx], axis=1)
+        return np.sum(np.log(summation)) - self.integral_fcn(f_bin, gamma, self.malm_pars)
 
     def _lnlike_stable(self, pars):
         if self.vary_bin_frac:
@@ -105,7 +118,6 @@ class GammaFitter(fitters.Bayesian_LS):
         ln_gamma_q += np.log(malm_func(self.q)) - np.log(denominator)  # This could probably be made more efficient...
         ln_gamma = ln_gamma_q + np.log(f_bin)
         ln_summand = ln_gamma + self.ln_completeness - self.lnp
-        
         summation = np.nanmean(np.exp(ln_summand[self.good_idx]), axis=1)
         return np.sum(np.log(summation)) - self.integral_fcn(f_bin, gamma, self.malm_pars)
 
@@ -211,7 +223,7 @@ class OrbitPrior(object):
         self.low_q = low_q
         self.high_q = high_q
 
-    def _evaluate_empirical_q_prior(self, q):
+    def _evaluate_empirical_q_prior(self, q, clip=1e-40):
         if self._cache_empirical and self._cache is not None:
             return self._cache
         q = np.atleast_1d(q)
@@ -219,13 +231,15 @@ class OrbitPrior(object):
         emp_prior = np.array([self.empirical_q_prior[i](q[i]) for i in range(q.shape[0])])
         if self._cache_empirical:
             self._cache = emp_prior
+        emp_prior[emp_prior < clip] = clip
         return emp_prior
 
     def evaluate(self, q):
         empirical_prior = self._evaluate_empirical_q_prior(q)
-        return (1 - self.gamma) * q ** (-self.gamma) * empirical_prior 
+        return (1 - self.gamma) * q ** (-self.gamma) * empirical_prior / (self.high_q**(1-self.gamma) - self.low_q**(1-self.gamma))
 
     def log_evaluate(self, lnq):
+        print('high_q = {}\nfactor = {}'.format(self.high_q, np.log(self.high_q**(1-self.gamma) - self.low_q**(1-self.gamma))))
         empirical_prior = np.log(self._evaluate_empirical_q_prior(np.exp(lnq)))
         return empirical_prior + np.log(1-self.gamma) - np.log(self.high_q**(1-self.gamma) - self.low_q**(1-self.gamma)) - self.gamma*lnq 
 
