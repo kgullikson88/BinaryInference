@@ -4,6 +4,7 @@
 double integrand(int n, double args[n]);
 double q_integrand_logisticQ(int n, double args[n]);
 double q_integrand_logisticQ_malmquist(int n, double args[n]);
+double q_integrand_logisticQ_malmquist_cutoff(int n, double args[n]);
 double polynomial(double x, int n, double pars[n]);
 double integrand2(int n, double* args);
 double Q(double q, double a, double e);
@@ -60,6 +61,32 @@ double q_integrand_logisticQ_malmquist(int n, double args[n])
     }
     
     return (1-gamma)*pow(q, -gamma) / (1.0 + exp(-alpha*(q-beta))) * polynomial(q, arr_size, malm_pars)/denominator;
+}
+
+
+double q_integrand_logisticQ_malmquist_cutoff(int n, double args[n])
+{
+    //unpack arguments
+    double q = args[0];
+    double gamma = args[1];
+    double alpha = args[2];
+    double beta = args[3];
+    double lowq = args[4];
+    double highq = args[5];
+    double constant = 1;
+
+    //make malmquist correction array
+    int arr_size = args[6];
+    double malm_pars[arr_size];
+    double denominator = 0.0;
+    for (int i=0; i<arr_size; ++i)
+    {
+        malm_pars[i] = args[i+7];
+        denominator += malm_pars[i] * (1-gamma)/(1+i-gamma);
+    }
+
+    constant = (1-gamma) / (denominator * (pow(highq, 1-gamma) - pow(lowq, 1-gamma)))
+    return constant*pow(q, -gamma) / (1.0 + exp(-alpha*(q-beta))) * polynomial(q, arr_size, malm_pars);
 }
 
 double polynomial(double x, int n, double pars[n])

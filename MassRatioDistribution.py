@@ -48,8 +48,16 @@ class GammaFitter(fitters.Bayesian_LS):
     - fix_bin_frac:     boolean, default=True 
                         Should the overall binary fraction be fixed to 1.0? If not, you can estimate it but it is
                         rather degenerate with the mass-ratio distribution, especially in a malmquist-biased sample!
+
+    - low_q:            float, default=0.0
+                        What is the lowest mass ratio in the sample? (Used for normalized the PDF)
+
+    - high_q:           float, default=1.0
+                        What is the highest mass ratio in the sample? (Used for normalizing the PDF)
     """
-    def __init__(self, mcmc_samples, prior_fcn=None, completeness_fcn=None, integral_fcn=None, malm_pars=(1.0,), fix_bin_frac=True, low_q=0.0, high_q=1.0):
+
+    def __init__(self, mcmc_samples, prior_fcn=None, completeness_fcn=None, integral_fcn=None, malm_pars=(1.0,),
+                 fix_bin_frac=True, low_q=0.0, high_q=1.0):
         if fix_bin_frac:
             self.param_names = ['$\gamma$']
         else:
@@ -200,6 +208,12 @@ class OrbitPrior(object):
                        Should we cache the empirical prior to make lookups faster?
                        If the input q changes, this will give THE WRONG ANSWER!
 
+        - low_q:       float, default=0.0
+                       What is the lowest mass ratio in the sample? (Used for normalized the PDF)
+
+        - high_q:      float, default=1.0
+                       What is the highest mass ratio in the sample? (Used for normalizing the PDF)
+
         Returns:
         =========
         None
@@ -251,7 +265,7 @@ class CensoredCompleteness(object):
         In this case, it assumes each star has a completeness function of shape
     """
 
-    def __init__(self, alpha_vals, beta_vals):
+    def __init__(self, alpha_vals, beta_vals, low_q=0.0, high_q=1.0):
         """
         A helper function for calculating the completeness function and corresponding integral.
         The completeness is defined as:
@@ -266,9 +280,17 @@ class CensoredCompleteness(object):
 
          - beta_vals:   An iterable of length N
                         Holds all the values for beta
+
+         - low_q:       float, default=0.0
+                        What is the lowest mass ratio in the sample? (Used for normalized the PDF)
+
+         - high_q:      float, default=1.0
+                        What is the highest mass ratio in the sample? (Used for normalizing the PDF)
         """
         self.alpha_vals = np.atleast_1d(alpha_vals)
         self.beta_vals = np.atleast_1d(beta_vals)
+        self.low_q = low_q
+        self.high_q = high_q
         assert len(alpha_vals) == len(beta_vals), 'alpha_vals and beta_vals must be the same length!'
 
         import ctypes
@@ -278,7 +300,7 @@ class CensoredCompleteness(object):
             lib = ctypes.CDLL('{}/School/Research/BinaryInference/integrandlib.so'.format(os.environ['HOME']))
         except OSError:
             lib = ctypes.CDLL('{}/integrandlib.so'.format(os.getcwd()))
-        self.c_integrand = lib.q_integrand_logisticQ_malmquist  # Assign specific function to name c_integrand (for simplicity)
+        self.c_integrand = lib.q_integrand_logisticQ_malmquist_cutoff  # Assign specific function to name c_integrand (for simplicity)
         self.c_integrand.restype = ctypes.c_double
         self.c_integrand.argtypes = (ctypes.c_int, ctypes.c_double)
 
@@ -305,9 +327,9 @@ class CensoredCompleteness(object):
         """
         s = 0.0
         for alpha, beta in zip(self.alpha_vals, self.beta_vals):
-            arg_list = [gamma, alpha, beta, len(malm_pars)]
+            arg_list = [gamma, alpha, beta, self.low_q, self.high_q, len(malm_pars)]
             arg_list.extend(malm_pars)
-            s += quad(self.c_integrand, 0, 1, args=tuple(arg_list))[0]
+            s += quad(self.c_integrand, self.low_q, self.high_q, args=tuple(arg_list))[0]
         return s*f_bin
         #return f_bin * np.sum([quad(self.c_integrand, 0, 1, args=arg_list)[0] for alpha, beta in
         #               zip(self.alpha_vals, self.beta_vals)])
