@@ -239,7 +239,6 @@ class OrbitPrior(object):
         return (1 - self.gamma) * q ** (-self.gamma) * empirical_prior / (self.high_q**(1-self.gamma) - self.low_q**(1-self.gamma))
 
     def log_evaluate(self, lnq):
-        print('high_q = {}\nfactor = {}'.format(self.high_q, np.log(self.high_q**(1-self.gamma) - self.low_q**(1-self.gamma))))
         empirical_prior = np.log(self._evaluate_empirical_q_prior(np.exp(lnq)))
         return empirical_prior + np.log(1-self.gamma) - np.log(self.high_q**(1-self.gamma) - self.low_q**(1-self.gamma)) - self.gamma*lnq 
 
