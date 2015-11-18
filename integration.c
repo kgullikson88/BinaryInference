@@ -59,7 +59,7 @@ double q_integrand_logisticQ_malmquist(int n, double args[n])
         denominator += malm_pars[i] * (1-gamma)/(1+i-gamma);
     }
     
-    return (1-gamma)/pow(2, (1-gamma))*pow(q, -gamma) / (1.0 + exp(-alpha*(q-beta))) * polynomial(q, arr_size, malm_pars)/denominator;
+    return (1-gamma)*pow(q, -gamma) / (1.0 + exp(-alpha*(q-beta))) * polynomial(q, arr_size, malm_pars)/denominator;
 }
 
 double polynomial(double x, int n, double pars[n])
