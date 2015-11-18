@@ -85,7 +85,7 @@ double q_integrand_logisticQ_malmquist_cutoff(int n, double args[n])
         denominator += malm_pars[i] * (1-gamma)/(1+i-gamma);
     }
 
-    constant = (1-gamma) / (denominator * (pow(highq, 1-gamma) - pow(lowq, 1-gamma)))
+    constant = (1-gamma) / (denominator * (pow(highq, 1-gamma) - pow(lowq, 1-gamma)));
     return constant*pow(q, -gamma) / (1.0 + exp(-alpha*(q-beta))) * polynomial(q, arr_size, malm_pars);
 }
 
