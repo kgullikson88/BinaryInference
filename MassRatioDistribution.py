@@ -134,6 +134,7 @@ class GammaFitter(fitters.Bayesian_LS):
         if self.malm_pars.size > 1 or self.malm_pars != 1:
             # malmquist-correct the binary fraction
             f_bin = f_bin * denominator / (f_bin * denominator + (1 - f_bin) * self.Pobs)
+        logging.debug('Modified f_bin, Pobs|binary, Pobs|not binary = {}, {}, {}'.format(f_bin, denominator, self.Pobs))
         ln_gamma = ln_gamma_q + np.log(f_bin)
         ln_summand = ln_gamma + self.ln_completeness - self.lnp
         summation = np.nanmean(np.exp(ln_summand[self.good_idx]), axis=1)
