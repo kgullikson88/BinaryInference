@@ -54,10 +54,14 @@ class GammaFitter(fitters.Bayesian_LS):
 
     - high_q:           float, default=1.0
                         What is the highest mass ratio in the sample? (Used for normalizing the PDF)
+
+    - Pobs:             float, default=0.00711310498183
+                        The probability of observing a star, given that it is NOT a binary system.
+                        The default value was calculated in the Malmquist.ipynb notebook.
     """
 
     def __init__(self, mcmc_samples, prior_fcn=None, completeness_fcn=None, integral_fcn=None, malm_pars=(1.0,),
-                 fix_bin_frac=True, low_q=0.0, high_q=1.0):
+                 fix_bin_frac=True, low_q=0.0, high_q=1.0, Pobs=0.00711310498183):
         if fix_bin_frac:
             self.param_names = ['$\gamma$']
         else:
@@ -67,6 +71,7 @@ class GammaFitter(fitters.Bayesian_LS):
         self.n_params = len(self.param_names)
         self.q = mcmc_samples
         self.malm_pars = np.atleast_1d(malm_pars)
+        self.Pobs = Pobs
         
         # Pre-compute logs
         self.lnq = np.log(self.q)
@@ -97,6 +102,7 @@ class GammaFitter(fitters.Bayesian_LS):
         """
         raise NotImplementedError
 
+
     def _lnlike_plain(self, pars):
         if self.vary_bin_frac:
             f_bin, gamma = pars
@@ -125,6 +131,9 @@ class GammaFitter(fitters.Bayesian_LS):
         # Adjust for malmquist bias
         malm_func, denominator = self._malmquist(gamma)
         ln_gamma_q += np.log(malm_func(self.q)) - np.log(denominator)  # This could probably be made more efficient...
+        if self.malm_pars.size > 1 or self.malm_pars != 1:
+            # malmquist-correct the binary fraction
+            f_bin = f_bin * denominator / (f_bin * denominator + (1 - f_bin) * self.Pobs)
         ln_gamma = ln_gamma_q + np.log(f_bin)
         ln_summand = ln_gamma + self.ln_completeness - self.lnp
         summation = np.nanmean(np.exp(ln_summand[self.good_idx]), axis=1)
