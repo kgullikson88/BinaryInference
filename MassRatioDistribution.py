@@ -117,6 +117,7 @@ class GammaFitter(fitters.Bayesian_LS):
         else:
             gamma = pars
             f_bin = 1.0
+        logging.debug('f_bin, gamma = {:.3f}, {:.3f}'.format(f_bin, gamma))
         ln_gamma_q = (np.log(1 - gamma)
                       - np.log(self.high_q ** (1 - gamma) - self.low_q ** (1 - gamma))
                       - gamma * self.lnq)
@@ -327,7 +328,8 @@ class CensoredCompleteness(object):
         """
         s = 0.0
         for alpha, beta in zip(self.alpha_vals, self.beta_vals):
-            arg_list = [gamma, alpha, beta, self.low_q, self.high_q, len(malm_pars)]
+            #arg_list = [gamma, alpha, beta, self.low_q, self.high_q, len(malm_pars)]
+            arg_list = [gamma, alpha, beta, 0.0, 1.0, len(malm_pars)]
             arg_list.extend(malm_pars)
             s += quad(self.c_integrand, self.low_q, self.high_q, args=tuple(arg_list))[0]
         return s*f_bin
