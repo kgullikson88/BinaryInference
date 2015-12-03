@@ -124,21 +124,38 @@ class GammaFitter(fitters.Bayesian_LS):
             gamma = pars
             f_bin = 1.0
         logging.debug('f_bin, gamma = {:.3f}, {:.3f}'.format(f_bin, gamma))
-        ln_gamma_q = (np.log(1 - gamma)
-                      - np.log(self.high_q ** (1 - gamma) - self.low_q ** (1 - gamma))
-                      - gamma * self.lnq)
+        #ln_gamma_q = (np.log(1 - gamma)
+        #              - np.log(self.high_q ** (1 - gamma) - self.low_q ** (1 - gamma))
+        #              - gamma * self.lnq)
 
         # Adjust for malmquist bias
-        malm_func, denominator = self._malmquist(gamma)
-        ln_gamma_q += np.log(malm_func(self.q)) - np.log(denominator)  # This could probably be made more efficient...
-        if self.malm_pars.size > 1 or self.malm_pars != 1:
+        #malm_func, denominator = self._malmquist(gamma)
+        #ln_gamma_q += np.log(malm_func(self.q)) - np.log(denominator)  # This could probably be made more efficient...
+        #if self.malm_pars.size > 1 or self.malm_pars != 1:
             # malmquist-correct the binary fraction
-            f_bin = f_bin * denominator / (f_bin * denominator + (1 - f_bin) * self.Pobs)
-        logging.debug('Modified f_bin, Pobs|binary, Pobs|not binary = {}, {}, {}'.format(f_bin, denominator, self.Pobs))
-        ln_gamma = ln_gamma_q + np.log(f_bin)
+        #    f_bin = f_bin * denominator / (f_bin * denominator + (1 - f_bin) * self.Pobs)
+        #logging.debug('Modified f_bin, Pobs|binary, Pobs|not binary = {}, {}, {}'.format(f_bin, denominator, self.Pobs))
+        
+        # Get the malmquist-adjusted log-rate density
+        ln_gamma = self._malmquist_q_lngamma(gamma, f_bin)
+
+        #ln_gamma = ln_gamma_q + np.log(f_bin)
         ln_summand = ln_gamma + self.ln_completeness - self.lnp
         summation = np.nanmean(np.exp(ln_summand[self.good_idx]), axis=1)
-        return np.sum(np.log(summation)) - self.integral_fcn(f_bin, gamma, self.malm_pars)
+        return np.sum(np.log(summation)) - self.integral_fcn(f_bin, gamma, malm_pars=self.malm_pars, Pobs=self.Pobs)
+
+    def _malmquist_q_lngamma(self, gamma, f_bin):
+        """ Return the rate density for q, including f_bin and malmquist bias
+        """
+        func = np.poly1d(self.malm_pars[::-1])
+        const_factor = (1 - gamma) / (self.high_q ** (1 - gamma) - self.low_q ** (1 - gamma))
+        integral = np.sum(
+            [p * const_factor / (i + 1 - gamma) * (self.high_q ** (i + 1 - gamma) - self.low_q ** (i + 1 - gamma))
+             for i, p in enumerate(self.malm_pars)])
+        Pobs = integral if self.malm_pars.size == 1 and self.malm_pars[0] == 1 else self.Pobs
+        denom = f_bin*integral + (1-f_bin)*Pobs
+        logging.debug('Denominator = {}\nIntegral = {}\nPobs = {}\n'.format(denom, integral, Pobs))
+        return np.log(func(self.q)) + np.log(f_bin) + np.log(const_factor) - gamma*self.lnq - np.log(denom)
 
     def _malmquist(self, gamma):
         """ Return the malmquist adjustment function as well as the normalization constant
@@ -320,7 +337,7 @@ class CensoredCompleteness(object):
     def sigmoid(cls, q, alpha, beta):
         return 1.0 / (1.0 + np.exp(-alpha * (q - beta)))
 
-    def integral(self, f_bin, gamma, malm_pars=np.array([1.])):
+    def integral(self, f_bin, gamma, malm_pars=np.array([1.]), Pobs=0.00711310498183):
         """
         Returns the integral normalization factor in Equation 11
 
@@ -339,10 +356,11 @@ class CensoredCompleteness(object):
         s = 0.0
         for alpha, beta in zip(self.alpha_vals, self.beta_vals):
             #arg_list = [gamma, alpha, beta, self.low_q, self.high_q, len(malm_pars)]
-            arg_list = [gamma, alpha, beta, 0.0, 1.0, len(malm_pars)]
+            arg_list = [gamma, f_bin, Pobs, alpha, beta, 0.0, 1.0, len(malm_pars)]
             arg_list.extend(malm_pars)
             s += quad(self.c_integrand, self.low_q, self.high_q, args=tuple(arg_list))[0]
-        return s*f_bin
+        #return s*f_bin
+        return s
         #return f_bin * np.sum([quad(self.c_integrand, 0, 1, args=arg_list)[0] for alpha, beta in
         #               zip(self.alpha_vals, self.beta_vals)])
 

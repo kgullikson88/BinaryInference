@@ -63,8 +63,38 @@ double q_integrand_logisticQ_malmquist(int n, double args[n])
     return (1-gamma)*pow(q, -gamma) / (1.0 + exp(-alpha*(q-beta))) * polynomial(q, arr_size, malm_pars)/denominator;
 }
 
-
 double q_integrand_logisticQ_malmquist_cutoff(int n, double args[n])
+{
+    //unpack arguments
+    double q = args[0];
+    double gamma = args[1];
+    double f_bin = args[2];
+    double Pobs = args[3];
+    double alpha = args[4];
+    double beta = args[5];
+    double lowq = args[6];
+    double highq = args[7];
+    double constant = 1;
+
+    //make malmquist correction array
+    int arr_size = args[8];
+    double malm_pars[arr_size];
+    double denominator = 0.0;
+    double integral = 0.0;
+    for (int i=0; i<arr_size; ++i)
+    {
+        malm_pars[i] = args[i+9];
+        integral += malm_pars[i] * (1-gamma)/(1+i-gamma) * (pow(highq, 1+i-gamma) - pow(lowq, 1+i-gamma));
+    }
+    if (arr_size == 1) { Pobs = integral;}
+    denominator = f_bin*integral + (1-f_bin)*Pobs;
+    
+    constant = (1-gamma) / (pow(highq, 1-gamma) - pow(lowq, 1-gamma));
+    return f_bin*constant*pow(q, -gamma) / (1.0 + exp(-alpha*(q-beta))) * polynomial(q, arr_size, malm_pars)/denominator;
+}
+
+
+double q_integrand_logisticQ_malmquist_cutoff_old(int n, double args[n])
 {
     //unpack arguments
     double q = args[0];
