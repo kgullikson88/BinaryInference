@@ -1,5 +1,6 @@
 #include <stdio.h>
 #include <math.h>
+#include <stdbool.h>
 
 double integrand(int n, double args[n]);
 double q_integrand_logisticQ(int n, double args[n]);
@@ -117,6 +118,65 @@ double q_integrand_logisticQ_malmquist_cutoff_old(int n, double args[n])
 
     constant = (1-gamma) / (denominator * (pow(highq, 1-gamma) - pow(lowq, 1-gamma)));
     return constant*pow(q, -gamma) / (1.0 + exp(-alpha*(q-beta))) * polynomial(q, arr_size, malm_pars);
+}
+
+double hist_integrand(int n, double args[n])
+{
+    //unpack arguments
+    double q = args[0];
+    double alpha = args[1];
+    double beta = args[2];
+    double f_bin = args[3];
+    double Pobs = args[4];
+    bool malmcorr = args[5];
+    int n_bins = args[6];
+    int n_malm = args[7];
+    int i, j;
+    double thetas[n_bins], bin_edges[n_bins+1], malm_pars[n_malm], malm_integrals[n_bins];
+    double denom_integral = 0.0;
+    double denom, gamma, Q;
+
+    // Make theta array and bin edges
+    for (i=0; i<n_bins; ++i) 
+    {
+        thetas[i] = args[8+i];
+        bin_edges[i] = args[8+i+n_bins];
+    }
+    bin_edges[n_bins] = args[8+2*n_bins];
+
+    // make malmquist correction array
+    for (i=0; i<n_malm; ++i)
+    {
+        malm_pars[i] = args[8+i+2*n_bins+1];
+    }
+    for (i=0; i<n_bins; ++i);
+    {
+        malm_integrals[i] = 0.0;
+        for (j=0; j<n_malm; ++j);
+            malm_integrals[i] += malm_pars[j]/(j+1.0)*(pow(bin_edges[i+1], j+1) - pow(bin_edges[i], j+1));
+
+        // Which bin is the requested q in?
+        if (q > bin_edges[i] & q <= bin_edges[i+1]) gamma = thetas[i];
+    }
+    
+    // Calculate denominator integral
+    denom_integral = 0.0;
+    for (i=0; i<n_bins; ++i)
+    {
+        denom_integral += thetas[i] * malm_integrals[i];
+    }
+    if (!malmcorr) Pobs = denom_integral;
+    denom = f_bin*denom_integral + (1-f_bin)*Pobs;
+
+    // Finally, calculate gamma
+    gamma *= polynomial(q, n_malm, malm_pars) * f_bin / denom;
+
+    Q = 1.0/(1.0 + exp(-alpha*(q-beta)));
+    return Q*gamma;
+
+
+
+
 }
 
 double polynomial(double x, int n, double pars[n])
