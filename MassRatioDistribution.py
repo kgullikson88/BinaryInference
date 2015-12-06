@@ -4,6 +4,7 @@ import numpy as np
 from scipy.optimize import minimize
 from scipy.stats import truncnorm, gaussian_kde
 from scipy.integrate import quad
+from HelperFunctions import BinomialErrors
 
 import Mamajek_Table
 
@@ -382,3 +383,115 @@ class CensoredCompleteness(object):
         for alpha, beta in zip(self.alpha_vals, self.beta_vals):
             completeness += self.sigmoid(q, alpha, beta)
         return completeness
+
+
+
+
+class Hist(object):
+    def __init__(self, x, bin_edges, Nsamp):
+        """
+        Calculate the raw histogram, the completeness-corrected one, and the malmquist-corrected one.
+        """
+        raw_vals, bin_edges = np.histogram(x, bins=bin_edges, normed=False)
+        self.bin_edges = bin_edges
+        self.bin_widths = np.diff(self.bin_edges)
+        self.bin_centers = 0.5*(self.bin_edges[:-1] + self.bin_edges[1:])
+        
+        P, low, high = np.array([BinomialErrors(v, Nsamp) for v in raw_vals]).T
+        self.raw_vals = P
+        self.raw_low = low
+        self.raw_high = high
+        self.complete_vals = None
+        self.malm_vals = None
+        return 
+    
+    def completeness(self, completeness_fcn=None, completeness_integrals=None):
+        """
+        Correct the raw histogram for completeness effects.
+        
+        Parameters:
+        ===========
+        - completeness_fcn:        callable
+                                   a function that takes an 'x' value, and returns the completenss for that x
+                                   
+        - completenss_integrals:   iterable of size N_bins
+                                   Pre-computed integrals for each bin. Useful if the completeness
+                                   function is analytically integrable.
+        """
+        if completeness_integrals is None:
+            from scipy.integrate import quad
+            completeness_integrals = [quad(completeness_fcn, x0, x1)[0]/(x1-x0) for x0, x1 in 
+                                      zip(self.bin_edges[:-1], self.bin_edges[1:])]
+        
+        self.complete_vals = np.array([v/I for v, I in zip(self.raw_vals, completeness_integrals)])
+        self.complete_low = np.array([v/I for v, I in zip(self.raw_low, completeness_integrals)])
+        self.complete_high = np.array([v/I for v, I in zip(self.raw_high, completeness_integrals)])
+        return self.complete_vals - self.raw_vals
+    
+    
+    def _fit_thetas(self, raw_thetas, malm_integrals):
+        thetas = np.array(raw_thetas)
+        thetas[:-1] = np.array([malm_integrals[-1]/Mi * p for Mi, p in zip(malm_integrals[:-1], raw_thetas[:-1])])
+        return thetas
+    
+        
+    def _integrate_malmquist(self, malm_pars, q0, q1):
+        """ Integrate the malmquist-correction factor from q0 --> q1
+        """
+        return np.sum([p/(i+1.0)*(q1**(i+1.0) - q0**(i+1.0)) for i, p in enumerate(malm_pars)])
+    
+
+    def malmquist(self, malm_pars, correct_errors=True):
+        """
+        Correct the histogram for malmquist bias. If your have already completeness-corrected the raw
+        histogram, it will use that. Otherwise, it will just use the raw histogram values.
+        
+        Parameters:
+        ===========
+        - malm_pars:      iterable
+                          polynomial parameters describing the malmquist correction. 
+                          They should be in order of the coefficients of increasing order
+                          (i.e. malm_pars[0] + malm_pars[1]*x + ...)
+        
+        -Pobs:            float:
+                          The probability of observation, given that the star is single.
+        
+        """
+        
+        # First, calculate the malmquist integrals for every bin
+        malm_integrals = np.array([self._integrate_malmquist(malm_pars, q0, q1) for q0, q1 
+                                   in zip(self.bin_edges[:-1], self.bin_edges[1:])])
+        malm_integrals = np.array(malm_integrals)
+        
+        raw_thetas = self.raw_vals if self.complete_vals is None else self.complete_vals
+        self.malm_vals = self._fit_thetas(raw_thetas, malm_integrals)
+        norm = np.sum(self.malm_vals * self.bin_widths) / np.sum(raw_thetas * self.bin_widths)
+        self.malm_vals /= norm
+        
+        # Adjust the errors too
+        if correct_errors:
+            logging.info('Correcting the lower bound')
+            err = self.raw_low if self.complete_vals is None else self.complete_low
+            self.malm_low = self._fit_thetas(err, malm_integrals) / norm
+            logging.info('Correcting the upper bound')
+            err = self.raw_high if self.complete_vals is None else self.complete_high
+            self.malm_high = self._fit_thetas(err, malm_integrals) / norm
+        return self.malm_vals - raw_thetas
+    
+    def plot(self, heights=None, ax=None, **hist_kwargs):
+        """ Make a histogram. Uses a malmquist-corrected histogram if available, then tries
+            a completeness-corrected one, and finally uses the raw histogram (if heights is None)
+        """
+        if heights is not None:
+            vals = heights
+        elif self.malm_vals is not None:
+            vals = self.malm_vals
+        elif self.complete_vals is not None:
+            vals = self.complete_vals
+        else:
+            vals = self.raw_vals
+        
+        if ax is None:
+            import matplotlib.pyplot as plt 
+            fig, ax = plt.subplots(1, 1)
+        return ax.bar(left=self.bin_edges[:-1], height=vals, width=self.bin_widths, **hist_kwargs)
