@@ -13,6 +13,8 @@ from astropy import units as u, constants
 import os
 import h5py
 import StarData
+import Priors
+import logging
 
 PRIOR_HDF5 = 'OrbitPrior.h5'
 
@@ -67,7 +69,7 @@ def lnlike(P, P_0, t, tau, k_C, k_I):
         P = 0.1
     retval = (k_C * t / tau - np.log(P / P_0) - k_I * k_C / (2.0 * tau ** 2) * (P ** 2 - P_0 ** 2)) ** 2 + penalty
     return retval
-    
+
 
 def poolfcn(args):
     return minimize_scalar(args[0], bracket=args[1], bounds=args[2], method='brent', args=args[3:]).x
@@ -148,14 +150,75 @@ def get_vsini_pdf(T_sec, age, age_err=None, P0_min=0.1, P0_max=5, N_age=1000, N_
     return vsini
 
 
-
 def get_age(star):
-	""" Get samples from the age for the given star.
-	"""
-	with h5py.File(PRIOR_HDF5, 'r') as infile:
-		if star in infile.keys():
-			return infile[star]['system_age'].value 
+    """ Get samples from the age for the given star.
+    """
+    with h5py.File(PRIOR_HDF5, 'r') as infile:
+        if star in infile.keys():
+            return infile[star]['system_age'].value 
 
-	from Priors import get_age
-	spt = StarData.GetData(star).spectype
-	return get_ages(star, spt)
+    from Priors import get_age
+    spt = StarData.GetData(star).spectype
+    return get_ages(star, spt)
+
+
+
+def maxwellian(v, alpha, l=0):
+    prob = (v-l)**2 * np.sqrt(2/np.pi) / alpha**3 * np.exp(-(v-l)**2 / (2*alpha**2))
+    prob[v < l] = 0.0
+    return prob
+
+
+def get_zr2011_velocity(mass, size=1e4):
+    """ 
+    Get samples from the velocity pdf as tabulated
+    by Table 4 in Zorec & Royer (2011)
+    
+    Parameters:
+    ============
+    - mass:       The mass of the star (in solar masses)
+    - size:       The number of samples 
+
+    Returns:
+    ========
+    Samples from the PDF for the equatorial velocity (in km/s)
+    """
+    # Read in the Maxwellian PDF fits
+    df = pd.read_csv('data/velocity_pdfs.csv', header=1)
+
+    # Find all of the mass-ranges that encompass the requested mass
+    subset = df.loc[(df.mass_low <= mass) & (df.mass_high > mass)]
+
+    # Get the average parameters
+    slow_mu = subset.slow_mu.mean()
+    fast_frac = subset.fast_frac.mean() / 100
+    slow_frac = 1.0 - fast_frac
+    fast_mu = subset.fast_mu.mean()
+    fast_l = subset.fast_l.mean()
+    logging.debug('Mean slow fraction, slow mean, fast fraction, fast mean, and fast l: ')
+    logging.debug(slow_frac, slow_mu, fast_frac, fast_mu, fast_l)
+
+    # Convert to the relevant parameters for the maxwellian function
+    slow_alpha = slow_mu / np.sqrt(2.0)
+    fast_alpha = fast_mu / np.sqrt(2.0)
+    logging.debug('slow/fast alpha = {},\t{}'.format(slow_alpha, fast_alpha))
+
+    # Get the total PDF
+    v = np.arange(0, 500, 0.01)
+    P = (slow_frac * maxwellian(v, alpha=slow_alpha, l=0.0) + 
+        fast_frac * maxwellian(v, alpha=fast_alpha, l=fast_l))
+    
+    # Convert to cdf
+    cdf = Priors.get_cdf(v, P)
+
+    # Remove duplicate cdf values
+    tmp = pd.DataFrame(data=dict(cdf=cdf, velocity=v))
+    tmp.drop_duplicates(subset=['cdf'], inplace=True)
+            
+    # Calculate the inverse cdf
+    inv_cdf = spline(tmp.cdf.values, tmp.velocity.values, k=1)
+            
+    # Calculate samples from the inverse cdf
+    velocity_samples = inv_cdf(np.random.uniform(size=size))
+
+    return velocity_samples
