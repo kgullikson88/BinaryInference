@@ -25,6 +25,10 @@ import StarData
 MS = SpectralTypeRelations.MainSequence()
 MT = Mamajek_Table.MamajekTable()
 sptnum2mass = MT.get_interpolator('SpTNum', 'Msun')
+
+# Read in the David & Hillenbrand summary
+dh2015 = pd.read_csv('/home/kgullikson/Dropbox/School/Research/AstarStuff/TargetLists/David_and_Hillenbrand2015/dh2015-table5.csv')
+
 def read_dh2015_posterior(hipnum,
                           basedir='/home/kgullikson/Dropbox/School/Research/AstarStuff/TargetLists/David_and_Hillenbrand2015',
                           var='mass'):
