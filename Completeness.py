@@ -223,3 +223,25 @@ def get_zr2011_velocity(mass, size=1e4):
 
     return velocity_samples
 
+
+
+def parse_braganca(fname='data/Braganca2012.tsv'):
+    """ Parse the braganca 2012 data file.
+    """
+    import re
+    pattern = '([OB][0-9])'
+    df = pd.read_csv('data/Braganca2012.tsv', sep='|', header=70)[2:].reset_index()
+
+    spt = []
+    hip = []
+    vsini = []
+    teff = []
+    for _, row in df.iterrows():
+        for m in re.finditer(pattern, row['SpT']):
+            spt.append(row['SpT'][m.start():m.end()])
+            hip.append(row['HIP'])
+            teff.append(row['Teff'])
+            vsini.append(row['<vsini>'])
+
+    return pd.DataFrame(data=dict(HIP=hip, SpT=spt,
+                                  vsini=vsini, Teff=teff))
