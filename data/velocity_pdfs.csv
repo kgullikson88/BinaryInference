@@ -1,4 +1,4 @@
-#This data comes from Table 4 of Zorec & Royer (2012):,,,,,,
+#This data comes from Table 4 of Zorec & Royer (2012): 2012A&A...537A.120Z ,,,,,,
 mass_low,mass_high,slow_frac,slow_mu,fast_frac,fast_mu,fast_l
 1.6,2,0,25,100,114,46
 1.7,2.1,0,25,100,124,46
