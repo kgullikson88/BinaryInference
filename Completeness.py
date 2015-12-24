@@ -222,3 +222,4 @@ def get_zr2011_velocity(mass, size=1e4):
     velocity_samples = inv_cdf(np.random.uniform(size=size))
 
     return velocity_samples
+
