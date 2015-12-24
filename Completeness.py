@@ -245,3 +245,20 @@ def parse_braganca(fname='data/Braganca2012.tsv'):
 
     return pd.DataFrame(data=dict(HIP=hip, SpT=spt,
                                   vsini=vsini, Teff=teff))
+
+
+def make_braganca_hists(df):
+    """ This is mostly to save my work and remind myself
+    how to make histograms of each spectral type bin. I will
+    need to tweak this to get things working for my purposes.
+    """
+    groups = df.groupby('SpT')
+    import pylab
+    for i, spt in enumerate(groups.groups.keys()):
+        group = groups.get_group(spt)
+        fig = pylab.figure(i)
+        vsini = group.vsini.values
+        pylab.title('SpT = {}'.format(spt))
+        pylab.hist(vsini[~np.isnan(vsini)], bins=10)
+
+    pylab.show()
