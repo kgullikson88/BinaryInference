@@ -10,6 +10,7 @@ from scipy.optimize import minimize_scalar
 from scipy.interpolate import InterpolatedUnivariateSpline as spline
 from scipy.stats import gaussian_kde
 import pandas as pd 
+import Mamajek_Table
 from astropy import units as u, constants
 import os
 import h5py
@@ -261,6 +262,92 @@ def parse_braganca(fname='data/Braganca2012.tsv'):
         df[col] = pd.to_numeric(df[col], errors='coerce')
     return df
 
+
+def get_vsini_samples(Teff, age, size=1):
+    """
+    Get samples of the vsini, drawing from a series of distributions
+    TODO: Document better how I calculate this
+
+    Parameters:
+    ============
+    Teff:        The effective temperature of the star, in Kelvin
+    age:         The age of the star, in Myr.
+    size:        The number of samples to generate. 
+                 Only used if Teff and age are scalars
+
+    Returns:
+    ========
+    Samples of the vsini, in km/s
+    """
+    # Make sure everything is a numpy array with commensurate shapes
+    Teff = np.atleast_1d(Teff)
+    age = np.atleast_1d(age)
+    if Teff.size > 1 and age.size > 1:
+        assert Teff.size == age.size 
+    if Teff.size == 1 and age.size == 1:
+        Teff = np.ones(size)*Teff
+        age = np.ones(size)*age 
+    else:
+        size = max(Teff.size, age.size)
+
+    # Convert temperature to mass, assuming main-sequence
+    MT = Mamajek_Table.MamajekTable()
+    teff2mass = MT.get_interpolator('Teff', 'Msun')
+    mass = teff2mass(Teff)
+
+    vsini = np.empty(size)
+
+    # Split by temperature
+    lowT = Teff < 7200
+    midT = 7200 >= Teff > 14000
+    highT = Teff >= 14000
+
+    ## Low Temperature: Use gyrochronology relation from Barnes (2010)
+    if lowT.sum() > 0:
+        period_fcn = get_barnes_interpolator()
+        P0 = np.random.uniform(0.1, 5.0, lowT.sum())
+        period = period_fcn(Teff[lowT], age[lowT], P0)
+
+        # Convert to an equatorial velocity distribution by using the radius
+        R = teff2radius(Teff[lowT])
+        v_eq = 2.0*np.pi*R*constants.R_sun/(period*u.day)
+
+        # Sample random inclinations to get a distribution of vsini
+        vsini[lowT] = v_eq.to(u.km/u.s) * np.random.uniform(0, 1., size=period.size)
+
+
+    ## Mid temperatures: Use Maxwellian velocity fits from Zorec & Royer (2011)
+    if midT.sum() > 0:
+        v_eq = get_zr2011_velocity(mass[midT], size, midT.sum())
+        vsini[midT] = v_eq * np.random.uniform(0, 1., size=v_eq.size)
+
+    # High temperatures: Sample from the empirical PDF from Braganca et al. (2012)
+    if highT.sum() > 0:
+        vsini[highT] = get_braganca_samples(size=highT.sum())
+
+    return vsini
+
+
+def get_braganca_samples(df=None, size=1):
+    # Get the pdf function
+    vsini_pdf = get_braganca_pdf()
+    v = np.arange(0, 500, 0.1)
+    P = vsini_pdf(v)
+
+    # Convert to cdf
+    cdf = Priors.get_cdf(v, P)
+
+    # Remove duplicate cdf values
+    tmp = pd.DataFrame(data=dict(cdf=cdf, velocity=v))
+    tmp.drop_duplicates(subset=['cdf'], inplace=True)
+            
+    # Calculate the inverse cdf
+    inv_cdf = spline(tmp.cdf.values, tmp.velocity.values, k=1)
+            
+    # Calculate samples from the inverse cdf
+    velocity_samples = inv_cdf(np.random.uniform(size=size))
+
+    return velocity_samples
 
 
 def get_braganca_pdf(df=None):
