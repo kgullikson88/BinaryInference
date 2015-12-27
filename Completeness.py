@@ -8,6 +8,7 @@ import numpy as np
 import multiprocessing
 from scipy.optimize import minimize_scalar
 from scipy.interpolate import InterpolatedUnivariateSpline as spline
+from scipy.stats import gaussian_kde
 import pandas as pd 
 from astropy import units as u, constants
 import os
@@ -15,6 +16,8 @@ import h5py
 import StarData
 import Priors
 import logging
+import pickle
+from scipy.interpolate import LinearNDInterpolator
 
 PRIOR_HDF5 = 'OrbitPrior.h5'
 
@@ -75,7 +78,7 @@ def poolfcn(args):
     return minimize_scalar(args[0], bracket=args[1], bounds=args[2], method='brent', args=args[3:]).x
 
 
-def get_period_dist_parallel(ages, P0_min, P0_max, T_star, N_P0=1000, k_C=0.646, k_I=452, nproc=None):
+def get_period_dist_parallel(ages, P0_min, P0_max, T_star, N_P0=1000, k_C=0.646, k_I=452, nproc=None, safe=True):
     """
     All-important function to get the period distribution out of stuff that I know - parallel version!
     :param ages: Random samples for the age of the system (Myr)
@@ -84,6 +87,7 @@ def get_period_dist_parallel(ages, P0_min, P0_max, T_star, N_P0=1000, k_C=0.646,
     :param T_star: The temperature of the star, in Kelvin
     :keyword N_age, N_P0: The number of samples to take in age and initial period
     :keyword k_C, k_I: The parameters fit in Barnes 2010
+    :keyword safe: Remove the periods with values < 0?
     """
 
     # Set up multiprocessing and a fit function with only one argument set
@@ -104,17 +108,25 @@ def get_period_dist_parallel(ages, P0_min, P0_max, T_star, N_P0=1000, k_C=0.646,
         args.extend(a)
     #    period_list.extend(pool.map(poolfcn, args))
     period_list = pool.map(poolfcn, args)
+    p0_list = [ag[3] for ag in args]
+    age_list = [ag[4] for ag in args]
 
     pool.close()
     pool.join()
+
     P = np.array(period_list)
-    return P[P > 0]
+    P0 = np.array(p0_list)
+    age = np.array(age_list)
+    teff = np.ones_like(P)*T_star
+    if safe:
+        return P[P > 0], P0[P > 0], age, teff
+    return P, P0, age, teff
 
 
-def get_vsini_pdf(T_sec, age, age_err=None, P0_min=0.1, P0_max=5, N_age=1000, N_P0=1000, k_C=0.646, k_I=452,
-                  nproc=None):
+def get_vsini_samples(T_sec, age, age_err=None, P0_min=0.1, P0_max=5, N_age=1000, N_P0=1000, k_C=0.646, k_I=452,
+                      nproc=None):
     """
-    Get the probability distribution function of vsini for a star of the given temperature, at the given age
+    Get samples from the probability distribution function of vsini for a star of the given temperature, at the given age
     :param T_sec: float - the temperature of the companion
     :param age: float, or numpy array: If a numpy array, should be a bunch of random samples of the age using
                 whatever PDF you want for the age. Could be MCMC samples, for instance. If a float, this
@@ -138,7 +150,7 @@ def get_vsini_pdf(T_sec, age, age_err=None, P0_min=0.1, P0_max=5, N_age=1000, N_
         age = np.random.normal(loc=age, scale=age_err, size=N_age)
 
     # Get the period distribution
-    periods = get_period_dist_parallel(age, P0_min, P0_max, T_sec, N_P0=N_P0, k_C=k_C, k_I=k_I, nproc=nproc)
+    periods, _ = get_period_dist_parallel(age, P0_min, P0_max, T_sec, N_P0=N_P0, k_C=k_C, k_I=k_I, nproc=nproc)
 
     # Convert to an equatorial velocity distribution by using the radius
     R = teff2radius(T_sec)
@@ -243,22 +255,73 @@ def parse_braganca(fname='data/Braganca2012.tsv'):
             teff.append(row['Teff'])
             vsini.append(row['<vsini>'])
 
-    return pd.DataFrame(data=dict(HIP=hip, SpT=spt,
-                                  vsini=vsini, Teff=teff))
+    df = pd.DataFrame(data=dict(HIP=hip, SpT=spt,
+                                vsini=vsini, Teff=teff))
+    for col in ['Teff', 'vsini']:
+        df[col] = pd.to_numeric(df[col], errors='coerce')
+    return df
 
 
-def make_braganca_hists(df):
-    """ This is mostly to save my work and remind myself
-    how to make histograms of each spectral type bin. I will
-    need to tweak this to get things working for my purposes.
+
+def get_braganca_pdf(df=None):
+    """ Return a callable that gives the PDF of the vsini distribution from Braganca2012
     """
-    groups = df.groupby('SpT')
-    import pylab
-    for i, spt in enumerate(groups.groups.keys()):
-        group = groups.get_group(spt)
-        fig = pylab.figure(i)
-        vsini = group.vsini.values
-        pylab.title('SpT = {}'.format(spt))
-        pylab.hist(vsini[~np.isnan(vsini)], bins=10)
+    if df is None:
+        df = parse_braganca()
 
-    pylab.show()
+    vsini = df.loc[df.vsini.notnull(), 'vsini'].values
+    kde = gaussian_kde(vsini, bw_method='scott')
+    return kde
+
+
+
+def get_barnes_interpolator(pretab='data/Gyro.pkl'):
+    with open(pretab, 'rb') as f:
+        tri, values = pickle.load(f)
+    raw_fcn = LinearNDInterpolator(tri, values)
+
+    def Period(Teff, age, P0):
+        """ 
+        Get the current rotation period of a star with the given parameters.
+
+        Parameters:
+        ===========
+        -Teff:      The effective temperature, in Kelvin
+        -age:       The age of the star, in Myr
+        -P0:        The initial rotation period, in days.
+
+        Returns:
+        ========
+        The current rotation period, in days.
+        """
+        return raw_fcn(np.log10(Teff), np.log10(age)+6, P0)
+
+    return Period
+
+
+
+def get_padova_interpolator(pretab='data/Padova.tri'):
+    with open(pretab, 'rb') as f:
+        tri, values = pickle.load(f)
+    raw_fcn = LinearNDInterpolator(tri, values)
+
+    def Mass(Teff, age, feh=0.0):
+        """ Get the mass by interpolating Padova evolutionary tracks
+
+        Parameters:
+        ===========
+        -Teff:    The effective temperature, in Kelvin
+        -age:     The age of the system, in Myr
+        -feh:     The metallicity of the star, in dex
+
+        Returns:
+        ========
+        Mass (in solar masses)
+        """
+        return raw_fcn(np.log10(Teff), np.log10(age)+6, feh)
+
+    return Mass 
+
+
+
+
