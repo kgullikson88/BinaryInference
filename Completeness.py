@@ -199,8 +199,17 @@ def get_zr2011_velocity(mass, size=1e4):
     # Read in the Maxwellian PDF fits
     df = pd.read_csv('data/velocity_pdfs.csv', header=1)
 
+    
     # Find all of the mass-ranges that encompass the requested mass
-    subset = df.loc[(df.mass_low <= mass) & (df.mass_high > mass)]
+    # Extrapolate if needed, but throw warning
+    if mass < df.mass_low.min():
+        logging.warn('Extrapolating to lower masses than the original study used!')
+        subset = df.loc[df.mass_low == df.mass_low.min()]
+    elif mass > df.mass_high.max():
+        logging.warn('Extrapolating to higher masses than the original study used!')
+        subset = df.loc[df.mass_high == df.mass_high.max()]
+    else:
+        subset = df.loc[(df.mass_low <= mass) & (df.mass_high > mass)]
 
     # Get the average parameters
     slow_mu = subset.slow_mu.mean()
