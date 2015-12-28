@@ -19,6 +19,7 @@ import Priors
 import logging
 import pickle
 from scipy.interpolate import LinearNDInterpolator
+from HelperFunctions import IsListlike
 
 PRIOR_HDF5 = 'OrbitPrior.h5'
 
@@ -43,17 +44,26 @@ teff2radius_int = spline(bk_data.Teff, bk_data.Radius)
 Tmin = bk_data.Teff.min()
 Tmax = bk_data.Teff.max()
 def teff2tau(T):
-    if T < Tmin:
-        return teff2tau(Tmin)
-    elif T > Tmax:
-        return teff2tau(Tmax)
-    return max(0.1, teff2tau_int(T))
+    T = np.atleast_1d(T)
+    lowT = T < Tmin
+    highT = T > Tmax
+    good = (T >= Tmin) & (T <= Tmax)
+    retval = np.empty_like(T)
+    retval[lowT] = teff2tau_int(Tmin)
+    retval[highT] = teff2tau_int(Tmax)
+    retval[good] = np.maximum(0.1, teff2tau_int(T[good]))
+    return retval
+
 def teff2radius(T):
-    if T < Tmin:
-        return teff2radius_int(Tmin)
-    elif T > Tmax:
-        return teff2radius_int(Tmax)
-    return teff2radius_int(T)
+    T = np.atleast_1d(T)
+    lowT = T < Tmin
+    highT = T > Tmax
+    good = (T >= Tmin) & (T <= Tmax)
+    retval = np.empty_like(T)
+    retval[lowT] = teff2radius_int(Tmin)
+    retval[highT] = teff2radius_int(Tmax)
+    retval[good] = np.maximum(0.1, teff2radius_int(T[good]))
+    return retval
 
 
 def lnlike(P, P_0, t, tau, k_C, k_I):
@@ -124,7 +134,7 @@ def get_period_dist_parallel(ages, P0_min, P0_max, T_star, N_P0=1000, k_C=0.646,
     return P, P0, age, teff
 
 
-def get_vsini_samples(T_sec, age, age_err=None, P0_min=0.1, P0_max=5, N_age=1000, N_P0=1000, k_C=0.646, k_I=452,
+def get_gyro_vsini_samples(T_sec, age, age_err=None, P0_min=0.1, P0_max=5, N_age=1000, N_P0=1000, k_C=0.646, k_I=452,
                       nproc=None):
     """
     Get samples from the probability distribution function of vsini for a star of the given temperature, at the given age
@@ -196,45 +206,40 @@ def get_zr2011_velocity(mass, size=1e4):
     ========
     Samples from the PDF for the equatorial velocity (in km/s)
     """
-    # Read in the Maxwellian PDF fits
+
+    # Read in and update the columns a bit.
     df = pd.read_csv('data/velocity_pdfs.csv', header=1)
+    df['mid_mass'] = (df.mass_high + df.mass_low) / 2.0
+    df['slow_alpha'] = df.slow_mu / np.sqrt(2)
+    df['fast_alpha'] = df.fast_mu / np.sqrt(2)
+    df['slow_frac'] /= 100.0
+    df['fast_frac'] /= 100.0
 
-    
-    # Find all of the mass-ranges that encompass the requested mass
-    # Extrapolate if needed, but throw warning
-    if mass < df.mass_low.min():
-        logging.warn('Extrapolating to lower masses than the original study used!')
-        subset = df.loc[df.mass_low == df.mass_low.min()]
-    elif mass > df.mass_high.max():
-        logging.warn('Extrapolating to higher masses than the original study used!')
-        subset = df.loc[df.mass_high == df.mass_high.max()]
-    else:
-        subset = df.loc[(df.mass_low <= mass) & (df.mass_high > mass)]
+    # Interpolate the parameters as a function of mass
+    columns = ['slow_frac', 'slow_alpha', 'fast_frac', 'fast_alpha', 'fast_l']
+    interpolators = {col: spline(df.mid_mass, df[col], k=1) for col in columns}
+    pars = {col: interpolators[col](mass) for col in interpolators.keys()}
 
-    # Get the average parameters
-    slow_mu = subset.slow_mu.mean()
-    fast_frac = subset.fast_frac.mean() / 100
-    slow_frac = 1.0 - fast_frac
-    fast_mu = subset.fast_mu.mean()
-    fast_l = subset.fast_l.mean()
-    logging.debug('Mean slow fraction, slow mean, fast fraction, fast mean, and fast l: ')
-    logging.debug(slow_frac, slow_mu, fast_frac, fast_mu, fast_l)
+    # Make large arrays. This may be memory intensive!
+    v_arr = np.arange(0, 500, 0.1)
+    v, slow_frac = np.meshgrid(v_arr, pars['slow_frac'])
+    v, slow_alpha = np.meshgrid(v_arr, pars['slow_alpha'])
+    v, fast_frac = np.meshgrid(v_arr, pars['fast_frac'])
+    v, fast_alpha = np.meshgrid(v_arr, pars['fast_alpha'])
+    v, fast_l = np.meshgrid(v_arr, pars['fast_l'])
 
-    # Convert to the relevant parameters for the maxwellian function
-    slow_alpha = slow_mu / np.sqrt(2.0)
-    fast_alpha = fast_mu / np.sqrt(2.0)
-    logging.debug('slow/fast alpha = {},\t{}'.format(slow_alpha, fast_alpha))
+    # Get the probability for each mass point
+    prob = (slow_frac*maxwellian(v=v, alpha=slow_alpha, l=0.0) + 
+            fast_frac*maxwellian(v=v, alpha=fast_alpha, l=fast_l))
 
-    # Get the total PDF
-    v = np.arange(0, 500, 0.01)
-    P = (slow_frac * maxwellian(v, alpha=slow_alpha, l=0.0) + 
-        fast_frac * maxwellian(v, alpha=fast_alpha, l=fast_l))
-    
+    # Marginalize over the mass
+    P_avg = np.mean(prob, axis=0)
+
     # Convert to cdf
-    cdf = Priors.get_cdf(v, P)
+    cdf = Priors.get_cdf(v_arr, P_avg)
 
     # Remove duplicate cdf values
-    tmp = pd.DataFrame(data=dict(cdf=cdf, velocity=v))
+    tmp = pd.DataFrame(data=dict(cdf=cdf, velocity=v_arr))
     tmp.drop_duplicates(subset=['cdf'], inplace=True)
             
     # Calculate the inverse cdf
@@ -297,7 +302,11 @@ def get_vsini_samples(Teff, age, size=1):
         Teff = np.ones(size)*Teff
         age = np.ones(size)*age 
     else:
-        size = max(Teff.size, age.size)
+        if Teff.size > 1 and age.size == 1:
+            age = np.ones_like(Teff) * age 
+        elif Teff.size == 1 and age.size > 1:
+            Teff = np.ones_like(age) * Teff
+        size = Teff.size
 
     # Convert temperature to mass, assuming main-sequence
     MT = Mamajek_Table.MamajekTable()
@@ -308,8 +317,9 @@ def get_vsini_samples(Teff, age, size=1):
 
     # Split by temperature
     lowT = Teff < 7200
-    midT = 7200 >= Teff > 14000
+    midT = (Teff >= 7200) & (Teff < 14000)
     highT = Teff >= 14000
+    print(lowT.sum(), midT.sum(), highT.sum())
 
     ## Low Temperature: Use gyrochronology relation from Barnes (2010)
     if lowT.sum() > 0:
@@ -327,7 +337,7 @@ def get_vsini_samples(Teff, age, size=1):
 
     ## Mid temperatures: Use Maxwellian velocity fits from Zorec & Royer (2011)
     if midT.sum() > 0:
-        v_eq = get_zr2011_velocity(mass[midT], size, midT.sum())
+        v_eq = get_zr2011_velocity(mass[midT], size=midT.sum())
         vsini[midT] = v_eq * np.random.uniform(0, 1., size=v_eq.size)
 
     # High temperatures: Sample from the empirical PDF from Braganca et al. (2012)
