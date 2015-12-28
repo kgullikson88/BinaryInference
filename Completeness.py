@@ -316,10 +316,9 @@ def get_vsini_samples(Teff, age, size=1):
     vsini = np.empty(size)
 
     # Split by temperature
-    lowT = Teff < 7200
-    midT = (Teff >= 7200) & (Teff < 14000)
+    lowT = Teff < 6500
+    midT = (Teff >= 6500) & (Teff < 14000)
     highT = Teff >= 14000
-    print(lowT.sum(), midT.sum(), highT.sum())
 
     ## Low Temperature: Use gyrochronology relation from Barnes (2010)
     if lowT.sum() > 0:
