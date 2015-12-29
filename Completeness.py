@@ -287,75 +287,6 @@ def parse_braganca(fname='data/Braganca2012.tsv'):
     return df
 
 
-def get_vsini_samples(Teff, age, size=1):
-    """
-    Get samples of the vsini, drawing from a series of distributions
-    TODO: Document better how I calculate this
-
-    Parameters:
-    ============
-    Teff:        The effective temperature of the star, in Kelvin
-    age:         The age of the star, in Myr.
-    size:        The number of samples to generate. 
-                 Only used if Teff and age are scalars
-
-    Returns:
-    ========
-    Samples of the vsini, in km/s
-    """
-    # Make sure everything is a numpy array with commensurate shapes
-    Teff = np.atleast_1d(Teff)
-    age = np.atleast_1d(age)
-    if Teff.size > 1 and age.size > 1:
-        assert Teff.size == age.size 
-    if Teff.size == 1 and age.size == 1:
-        Teff = np.ones(size)*Teff
-        age = np.ones(size)*age 
-    else:
-        if Teff.size > 1 and age.size == 1:
-            age = np.ones_like(Teff) * age 
-        elif Teff.size == 1 and age.size > 1:
-            Teff = np.ones_like(age) * Teff
-        size = Teff.size
-
-    # Convert temperature to mass, assuming main-sequence
-    MT = Mamajek_Table.MamajekTable()
-    teff2mass = MT.get_interpolator('Teff', 'Msun')
-    mass = teff2mass(Teff)
-
-    vsini = np.empty(size)
-
-    # Split by temperature
-    lowT = Teff < 6500
-    midT = (Teff >= 6500) & (Teff < 14000)
-    highT = Teff >= 14000
-
-    ## Low Temperature: Use gyrochronology relation from Barnes (2010)
-    if lowT.sum() > 0:
-        period_fcn = get_barnes_interpolator()
-        P0 = np.random.uniform(0.1, 5.0, lowT.sum())
-        period = period_fcn(Teff[lowT], age[lowT], P0)
-
-        # Convert to an equatorial velocity distribution by using the radius
-        R = teff2radius(Teff[lowT])
-        v_eq = 2.0*np.pi*R*constants.R_sun/(period*u.day)
-
-        # Sample random inclinations to get a distribution of vsini
-        vsini[lowT] = v_eq.to(u.km/u.s) * np.random.uniform(0, 1., size=period.size)
-
-
-    ## Mid temperatures: Use Maxwellian velocity fits from Zorec & Royer (2011)
-    if midT.sum() > 0:
-        v_eq = get_zr2011_velocity(mass[midT], size=midT.sum())
-        vsini[midT] = v_eq * np.random.uniform(0, 1., size=v_eq.size)
-
-    # High temperatures: Sample from the empirical PDF from Braganca et al. (2012)
-    if highT.sum() > 0:
-        vsini[highT] = get_braganca_samples(size=highT.sum())
-
-    return vsini
-
-
 def get_braganca_samples(df=None, size=1):
     # Get the pdf function
     vsini_pdf = get_braganca_pdf()
@@ -389,9 +320,6 @@ def get_braganca_pdf(df=None):
     return kde
 
 
-#with open('data/Gyro.pkl', 'rb') as f:
-#    tri, values = pickle.load(f)
-#gyro_raw_fcn = LinearNDInterpolator(tri, values)
 def get_barnes_interpolator():
     with open('data/Gyro.pkl', 'rb') as f:
         tri, values = pickle.load(f)
@@ -414,30 +342,6 @@ def get_barnes_interpolator():
         return gyro_raw_fcn(np.log10(Teff), np.log10(age)+6, P0)
 
     return Period
-
-
-
-def get_padova_interpolator(pretab='data/Padova.tri'):
-    with open(pretab, 'rb') as f:
-        tri, values = pickle.load(f)
-    raw_fcn = LinearNDInterpolator(tri, values)
-
-    def Mass(Teff, age, feh=0.0):
-        """ Get the mass by interpolating Padova evolutionary tracks
-
-        Parameters:
-        ===========
-        -Teff:    The effective temperature, in Kelvin
-        -age:     The age of the system, in Myr
-        -feh:     The metallicity of the star, in dex
-
-        Returns:
-        ========
-        Mass (in solar masses)
-        """
-        return raw_fcn(np.log10(Teff), np.log10(age)+6, feh)
-
-    return Mass 
 
 
 
