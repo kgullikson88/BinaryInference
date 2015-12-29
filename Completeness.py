@@ -48,7 +48,7 @@ def teff2tau(T):
     lowT = T < Tmin
     highT = T > Tmax
     good = (T >= Tmin) & (T <= Tmax)
-    retval = np.empty_like(T)
+    retval = np.empty_like(T, dtype=np.float)
     retval[lowT] = teff2tau_int(Tmin)
     retval[highT] = teff2tau_int(Tmax)
     retval[good] = np.maximum(0.1, teff2tau_int(T[good]))
@@ -59,7 +59,7 @@ def teff2radius(T):
     lowT = T < Tmin
     highT = T > Tmax
     good = (T >= Tmin) & (T <= Tmax)
-    retval = np.empty_like(T)
+    retval = np.empty_like(T, dtype=np.float)
     retval[lowT] = teff2radius_int(Tmin)
     retval[highT] = teff2radius_int(Tmax)
     retval[good] = np.maximum(0.1, teff2radius_int(T[good]))
@@ -126,11 +126,13 @@ def get_period_dist_parallel(ages, P0_min, P0_max, T_star, N_P0=1000, k_C=0.646,
     pool.join()
 
     P = np.array(period_list)
+    if P.ndim > 1:
+        P = P[:, 0]
     P0 = np.array(p0_list)
     age = np.array(age_list)
     teff = np.ones_like(P)*T_star
     if safe:
-        return P[P > 0], P0[P > 0], age, teff
+        return P[P > 0], P0[P > 0], age[P > 0], teff[P > 0]
     return P, P0, age, teff
 
 
@@ -192,7 +194,7 @@ def maxwellian(v, alpha, l=0):
     return prob
 
 
-def get_zr2011_velocity(mass, size=1e4):
+def get_zr2011_velocity(mass, size=1e4, reduce_arr=True, df=None):
     """ 
     Get samples from the velocity pdf as tabulated
     by Table 4 in Zorec & Royer (2011)
@@ -201,6 +203,9 @@ def get_zr2011_velocity(mass, size=1e4):
     ============
     - mass:       The mass of the star (in solar masses)
     - size:       The number of samples 
+    - reduce_arr: Boolean flag. Should re only take the unique masses or all of them?
+    - df:         A dataframe with all of the necessary columns. Don't give this 
+                  unless you know what you are doing!
 
     Returns:
     ========
@@ -208,12 +213,17 @@ def get_zr2011_velocity(mass, size=1e4):
     """
 
     # Read in and update the columns a bit.
-    df = pd.read_csv('data/velocity_pdfs.csv', header=1)
-    df['mid_mass'] = (df.mass_high + df.mass_low) / 2.0
-    df['slow_alpha'] = df.slow_mu / np.sqrt(2)
-    df['fast_alpha'] = df.fast_mu / np.sqrt(2)
-    df['slow_frac'] /= 100.0
-    df['fast_frac'] /= 100.0
+    if df is None:
+        df = pd.read_csv('data/velocity_pdfs.csv', header=1)
+        df['mid_mass'] = (df.mass_high + df.mass_low) / 2.0
+        df['slow_alpha'] = df.slow_mu / np.sqrt(2)
+        df['fast_alpha'] = df.fast_mu / np.sqrt(2)
+        df['slow_frac'] /= 100.0
+        df['fast_frac'] /= 100.0
+
+    # Reduce the size of the mass array, if requested
+    if reduce_arr:
+        mass = np.unique(mass)
 
     # Interpolate the parameters as a function of mass
     columns = ['slow_frac', 'slow_alpha', 'fast_frac', 'fast_alpha', 'fast_l']
@@ -379,11 +389,13 @@ def get_braganca_pdf(df=None):
     return kde
 
 
-
-def get_barnes_interpolator(pretab='data/Gyro.pkl'):
-    with open(pretab, 'rb') as f:
+#with open('data/Gyro.pkl', 'rb') as f:
+#    tri, values = pickle.load(f)
+#gyro_raw_fcn = LinearNDInterpolator(tri, values)
+def get_barnes_interpolator():
+    with open('data/Gyro.pkl', 'rb') as f:
         tri, values = pickle.load(f)
-    raw_fcn = LinearNDInterpolator(tri, values)
+    gyro_raw_fcn = LinearNDInterpolator(tri, values)
 
     def Period(Teff, age, P0):
         """ 
@@ -399,7 +411,7 @@ def get_barnes_interpolator(pretab='data/Gyro.pkl'):
         ========
         The current rotation period, in days.
         """
-        return raw_fcn(np.log10(Teff), np.log10(age)+6, P0)
+        return gyro_raw_fcn(np.log10(Teff), np.log10(age)+6, P0)
 
     return Period
 
@@ -430,3 +442,123 @@ def get_padova_interpolator(pretab='data/Padova.tri'):
 
 
 
+class VelocityPDF(object):
+    def __init__(self):
+        self.zr2011_df = None
+        return        
+    
+
+    def _compute_zr2011_dataframe(self):
+        """ 
+        Get the dataframe needed for the mid-range temperatures, 
+        and add a mass bin for 6000 K using the gyrochronology relation.
+        """
+        # Read in the dataframe from disk.
+        df = pd.read_csv('data/velocity_pdfs.csv', header=1)
+
+        # Compute equatorial velocities for a 6000 K star at this age.
+        teff = np.ones_like(self.age) * 6000.0
+        v_eq = self._gyro_velocities(teff, self.age).to(u.km/u.s).value 
+        v_eq[v_eq > 500] = np.nan  # Remove unphysical vsini values.
+
+        # Calculate approximate maxwellian parameters from the velocities.
+        alpha = np.sqrt(np.nanvar(v_eq) * np.pi / (3*np.pi - 8))
+        l = np.nanmedian(v_eq) - 2*alpha*np.sqrt(2/np.pi)
+
+        # Add a row to the dataframe with this information
+        df.loc[df.index.max()+1] = [1.0, 1.24, 0, 25, 100, alpha*np.sqrt(2), l]
+
+        # Calculate a few more columns for the dataframe
+        df['mid_mass'] = (df.mass_high + df.mass_low) / 2.0
+        df['slow_alpha'] = df.slow_mu / np.sqrt(2)
+        df['fast_alpha'] = df.fast_mu / np.sqrt(2)
+        df['slow_frac'] /= 100.0
+        df['fast_frac'] /= 100.0
+
+        # Sort so that interpolation works
+        df = df.sort_values(by='mid_mass').reset_index()
+
+        return df
+
+    
+    def _gyro_velocities(self, teff, age):
+        try:
+            period_fcn = self.period_fcn
+        except AttributeError:
+            period_fcn = get_barnes_interpolator()
+            self.period_fcn = period_fcn
+        
+        P0 = np.random.uniform(0.1, 5.0, teff.size)
+        period = period_fcn(teff, age, P0)
+
+        # Convert to an equatorial velocity distribution by using the radius
+        R = teff2radius(teff)
+        v_eq = 2.0*np.pi*R*constants.R_sun/(period*u.day)
+        return v_eq
+
+
+    def _lowT(self, teff, age):
+        v_eq = self._gyro_velocities(teff, age)
+
+        # Sample random inclinations to get a distribution of vsini
+        return v_eq.to(u.km/u.s) * np.random.uniform(0, 1., size=teff.size)
+    
+    
+    def _midT(self, mass):
+        """ TODO: Treat 6000 to 7000 K differently"""
+        if self.zr2011_df is None:
+            self.zr2011_df = self._compute_zr2011_dataframe()
+        v_eq = get_zr2011_velocity(mass, size=mass.shape, df=self.zr2011_df)
+        return v_eq * np.random.uniform(0, 1., size=v_eq.shape)
+    
+    
+    def _highT(self, size):
+        return get_braganca_samples(size=size)
+    
+    
+    
+    def get_vsini_samples(self, Teff, age, size=1):
+        """ TODO: Insert docstring
+        """
+        # Make sure everything is a numpy array with commensurate shapes
+        Teff = np.atleast_1d(Teff)
+        age = np.atleast_1d(age)
+        if Teff.size > 1 and age.size > 1:
+            assert Teff.size == age.size 
+        if Teff.size == 1 and age.size == 1:
+            Teff = np.ones(size)*Teff
+            age = np.ones(size)*age 
+        else:
+            if Teff.size > 1 and age.size == 1:
+                age = np.ones_like(Teff) * age 
+            elif Teff.size == 1 and age.size > 1:
+                Teff = np.ones_like(age) * Teff
+            size = Teff.size
+
+        # Convert temperature to mass, assuming main-sequence
+        MT = Mamajek_Table.MamajekTable()
+        teff2mass = MT.get_interpolator('Teff', 'Msun')
+        mass = teff2mass(Teff)
+        
+        # Save class variables
+        self.Teff = Teff
+        self.age = age
+        self.mass = mass
+        
+        # Split by temperature
+        lowT = self.Teff < 6000
+        midT = (self.Teff >= 6000) & (self.Teff < 14000)
+        highT = self.Teff >= 14000
+        
+        # Make a vsini array
+        vsini = np.empty_like(self.Teff, dtype=np.float)
+        
+        # Fill by temperature
+        if lowT.sum() > 0:
+            vsini[lowT] = self._lowT(self.Teff[lowT], self.age[lowT])
+        if midT.sum() > 0:
+            vsini[midT] = self._midT(self.mass[midT])
+        if highT.sum() > 0:
+            vsini[highT] = self._highT(size=highT.sum())
+        
+        return vsini
