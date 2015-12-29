@@ -21,7 +21,7 @@ import pickle
 from scipy.interpolate import LinearNDInterpolator
 from HelperFunctions import IsListlike
 
-PRIOR_HDF5 = 'OrbitPrior.h5'
+PRIOR_HDF5 = 'data/OrbitPrior.h5'
 
 
 # Read in the Barnes & Kim (2010) table (it is in LaTex format)
