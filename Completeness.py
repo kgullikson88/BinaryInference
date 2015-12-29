@@ -466,3 +466,34 @@ class VelocityPDF(object):
             vsini[highT] = self._highT(size=highT.sum())
         
         return vsini
+
+
+
+def get_completeness(starname, date):
+    """ 
+    Get the completeness as a function of mass-ratio for the 
+    given star and observation date.
+    """
+
+    # Read in the completeness vs. temperature
+    with h5py.File('data/Completeness.h5', 'r') as comp:
+        if starname in comp.keys() and date in comp[starname].keys():
+            ds = comp[starname][date]['marginalized']
+            comp_df = pd.DataFrame(data=ds.value, columns=ds.attrs['columns'])
+            comp_df['Instrument'] = ds.attrs['Instrument']
+        else:
+            logging.warn('starname/date combination not found in dataset!')
+            return None
+
+    # Get the primary mass 
+    spt = StarData.GetData(starname).spectype
+    primary_mass_samples = Priors.get_primary_mass(starname, spt)
+    comp_df['M1'] = np.median(primary_mass_samples)
+
+    # Convert the companion temperature to mass using spectral type relations 
+    spt_int = Priors.SpectralTypeInterpolator()
+    comp_df['M2'] = comp_df.Temperature.map(spt_int)
+
+    # Make mass ratio and return
+    comp_df['q'] = comp_df.M2 / comp_df.M1
+    return comp_df 
