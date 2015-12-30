@@ -128,17 +128,18 @@ def get_ages(starname, spt, size=1e4):
             logging.debug('Star found in DH2015 sample!')
             # Get the cdf in discrete steps
             age, P = read_dh2015_posterior(hipnum=hipnum, var='age')
-            cdf = get_cdf(age, P)
-            
-            # Remove duplicate cdf values
-            df = pd.DataFrame(data=dict(cdf=cdf, age=age))
-            df.drop_duplicates(subset=['cdf'], inplace=True)
-            
-            # Calculate the inverse cdf
-            inv_cdf = spline(df.cdf.values, df.age.values, k=1)
-            
-            age_samples = inv_cdf(np.random.uniform(size=size))
-            return 10**(age_samples-6.0)
+            if not np.any(np.isnan(P)):
+                cdf = get_cdf(age, P)
+                
+                # Remove duplicate cdf values
+                df = pd.DataFrame(data=dict(cdf=cdf, age=age))
+                df.drop_duplicates(subset=['cdf'], inplace=True)
+                
+                # Calculate the inverse cdf
+                inv_cdf = spline(df.cdf.values, df.age.values, k=1)
+                
+                age_samples = inv_cdf(np.random.uniform(size=size))
+                return 10**(age_samples-6.0)
     
     # Try the evolutionary grid mass
     age_samples = get_padova_posterior(starname, var='age')
