@@ -86,17 +86,18 @@ def get_primary_mass(star, spt, size=1e4, mass_err=0.1):
         if int(hipnum) in dh2015.HIP.values:
             # Get the cdf in discrete steps
             mass, P = read_dh2015_posterior(hipnum=hipnum, var='mass')
-            cdf = get_cdf(mass, P)
-            
-            # Remove duplicate cdf values
-            df = pd.DataFrame(data=dict(cdf=cdf, mass=mass))
-            df.drop_duplicates(subset=['cdf'], inplace=True)
-            
-            # Calculate the inverse cdf
-            inv_cdf = spline(df.cdf.values, df.mass.values, k=1)
-            
-            mass_samples = inv_cdf(np.random.uniform(size=size))
-            return mass_samples
+            if not np.any(np.isnan(P)):
+                cdf = get_cdf(mass, P)
+                
+                # Remove duplicate cdf values
+                df = pd.DataFrame(data=dict(cdf=cdf, mass=mass))
+                df.drop_duplicates(subset=['cdf'], inplace=True)
+                
+                # Calculate the inverse cdf
+                inv_cdf = spline(df.cdf.values, df.mass.values, k=1)
+                
+                mass_samples = inv_cdf(np.random.uniform(size=size))
+                return mass_samples
     
     # Try the evolutionary grid mass
     mass_samples = get_padova_posterior(star, var='mass')
