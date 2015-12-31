@@ -496,4 +496,8 @@ def get_completeness(starname, date):
 
     # Make mass ratio and return
     comp_df['q'] = comp_df.M2 / comp_df.M1
+
+    # Make sure all columns are floats
+    for col in ['Temperature', 'Detection_Rate', 'vsini', 'M1', 'M2', 'q']:
+        comp_df[col] = pd.to_numeric(comp_df[col], errors='coerce')
     return comp_df 
