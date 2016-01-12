@@ -350,6 +350,16 @@ def get_barnes_interpolator():
 class VelocityPDF(object):
     def __init__(self):
         self.zr2011_df = None
+
+        # Initialize the radius interpolator
+        import dill
+        with open('data/Radius_Interpolator.pkl', 'r') as f:
+            raw_radius_fcn = dill.load(f)
+        
+        def radius(self, teff, age):
+            log_radius = raw_radius_fcn(np.log10(teff), np.log10(age)+6)
+            return 10**log_radius
+
         return        
     
 
@@ -398,7 +408,8 @@ class VelocityPDF(object):
         period = period_fcn(teff, age, P0)
 
         # Convert to an equatorial velocity distribution by using the radius
-        R = teff2radius(teff)
+        #R = teff2radius(teff)
+        R = self.radius(teff, age)
         v_eq = 2.0*np.pi*R*constants.R_sun/(period*u.day)
         return v_eq
 
