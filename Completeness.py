@@ -386,14 +386,15 @@ class VelocityPDF(object):
         return df
 
     
-    def _gyro_velocities(self, teff, age):
+    def _gyro_velocities(self, teff, age, P0_min=0.1, P0_max=5.0):
         try:
             period_fcn = self.period_fcn
         except AttributeError:
             period_fcn = get_barnes_interpolator()
             self.period_fcn = period_fcn
         
-        P0 = np.random.uniform(0.1, 5.0, teff.size)
+        #P0 = np.random.uniform(P0_min, P0_max, teff.size)
+        P0 = 10**np.random.uniform(np.log10(P0_min), np.log10(P0_max), size=teff.size)
         period = period_fcn(teff, age, P0)
 
         # Convert to an equatorial velocity distribution by using the radius
