@@ -114,7 +114,8 @@ def get_period_dist_parallel(ages, P0_min, P0_max, T_star, N_P0=1000, k_C=0.646,
     args = []
     #args = [(lnlike, bracket, bounds, P0, age, tau, k_C, k_I) for P0 in np.random.uniform(P0_min, P0_max, size=N_P0) for age in ages]
     for age in ages:
-        P0_vals = np.random.uniform(P0_min, P0_max, size=N_P0)
+        #P0_vals = np.random.uniform(P0_min, P0_max, size=N_P0)
+        P0_vals = 10**np.random.uniform(np.log10(P0_min), np.log10(P0_max), size=N_P0)
         a = [(lnlike, bracket, bounds, P0, age, tau, k_C, k_I) for P0 in P0_vals]
         args.extend(a)
     #    period_list.extend(pool.map(poolfcn, args))
