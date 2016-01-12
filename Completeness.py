@@ -395,7 +395,7 @@ class VelocityPDF(object):
         return df
 
     
-    def _gyro_velocities(self, teff, age, P0_min=0.1, P0_max=5.0):
+    def _gyro_velocities(self, teff, age, P0_min=0.2, P0_max=10.0):
         try:
             period_fcn = self.period_fcn
         except AttributeError:
