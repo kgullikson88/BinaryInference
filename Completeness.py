@@ -354,14 +354,13 @@ class VelocityPDF(object):
         # Initialize the radius interpolator
         import dill
         with open('data/Radius_Interpolator.pkl', 'r') as f:
-            raw_radius_fcn = dill.load(f)
-        
-        def radius(self, teff, age):
-            log_radius = raw_radius_fcn(np.log10(teff), np.log10(age)+6)
-            return 10**log_radius
+            self._raw_radius_fcn = dill.load(f)
 
         return        
-    
+
+    def radius(self, teff, age):
+            log_radius = self._raw_radius_fcn(np.log10(teff), np.log10(age)+6)
+            return 10**log_radius
 
     def _compute_zr2011_dataframe(self):
         """ 
