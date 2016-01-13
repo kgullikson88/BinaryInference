@@ -168,15 +168,30 @@ def get_ages(starname, spt, size=1e4):
 
 class IsochroneInterpolator(object):
     def __init__(self):
+        # Get the dataframe holding the Feiden isochrones
         df = Feiden.MASTERDF
         df['logAge'] = np.log10(df.Age)
+        df['Teff'] = 10**df.logT
 
-        points = np.zeros((len(df),2))
-        points[:,0] = df.logT.values
-        points[:,1] = df.logAge.values
-        self.fcn = scipy.interpolate.LinearNDInterpolator(points, df.Msun.values)
+        # Pull out the pre-main sequence or main-sequence values
+        MT = Mamajek_Table.MamajekTable()
+        teff2mass = MT.get_interpolator('Teff', 'Msun')
+        good = (df.Msun < 1.2*teff2mass(df.Teff))
+
+        # Interpolate from teff/age to mass
+        logT = df.loc[good, 'logT'].values
+        log_age = df.loc[good, 'logAge'].values
+        mass = df.loc[good, 'Msun'].values
+        points = np.column_stack((logT, log_age))
+        values = mass
+        self.fcn = scipy.interpolate.LinearNDInterpolator(points, values)
+
     def __call__(self, teff, age):
-        return self.fcn(np.log10(teff), age)
+        """
+        Return the mass corresponding to a star of temperature T at the given age
+        (age in Myr).
+        """
+        return self.fcn(np.log10(teff), np.log10(age) + 6)
 
     
 class SpectralTypeInterpolator(object):
