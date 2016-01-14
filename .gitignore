@@ -13,3 +13,11 @@ unconstrained_mn_malmquist
 unconstrained_mn_qprior
 unconstrained_mn_qprior2
 TexMex.slides.html
+Figures*
+Completeness/*
+FullFitter
+ParFitter
+login.cl
+*.log
+pyraf
+uparm
