@@ -116,17 +116,23 @@ def fit_orbits_multinest(output_base, outfilename, sample_parameters, rv1_err=0.
 
         # Fit the orbit
         logging.debug('Creating Fitter...')
-        fitter = Orbit.SpectroscopicOrbitFitter(rv_times=t_rv, rv1_measurements=rv1, rv1_err=rv1_err,
-                                                rv2_measurements=rv2, rv2_err=rv2_err,
-                                                primary_mass=M1_mean,
-                                                q_prior=q_prior)
+        #fitter = Orbit.SpectroscopicOrbitFitter(rv_times=t_rv, rv1_measurements=rv1, rv1_err=rv1_err,
+        #                                        rv2_measurements=rv2, rv2_err=rv2_err,
+        #                                        primary_mass=M1_mean,
+        #                                        q_prior=q_prior)
+        fitter = Orbit.FullOrbitFitter(rv_times=t_rv, imaging_times=[], rv1_measurements=rv1, rv1_err=rv1_err,
+                                       rv2_measurements=rv2, rv2_err=rv2_err,
+                                       rho_measurements=[], theta_measurements=[], pos_err=[],
+                                       q_prior=q_prior)
         logging.debug('Fitting...')
-        fitter.fit(backend='multinest', basename='{}/idx{}-'.format(output_base, i), overwrite=False)
+        fitter.fit(backend='multinest', basename='{}/idx{}-'.format(output_base, i), overwrite=True)
 
         # Save the MCMC samples and the true parameters
         logging.debug('Saving MCMC samples')
         try:
-            ds = outfile.create_dataset('{}/ds{}'.format(output_base, i), data=fitter.samples, maxshape=(None, 8))
+            ds = outfile.create_dataset('{}/ds{}'.format(output_base, i), 
+                                        data=fitter.samples, 
+                                        maxshape=(None, fitter.samples.shape[1]))
         except RuntimeError:
             ds = outfile['{}/ds{}'.format(output_base, i)]
             ds.resize(fitter.samples.shape)

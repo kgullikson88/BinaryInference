@@ -420,8 +420,9 @@ class Hist(object):
         """
         if completeness_integrals is None:
             from scipy.integrate import quad
-            completeness_integrals = [quad(completeness_fcn, x0, x1)[0]/(x1-x0) for x0, x1 in 
+            completeness_integrals = [quad(completeness_fcn, x0, x1, maxp1=200)[0]/(x1-x0) for x0, x1 in 
                                       zip(self.bin_edges[:-1], self.bin_edges[1:])]
+            logging.debug(completeness_integrals)
         
         self.complete_vals = np.array([v/I for v, I in zip(self.raw_vals, completeness_integrals)])
         self.complete_low = np.array([v/I for v, I in zip(self.raw_low, completeness_integrals)])

@@ -260,7 +260,7 @@ def sample_orbit(star, N_rv, N_imag, rv1_err=None, rv2_err=None, pos_err=None, d
                                   big_omega=star['big_omega'], little_omega=star['little_omega'],
                                   i=star['i'], q=star['q'], primary_mass=star['M_prim'])
     print('K1 = {}\nK2 = {}'.format(orbit.K1, orbit.K2))
-    rv_times = np.random.uniform(0, star['Period'], size=N_rv)
+    #rv_times = np.random.uniform(0, star['Period'], size=N_rv)
     rv_times = np.random.uniform(1.0 / 365.0, 4.0, size=N_rv) + np.random.uniform(0, star['Period'], size=1)
     image_times = np.random.uniform(0, star['Period'], size=N_imag)
     rv_primary_measurements = orbit.get_rv(rv_times, component='primary')
