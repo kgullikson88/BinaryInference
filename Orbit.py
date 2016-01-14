@@ -7,6 +7,24 @@ import scipy.interpolate
 
 import HelperFunctions
 import Fitters
+import pandas as pd
+
+def make_inverse_cdf_callable(x, P, accuracy=10):
+    """ Given samples of the PDF, make a callable that estimates the inverse cdf 
+    """
+    # Turn the PDF samples into normalized CDF samples
+    cdf = np.zeros_like(x)
+    dx = np.diff(x)
+    cdf[1:] = np.cumsum(dx * 0.5*(P[1:] + P[:-1]))
+    normed_cdf = np.round(cdf/cdf[-1], decimals=accuracy)
+
+    # Remove duplicate cdf values by going through pandas
+    df = pd.DataFrame(data=dict(cdf=normed_cdf, x=x))
+    df.drop_duplicates(subset=['cdf'], inplace=True)
+                
+    # Calculate the inverse cdf
+    inv_cdf = scipy.interpolate.InterpolatedUnivariateSpline(df.cdf.values, df.x.values, k=1)
+    return inv_cdf
 
 
 cache = None
@@ -281,11 +299,16 @@ class FullOrbitFitter(Fitters.Bayesian_LS):
      - distance:             float
                              Distance from the Earth to the star in question (in parsecs)
 
+     - q_prior:              Callable
+                             This should return the prior probability density function for the mass-ratio (q).
+                             It should come from the estimated primary star mass and companion temperature.
+                             This code already assumes a mass-ratio distribution as the main prior on q
+
     """
     def __init__(self, rv_times, imaging_times, 
                  rv1_measurements, rv1_err, rv2_measurements, rv2_err, 
                  rho_measurements, theta_measurements, pos_err,
-                 distance=100.0):
+                 distance=100.0, q_prior=None):
         
         # Put the data into appropriate dictionaries
         x = dict(t_rv=rv_times, t_im=imaging_times)
@@ -295,10 +318,17 @@ class FullOrbitFitter(Fitters.Bayesian_LS):
         yerr = dict(rv1=rv1_err, rv2=rv2_err, pos=pos_err)
         
         # List the parameter names
-        parnames = ['Period', '$M_0$', 'a', 'e', '$\Omega$', '$\omega$', 'i', '$K_1$', '$K_2$', 'dv1', 'dv2']
+        parnames = ['$\log{P}$', '$M_0$', '$\log{a}$', '$\log{e}$', '$\Omega$', '$\omega$', 
+                    '$i$', '$q$', '$\gamma$']
 
         super(FullOrbitFitter, self).__init__(x, y, yerr, param_names=parnames)
         self.distance = distance
+        if q_prior is not None:
+            qvals = np.arange(0, 1, 1e-4)
+            Prob = np.array([q_prior(qi) for qi in qvals])[:, 0, 0]
+            self.q_prior_inv_cdf = make_inverse_cdf_callable(qvals, Prob)
+        else:
+            self.q_prior_inv_cdf = None
         return
         
         
@@ -314,17 +344,36 @@ class FullOrbitFitter(Fitters.Bayesian_LS):
         ======== 
            The primary/secondary rv, and the on-sky x- and y-positions
         """
-        period, M0, a, e, Omega, omega, i, K1, K2, dv1, dv2 = p
+        logP, M0, loga, loge, Omega, omega, i, q, gamma = p
+        period = 10**logP
+        a = 10**loga
+        e = 10**loge 
+        if q > 1.0:
+            q = 1.0 / q
+        M_tot = a**3 / period**2
+        M1 = M_tot / (1+q)
+        #K1 = 10**logK1
+        n = 2 * np.pi / (period * u.year.to(u.second))
+        K1 = n * q / (1+q) * a*np.sin(i) / np.sqrt(1-e**2)
+        K2 = K1 / q
+
         orbit = OrbitCalculator(P=period, M0=M0, a=a, e=e, 
                                 big_omega=Omega, little_omega=omega,
-                                i=i, K1=K1, K2=K2)
-
-        rv1 = orbit.get_rv(x['t_rv'], component='primary')
-        rv2 = -rv1 * orbit.K2 / orbit.K1
-        rho, theta = orbit.get_imaging_observables(x['t_im'], distance=self.distance)
-        xpos = rho*np.cos(theta)
-        ypos = rho*np.sin(theta)
-        return rv1 + dv1, rv2 + dv2, xpos, ypos
+                                #i=i, K1=K1, K2=K2)
+                                i=i, primary_mass=M1)
+        
+        if len(x['t_rv']) > 0:
+            rv1 = orbit.get_rv(x['t_rv'], component='primary')
+            rv2 = -rv1 * orbit.K2 / orbit.K1
+        else:
+            rv1, rv2 = [], []
+        if len(x['t_im']) > 0:
+            rho, theta = orbit.get_imaging_observables(x['t_im'], distance=self.distance)
+            xpos = rho*np.cos(theta)
+            ypos = rho*np.sin(theta)
+        else:
+            xpos, ypos = [], []
+        return rv1 + gamma, rv2 + gamma, xpos, ypos
     
     def lnlike_rv(self, rv1_pred, rv2_pred, primary=True, secondary=True):
         s = 0.0
@@ -345,28 +394,55 @@ class FullOrbitFitter(Fitters.Bayesian_LS):
             s += self.lnlike_rv(rv1, rv2, primary=primary, secondary=secondary)
         if len(xpos) > 0:
             s += self.lnlike_imaging(xpos, ypos)
-        return s
+        return s# if self.q_prior is None else s + np.log(self.q_prior(pars[8]))
     
     def mnest_prior(self, cube, ndim, nparames):
         # Multinest prior
-        cube[0] = 10**(cube[0]*5)    # log-uniform in period
-        cube[1] = cube[1] * 2*np.pi  # Uniform in mean anomaly at epoch (M0)
-        cube[2] = 10**(cube[2]*5)    # Log-uniform in semi-major axis
-        cube[3] = cube[3]            # Uniform in eccentricity
-        cube[4] = cube[4] * 2*np.pi  # Uniform in big omega
-        cube[5] = cube[5] * 2*np.pi  # Uniform in little omega
-        cube[6] = cube[6] * 2*np.pi  # Uniform in inclination
-        cube[7] = 10**(cube[7]*3)    # Log-uniform in rv semiamplitude (primary)
-        cube[8] = 10**(cube[8]*3)    # Log-uniform in rv semiamplitude (secondary)
-        cube[9] = cube[9] * 40 - 20  # Uniform in dv1
-        cube[10] = cube[10] * 40 - 20  # Uniform in dv2
+
+        # Period prior: log-uniform from 0.01 days to 10^5 years
+        cube[0] = cube[0] * 9.55 - 4.55
+
+        # Mean anomaly at epoch
+        cube[1] = cube[1] * 2*np.pi 
+
+        # Semimajor axis: log-uniform on 0.01 AU to 10^8 AU
+        cube[2] = cube[2] * 10 - 2
+
+        # Eccentricity: log-uniform on 10^-20 to 1
+        cube[3] = cube[3] * 20 - 20
+
+        # big- and little-omega: uniform from 0 to 360 degrees
+        cube[4] = cube[4] * 360 
+        cube[5] = cube[5] * 360
+
+        # Inclination: Uniform from 0 to 90 degrees 
+        cube[6] = cube[6] * 90
+
+        # Mass-ratio: uniform from 0 to 2 (I know, unphysical. This has better numerical properties)
+        # Mass ratio: Uniform from 0 to 2, unless a q prior was given
+        if self.q_prior_inv_cdf is None:
+            cube[7] = cube[7] * 2
+        else:
+            cube[7] = self.q_prior_inv_cdf(cube[7])
+
+        # Gamma-velocity: Uniform from -50 to 50 km/s
+        cube[8] = cube[8] * 100 - 50
         return
+
     
     def lnprior(self, pars):
         # emcee prior
-        period, M0, a, e, Omega, omega, i, K1, K2, dv1, dv2 = pars
-        if (0 < period < 1e5 and 0 < a < 1e5 and 0 < e < 1 and 0 < Omega < 360. and 0 < omega < 360.
-            and 0 < i < 360. and 0 < K1 < 1e3 and 0 < K2 < 1e3 and -20 < dv1 < 20 and -20 < dv2 < 20):
+        logP, M0, loga, loge, Omega, omega, i, q, gamma = pars
+        period = 10**logP
+        a = 10**loga
+        e = 10**loge 
+        #K1 = 10**logK1
+        n = 2 * np.pi / (period * u.year.to(u.second))
+        K1 = n * q / (1+q) * a*np.sini(i) / np.sqrt(1-e**2)
+        K2 = K1 / q
+
+        if (0 < period < 1e5 and 0 < a < 1e8 and 0 < e < 1 and 0 < Omega < 2*np.pi and 0 < omega < 2*np.pi
+            and 0 < i < np.pi/2.0 and 0 < K1 < 1e4 and 0 < K2 < 1e4 and -50 < gamma < 50):
 
             return 0.0
 
