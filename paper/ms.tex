@@ -1,0 +1,712 @@
+%\documentclass[12pt,preprint]{aastex}
+\documentclass{emulateapj}
+\usepackage{graphicx}
+\usepackage{natbib}
+\usepackage{subfigure}
+\usepackage{url}
+\bibliographystyle{astroads}
+\providecommand{\e}[1]{\ensuremath{\times 10^{#1}}}
+\begin{document}
+
+\title{The Inner Mass-Ratio Distribution of Intermediate-Mass Stars}
+
+\author{Kevin Gullikson \altaffilmark{1}}
+\author{Adam Kraus \altaffilmark{1}}
+\author{Sarah Dodson-Robinson \altaffilmark{2}}
+
+\altaffiltext{1}{University of Texas, Astronomy Department. 2515 Speedway, Stop C1400. Austin, TX 78712}
+\altaffiltext{2}{University of Delaware, Department of Physics and Astronomy, 217 Sharp Lab, Newark, DE 19716}
+
+
+\begin{abstract}
+Young, intermediate-mass stars are experiencing renewed interest as targets for direct-imaging planet searches. However, these types of stars are part of multiple systems more often than not. Close stellar companions affect the formation and orbital evolution of any planets, and the properties of the companions can help constrain the binary formation mechanism. Unfortunately, close companions are difficult and expensive to detect with imaging techniques. In this paper, we describe the direct spectral detection method wherein a high-resolution spectrum of the primary is cross-correlated against a template for a companion star. Variants of this method have previously been used to search for stellar, brown dwarf, and even planetary companions. We show that the direct spectral detection method can detect companions as late as M-type orbiting A0 or earlier primary stars in a single epoch on small-aperture telescopes. In addition to estimating the detection limits, we determine the sources of uncertainty in characterizing the companion temperature, and find that large systematic biases can exist. After calibrating the systematic biases with synthetic binary star observations, we apply the method to a sample of 34 known binary systems with an A- or B-type primary star. We detect nine total companions, including four of the five known companions with literature temperatures between $4000$ K $ < T < 6000$ K, the temperature range for which our method is optimized. We additionally characterize the companion for the first time in two previously single-lined binary systems and one binary identified with speckle interferometry. This method provides an inexpensive way to use small-aperture telescopes to detect binary companions with moderate mass-ratios, and is competitive with high-resolution imaging techniques inside $\sim 100-200$ mas.
+\end{abstract}
+
+\maketitle
+
+\section{Introduction}
+
+
+\label{sec:intro}
+There has recently been a revival of interest in the multiplicity properties of intermediate-mass stars,  spurred largely by the detection of planets orbiting nearby \mbox{$\sim2 M_{\odot}$} stars on both wide \citep[e.g.][]{Lagrange2010, Marois2008} and close \citep{Johnson2011} orbits. In this context, binary companions are contaminants; companions complicate radial velocity planet searches because they necessitate simultaneous modeling of both stellar motions \citep[e.g.][]{Bergmann2015}. Likewise, companions complicate direct imaging planet searches by requiring either extremely high-contrast instrumentation \citep{Thalmann2014} or specialized coronagraphs \citep{Crepp2010}. 
+
+However, known binary stars are typically avoided in planet search programs for a more fundamental reason: the binary companion depletes or destroys the planet-forming disk. By combining a binary census of the $\sim 2$ Myr Taurus-Auriga star-forming region with a disk census of the same, \cite{Kraus2012} showed that close ($\lesssim 40$ AU) binaries are about 2-3 times less likely to host a protoplanetary disk, and so hasten disk dispersal. Even if a disk survives, it tends to be depleted in mass by a factor of $\sim 25$ for binary separations $\lesssim 30$ AU \citep{Harris2012}.
+%[CITE KRAUS PAPER] performed a search for binary companions among Kepler planet host stars, and found that the presence of a companion within 5-50AU suppresses planet formation by a factor of $\sim 4$. 
+
+Multiplicity is an inevitable outcome of star formation, especially for more massive stars where multiplicity is more common \citep{Zinnecker2007}, and so is important to study in its own right. Beyond the overall multiplicity rate, the mass ratio, period, and eccentricity distributions of a binary star population can place important constraints on the mode of binary star formation. Specifically, a mass-ratio distribution that changes with physical separation could indicate that secondary stars are either forming through disk fragmentation \citep[e.g.][]{Kratter2006, Stamatellos2011}  or are accreting a significant amount of their mass from the primary star disk. \cite{DeRosa2014} recently completed an imaging survey of nearby A-type stars, and found preliminary evidence that the mass-ratio distribution does in fact become flatter for closer companions. There is no evidence of such a change for solar-type or later stars \citep{Meyer2013}.
+
+It is difficult to detect low-mass companions very near an intrinsically bright primary star and even more difficult to characterize the companion. There are three commonly used techniques for binary star searches: direct imaging with adaptive optics systems,  interferometry, and radial velocity monitoring. Imaging can easily detect low-mass companions at wide apparent separations, but loses sensitivity as the on-sky distance from the primary star decreases \citep[see][for typical sensitivity curves]{DeRosa2014}. Interferometry can usually achieve smaller working angles than imaging, but cannot achieve as high contrast \citep[see e.g.][]{Aldoretta2015}.
+
+ Radial velocity monitoring can easily find companions on very short-period orbits, but its sensitivity to low-mass companions drops as the physical separation increases. This is especially true for A- and B-type stars, where radial velocity precision is typically limited to $\sim 1 \rm km \  s^{-1}$ by their rotationally broadened lines. Worse, radial velocity monitoring techniques cannot characterize the companion unless the inclination is known or if the companion spectral lines are also visible. All three techniques have separation-dependent sensitivity, which introduces observational bias in any search for a parameter that changes with physical separation.
+ 
+ One technique that is separation independent is to search directly for the composite spectrum of two stars. \citet{Burgasser2007} used single-epoch low-resolution spectroscopy to identify and characterize a brown dwarf binary system by fitting both spectra simultaneously. This method only works if the stars have a similar brightness but very different spectra, such that the spectral features from both components are visible and distinguishable. If, as in the case of binary systems with very large flux ratios, the companion spectrum is buried within the noise of the primary star, a different method is needed.
+ 
+The direct spectral detection method (hereafter referred to as the DSD method), and variations thereof, has been used to search for binary companions to early B-stars \citep{Gullikson2013}, main sequence FGK-stars \citep{Kolbl2015}, young K-M stars \citep{Prato2002}, and even `Hot Jupiter' type planets \citep{Snellen2010, Brogi2012, deKok2013} orbiting FGK-stars. The method relies on the cross-correlation function (CCF) of a high-spectral-resolution spectrum of the primary star with a model spectrum for the expected companion. The CCF uses every pixel in the spectrum, and more importantly every spectral line in the secondary spectrum. A simple experiment with synthetic spectra containing increasing numbers of spectral lines (N) in noisy data shows that the CCF peak significance increases as $\sim\sqrt{N}$. For high-resolution cross-dispersed \'echelle spectra, this amplification can reach several factors of 10, allowing the detection \emph{and characterization} of a secondary spectrum where the individual lines are completely buried in noise. Since the DSD method uses a seeing-limited spectrum of the primary star, its sensitivity is independent of separation inside $\sim 1 ''$ and can make use of small telescopes to detect high-contrast companions.
+
+In this paper, we describe the DSD method in detail, and use it to detect the secondary star in nine known binary systems. We describe the method in Section \ref{sec:method}. We describe the observations and data reduction in Section \ref{sec:obs}, then use the observations to estimate the accuracy with which we can measure the companion temperature in Section \ref{subsec:systematics} and the sensitivity of the method in Section \ref{subsec:sensitivity}. In Section \ref{sec:results} we use the DSD method to search for known companions, and discuss the results in Section \ref{sec:conclusions}.
+
+
+\section{Observations and Data Reduction}
+\label{sec:obs}
+
+\section{Stellar Parameters}
+\label{sec:sp}
+
+\section{Companion Search}
+\label{sec:companions}
+
+\section{Survey Completeness}
+\label{sec:completeness}
+
+\section{Mass-Ratio Distribution}
+\label{sec:mrd}
+
+\section{Discussion}
+\label{sec:discussion}
+
+
+\section*{Acknowledgements}
+This research has made use of the SIMBAD database, operated at CDS, Strasbourg, France, and of Astropy, a community-developed core Python package for Astronomy (Astropy Collaboration, 2013).
+It was supported by a start-up grant to Adam Kraus as well as a University of Texas Continuing Fellowship to Kevin Gullikson. J.-E. Lee was supported by the Basic Science Research Program through the National Research Foundation of Korea (NRF) (grant No. NRF-2015R1A2A2A01004769) and the Korea
+Astronomy and Space Science Institute under the R\&D program (Project No. 2015-1-320-18) supervised by the Ministry of Science, ICT and Future Planning.
+
+This work used the Immersion Grating Infrared Spectrograph (IGRINS) that was developed under a collaboration between the University of Texas at Austin and the Korea Astronomy and Space Science Institute (KASI) with the financial support of the US National Science Foundation under grant AST-1229522, of the University of Texas at Austin, and of the Korean GMT Project of KASI.
+
+The Hobby-Eberly Telescope (HET) is a joint project of the University of Texas at Austin, the Pennsylvania State University, Stanford University, Ludwig-Maximilians-Universit\"at M\"unchen, and Georg-August-Universit\"at G\"ottingen. The HET is named in honor of its principal benefactors, William P. Hobby and Robert E. Eberly.
+
+Based on observations at Cerro Tololo Inter-American Observatory, National Optical Astronomy Observatory (NOAO Prop. IDs: 13A-0139, 13B-0112, 2014A-0260, 14A-0260, 15A-0245; PI: Kevin Gullikson), which is operated by the Association of Universities for Research in Astronomy (AURA) under a cooperative agreement with the National Science Foundation. 
+
+We would like to thank Bill Cochran and Mike Endl for observing some of the spectra used in this project. . Finally, we would like to thank the anonymous referee for numerous comments that improved the paper.
+
+
+
+\begin{longtable*}{|l|lllrlrr|}
+\hline
+              &                &                &                &          MJD &            &  exptime &     snr \\
+         star &            SpT &             ra &            dec & (JD-2450000) & instrument &  (sec)   &         \\ \hline
+\endhead
+\hline
+\multicolumn{3}{r}{{Continued on next page}} \\
+\endfoot
+
+\hline
+\endlastfoot
+     HIP 813 &           B9Vn &     00:10:2.20 &   +11:08:44.93 &  6618.58 &       TS23 &      557 &    1810 \\
+    HIP 1191 &          B8.5V &    00:14:54.52 &   -09:34:10.45 &  6552.60 &     CHIRON &     1200 &     320 \\
+    HIP 1366 &            A2V &     00:17:5.50 &   +38:40:53.89 &  6585.73 &       TS23 &      274 &    1790 \\
+    HIP 1647 &            B9V &    00:20:39.04 &   -69:37:29.68 &  6510.74 &     CHIRON &     1105 &     630 \\
+    HIP 2381 &            A3V &    00:30:22.65 &   -23:47:15.65 &  6874.71 &     CHIRON &      505 &     580 \\
+    HIP 2505 &           B8Vn &    00:31:46.36 &   +54:31:20.23 &  6586.71 &       TS23 &      235 &    1700 \\
+    HIP 2505 &           B8Vn &    00:31:46.36 &   +54:31:20.23 &  6962.71 &       TS23 &      804 &    1960 \\
+    HIP 2505 &           B8Vn &    00:31:46.36 &   +54:31:20.23 &  6945.71 &     IGRINS &      224 &     450 \\
+    HIP 2548 &          B9.5V &    00:32:23.78 &   +06:57:19.66 &  7240.93 &     IGRINS &      360 &     490 \\
+    HIP 2548 &          B9.5V &    00:32:23.78 &   +06:57:19.66 &  6516.84 &        HRS &      412 &    1070 \\
+    HIP 2912 &            B5V &    00:36:52.85 &    +33:43:9.64 &  7238.96 &     IGRINS &      367 &     790 \\
+    HIP 2912 &            B5V &    00:36:52.85 &    +33:43:9.64 &  6583.78 &       TS23 &      199 &    2460 \\
+    HIP 3300 &            B2V &     00:42:3.90 &   +50:30:45.09 &  6299.55 &       TS23 &      689 &    1010 \\
+    HIP 3478 &            B5V &    00:44:26.19 &   +47:51:50.34 &  6963.63 &       TS23 &     1200 &    1020 \\
+    HIP 3478 &            B5V &    00:44:26.19 &   +47:51:50.34 &  7288.82 &     IGRINS &      540 &     800 \\
+    HIP 3478 &            B5V &    00:44:26.19 &   +47:51:50.34 &  6669.53 &       TS23 &      743 &    1870 \\
+    HIP 3478 &            B5V &    00:44:26.19 &   +47:51:50.34 &  6945.72 &     IGRINS &      224 &     260 \\
+    HIP 3741 &            B9V &     00:48:1.06 &   -21:43:20.99 &  7174.89 &     CHIRON &     3981 &     430 \\
+    HIP 3741 &            B9V &     00:48:1.06 &   -21:43:20.99 &  7175.90 &     CHIRON &     3561 &     420 \\
+    HIP 3881 &     F8IV-V+M4V &    00:49:48.85 &   +41:04:44.08 &  6585.70 &       TS23 &      222 &    1690 \\
+    HIP 3881 &     F8IV-V+M4V &    00:49:48.85 &   +41:04:44.08 &  6964.60 &       TS23 &     1200 &     710 \\
+    HIP 3881 &     F8IV-V+M4V &    00:49:48.85 &   +41:04:44.08 &  6945.74 &     IGRINS &      224 &     510 \\
+    HIP 4436 &            A5V &    00:56:45.21 &   +38:29:57.64 &  6585.76 &       TS23 &      129 &    1940 \\
+    HIP 5131 &           A1Vn &    01:05:40.96 &   +21:28:23.45 &  6587.70 &       TS23 &      655 &    1780 \\
+    HIP 5131 &           A1Vn &    01:05:40.96 &   +21:28:23.45 &  7083.57 &     IGRINS &      930 &     130 \\
+    HIP 5131 &           A1Vn &    01:05:40.96 &   +21:28:23.45 &  6847.89 &     IGRINS &     1600 &     490 \\
+    HIP 5132 &           A0Vn &    01:05:41.71 &   +21:27:55.60 &  6587.77 &       TS23 &      535 &    1550 \\
+    HIP 5132 &           A0Vn &    01:05:41.71 &   +21:27:55.60 &  6847.89 &     IGRINS &      480 &     490 \\
+    HIP 5310 &            A3V &    01:07:57.16 &   +20:44:20.83 &  6945.75 &     IGRINS &      224 &     390 \\
+    HIP 5348 &        B6V+B9V &    01:08:23.08 &   -55:14:44.73 &  6325.56 &     CHIRON &      186 &     390 \\
+    HIP 5361 &            B8V &    01:08:33.47 &   +58:15:48.41 &  6523.84 &        HRS &     1000 &     810 \\
+    HIP 5518 &          A0Vnn &    01:10:39.32 &   +68:46:43.04 &  7238.94 &     IGRINS &      540 &     750 \\
+    HIP 5518 &          A0Vnn &    01:10:39.32 &   +68:46:43.04 &  6945.77 &     IGRINS &      224 &     370 \\
+    HIP 5626 &            A3V &    01:12:16.82 &   +79:40:26.27 &  6945.88 &     IGRINS &      224 &     270 \\
+    HIP 7345 &            A1V &    01:34:37.78 &   -15:40:34.90 &  6888.76 &     CHIRON &     1080 &     480 \\
+    HIP 7345 &            A1V &    01:34:37.78 &   -15:40:34.90 &  6887.76 &     CHIRON &      706 &     540 \\
+    HIP 8016 &            B9V &    01:42:55.86 &   +70:37:21.09 &  6522.96 &        HRS &      328 &     580 \\
+    HIP 8704 &          B1.5V &    01:51:59.32 &   +55:08:50.58 &  6506.90 &        HRS &      365 &     420 \\
+    HIP 8704 &          B1.5V &    01:51:59.32 &   +55:08:50.58 &  7084.57 &     IGRINS &      960 &     140 \\
+    HIP 8704 &          B1.5V &    01:51:59.32 &   +55:08:50.58 &  7237.93 &     IGRINS &      720 &     630 \\
+      HR 545 &         B9.5IV &    01:53:31.77 &   +19:17:46.27 &  6668.56 &       TS23 &      597 &    1920 \\
+      HR 545 &         B9.5IV &    01:53:31.77 &   +19:17:46.27 &  6586.75 &       TS23 &      265 &    1710 \\
+      HR 545 &         B9.5IV &    01:53:31.77 &   +19:17:46.27 &  6945.81 &     IGRINS &      224 &     540 \\
+    HIP 9312 &           A0Vn &    01:59:38.04 &   +64:37:17.76 &  6586.78 &       TS23 &      419 &    1750 \\
+    HIP 9564 &           A1Vn &    02:02:52.48 &    +64:54:5.27 &  6945.78 &     IGRINS &      224 &     180 \\
+      HR 604 &        B8V+A0V &    02:03:54.72 &   +42:19:51.41 &  6585.86 &       TS23 &      349 &    1650 \\
+   HIP 10320 &            B9V &    02:12:54.47 &   -30:43:25.77 &  6532.80 &     CHIRON &     1020 &     550 \\
+   HIP 10670 &          A1Vnn &    02:17:18.87 &   +33:50:49.90 &  6618.68 &       TS23 &      141 &    1810 \\
+   HIP 10732 &           A1Vn &     02:18:7.54 &    +19:54:4.19 &  6945.82 &     IGRINS &      224 &     290 \\
+   HIP 10732 &           A1Vn &     02:18:7.54 &    +19:54:4.19 &  7083.56 &     IGRINS &      240 &     160 \\
+   HIP 11345 &            A0V &    02:25:57.01 &   -12:17:25.71 &  6894.90 &     CHIRON &      540 &     520 \\
+   HIP 12332 &            A7V &    02:38:48.99 &   +21:57:41.06 &  6677.54 &       TS23 &     1107 &    1530 \\
+   HIP 12332 &            A7V &    02:38:48.99 &   +21:57:41.06 &  6947.79 &     IGRINS &      224 &     430 \\
+   HIP 12706 &       A2Vn+F4V &    02:43:18.04 &    +03:14:8.94 &  6584.86 &       TS23 &      362 &     990 \\
+   HIP 12706 &       A2Vn+F4V &    02:43:18.04 &    +03:14:8.94 &  6946.84 &     IGRINS &      224 &    2280 \\
+   HIP 12719 &            B3V &    02:43:27.11 &   +27:42:25.72 &  6583.87 &       TS23 &      264 &    1720 \\
+   HIP 12803 &           B9Vn &    02:44:32.97 &   +15:18:42.71 &  6676.53 &       TS23 &      452 &    1410 \\
+   HIP 12803 &           B9Vn &    02:44:32.97 &   +15:18:42.71 &  6947.80 &     IGRINS &      224 &     450 \\
+   HIP 12803 &           B9Vn &    02:44:32.97 &   +15:18:42.71 &  7240.95 &     IGRINS &      780 &    1120 \\
+   HIP 13165 &            B6V &    02:49:17.56 &   +17:27:51.52 &  6518.91 &        HRS &      275 &     850 \\
+   HIP 13202 &            A0V &    02:49:54.18 &   -27:56:31.14 &  6910.83 &     CHIRON &      580 &     570 \\
+   HIP 13209 &           B8Vn &    02:49:59.03 &   +27:15:37.83 &  6618.66 &       TS23 &      143 &    1880 \\
+   HIP 13327 &            B7V &    02:51:29.59 &   +15:04:55.45 &  6670.54 &       TS23 &     1200 &    1800 \\
+   HIP 13717 &            A3V &    02:56:37.42 &   -03:42:44.35 &  6917.83 &     CHIRON &      644 &     550 \\
+   HIP 13717 &            A3V &    02:56:37.42 &   -03:42:44.35 &  6970.75 &     CHIRON &      703 &     550 \\
+   HIP 13879 &           A2Vn &    02:58:45.67 &   +39:39:45.81 &  6945.79 &     IGRINS &      224 &     620 \\
+   HIP 13879 &           A2Vn &    02:58:45.67 &   +39:39:45.81 &  6681.68 &       TS23 &      930 &     230 \\
+   HIP 13879 &           A2Vn &    02:58:45.67 &   +39:39:45.81 &  6618.70 &       TS23 &      265 &    1490 \\
+   HIP 14043 &            B7V &    03:00:52.21 &    +52:21:6.22 &  6523.92 &        HRS &      400 &     620 \\
+   HIP 14143 &            B7V &    03:02:22.52 &   +04:21:10.39 &  6518.94 &        HRS &      462 &     900 \\
+   HIP 14293 &            A5V &    03:04:16.52 &    -07:36:3.08 &  6919.89 &     CHIRON &      800 &     240 \\
+   HIP 14576 &            B8V &    03:08:10.13 &   +40:57:20.33 &  6583.83 &       TS23 &       40 &    1030 \\
+   HIP 14576 &            B8V &    03:08:10.13 &   +40:57:20.33 &  6582.92 &       TS23 &       36 &    2050 \\
+   HIP 14764 &            B8V &    03:10:38.79 &   +11:52:21.44 &  6679.53 &       TS23 &      532 &    1370 \\
+   HIP 14764 &            B8V &    03:10:38.79 &   +11:52:21.44 &  6946.80 &     IGRINS &      360 &     410 \\
+   HIP 14862 &          A2Vnn &    03:11:56.27 &   +74:23:37.17 &  6945.86 &     IGRINS &      224 &     500 \\
+   HIP 14862 &          A2Vnn &    03:11:56.27 &   +74:23:37.17 &  7084.60 &     IGRINS &     1200 &     370 \\
+   HIP 15110 &            A1V &    03:14:54.10 &   +21:02:40.01 &  6946.83 &     IGRINS &      224 &     630 \\
+   HIP 15338 &            B8V &    03:17:47.35 &   +44:01:30.08 &  6523.90 &        HRS &      570 &     690 \\
+   HIP 15404 &            B3V &    03:18:37.74 &   +50:13:19.83 &  6517.92 &        HRS &      205 &     620 \\
+   HIP 15444 &            B5V &     03:19:7.64 &   +50:05:41.88 &  6582.94 &       TS23 &      340 &    1790 \\
+   HIP 16147 &            B5V &     03:28:3.07 &   +49:03:46.32 &  6299.59 &       TS23 &      735 &    1300 \\
+   HIP 16210 &           B6Vn &    03:28:52.33 &   +49:50:54.17 &  6676.58 &       TS23 &      406 &    1440 \\
+   HIP 16210 &           B6Vn &    03:28:52.33 &   +49:50:54.17 &  6945.84 &     IGRINS &      224 &     430 \\
+   HIP 16244 &            B3V &    03:29:22.05 &   +49:30:32.21 &  6583.84 &       TS23 &      311 &    1750 \\
+   HIP 16244 &            B3V &    03:29:22.05 &   +49:30:32.21 &  6945.83 &     IGRINS &      224 &     430 \\
+   HIP 16285 &            A5V &    03:29:55.15 &    -42:38:3.32 &  6933.84 &     CHIRON &      767 &     570 \\
+   HIP 16322 &           A0Vn &    03:30:24.47 &   +11:20:11.19 &  6944.72 &     CHIRON &      680 &     410 \\
+   HIP 16322 &           A0Vn &    03:30:24.47 &   +11:20:11.19 &  6946.82 &     IGRINS &      224 &     590 \\
+   HIP 16340 &            B8V &    03:30:36.95 &   +48:06:12.95 &  6678.54 &       TS23 &      570 &    1410 \\
+   HIP 16599 &            A3V &    03:33:39.06 &   +54:58:29.49 &  6945.85 &     IGRINS &      224 &     280 \\
+   HIP 16611 &            B9V &    03:33:47.28 &   -21:37:58.38 &  6946.85 &     IGRINS &      224 &     420 \\
+   HIP 16611 &            B9V &    03:33:47.28 &   -21:37:58.38 &  6522.88 &     CHIRON &      255 &     580 \\
+   HIP 17457 &           B7IV &    03:44:30.51 &   -01:09:47.14 &  6531.82 &     CHIRON &     1005 &     520 \\
+   HIP 17563 &            B3V &    03:45:40.44 &   +06:02:59.97 &  6538.82 &     CHIRON &     1088 &     400 \\
+   HIP 17527 &            B8V &     03:45:9.74 &   +24:50:21.34 &  6947.82 &     IGRINS &      224 &     230 \\
+   HIP 17527 &            B8V &     03:45:9.74 &   +24:50:21.34 &  6517.93 &        HRS &      429 &     670 \\
+   HIP 17527 &            B8V &     03:45:9.74 &   +24:50:21.34 &  6963.91 &       TS23 &      818 &     470 \\
+   HIP 18141 &            B8V &    03:52:41.66 &   -05:21:40.54 &  6678.59 &       TS23 &      605 &    1430 \\
+   HIP 18396 &            B6V &    03:55:58.17 &   +47:52:17.12 &  6516.94 &        HRS &      259 &     510 \\
+   HIP 18724 &        B3V+... &    04:00:40.82 &   +12:29:25.22 &  6299.62 &       TS23 &      226 &    1220 \\
+   HIP 18788 &            B5V &    04:01:32.05 &   -01:32:58.78 &  6535.81 &     CHIRON &     1039 &     180 \\
+   HIP 18805 &            B5V &    04:01:46.14 &   +09:59:52.84 &  6585.78 &       TS23 &      631 &    1760 \\
+   HIP 19799 &           B9Vn &    04:14:36.23 &   +10:00:41.05 &  6668.63 &       TS23 &     1200 &    1900 \\
+   HIP 19949 &           A2Vn &    04:16:43.09 &   +53:36:42.47 &  6945.90 &     IGRINS &      224 &     440 \\
+   HIP 19949 &           A2Vn &    04:16:43.09 &   +53:36:42.47 &  7084.62 &     IGRINS &      960 &      80 \\
+   HIP 19968 &            B7V &    04:16:53.56 &   +61:50:59.97 &  6676.62 &       TS23 &      524 &    1390 \\
+   HIP 20264 &            A0V &    04:20:39.01 &   -20:38:22.64 &  6718.53 &     CHIRON &      860 &     410 \\
+   HIP 20380 &            A3V &    04:21:51.81 &   +56:30:22.74 &  6945.89 &     IGRINS &      224 &     280 \\
+   HIP 20380 &            A3V &    04:21:51.81 &   +56:30:22.74 &  7084.67 &     IGRINS &     1200 &     180 \\
+   HIP 20430 &          B9Vnn &    04:22:34.94 &   +25:37:45.54 &  6520.95 &        HRS &      360 &     710 \\
+   HIP 20507 &            A2V &    04:23:40.85 &   -03:44:43.68 &  6719.50 &     CHIRON &      715 &     470 \\
+   HIP 20579 &            B8V &    04:24:29.16 &   +34:07:50.73 &  6517.96 &        HRS &      490 &     830 \\
+   HIP 20789 &            B7V &    04:27:17.45 &   +22:59:46.80 &  6946.86 &     IGRINS &      224 &     250 \\
+   HIP 20789 &            B7V &    04:27:17.45 &   +22:59:46.80 &  6586.83 &       TS23 &      524 &    1610 \\
+   HIP 21589 &            A6V &     04:38:9.46 &   +12:30:39.01 &  6962.94 &       TS23 &      220 &    1020 \\
+   HIP 21589 &            A6V &     04:38:9.46 &   +12:30:39.01 &  7065.63 &     CHIRON &      754 &     290 \\
+   HIP 21589 &            A6V &     04:38:9.46 &   +12:30:39.01 &  6948.96 &     IGRINS &      112 &     670 \\
+   HIP 21683 &           A5Vn &    04:39:16.50 &    +15:55:4.70 &  6948.98 &     IGRINS &      230 &     220 \\
+   HIP 21683 &           A5Vn &    04:39:16.50 &    +15:55:4.70 &  6962.97 &       TS23 &      335 &    1040 \\
+   HIP 21819 &            A2V &    04:41:19.76 &   +28:36:53.98 &  6679.64 &       TS23 &      466 &    1480 \\
+   HIP 21928 &           A1Vn &    04:42:54.33 &   +43:21:54.53 &  6677.63 &       TS23 &     1124 &    1470 \\
+   HIP 22028 &            A1V &     04:44:7.98 &   -18:39:59.71 &  6947.90 &     IGRINS &      240 &     260 \\
+   HIP 22509 &           A1Vn &    04:50:36.72 &    +08:54:0.65 &  6667.62 &       TS23 &     1200 &    1100 \\
+   HIP 22509 &           A1Vn &    04:50:36.72 &    +08:54:0.65 &  7126.51 &     CHIRON &     2612 &     440 \\
+   HIP 22833 &            A3V &    04:54:46.90 &   +11:25:33.63 &  6679.60 &       TS23 &      521 &    1520 \\
+   HIP 22833 &            A3V &    04:54:46.90 &   +11:25:33.63 &  6946.87 &     IGRINS &      224 &     420 \\
+   HIP 22840 &            B5V &    04:54:50.71 &    +00:28:1.81 &  6678.64 &       TS23 &      528 &    1380 \\
+   HIP 22913 &            B9V &    04:55:50.15 &   +15:02:25.00 &  6585.74 &     CHIRON &     1200 &     230 \\
+   HIP 22958 &            B6V &    04:56:24.19 &   -05:10:16.87 &  6551.79 &     CHIRON &     1200 &     340 \\
+   HIP 22958 &            B6V &    04:56:24.19 &   -05:10:16.87 &  6943.77 &     CHIRON &      650 &     320 \\
+   HIP 23362 &            B9V &    05:01:25.58 &    -20:03:6.91 &  6548.87 &     CHIRON &      725 &     520 \\
+   HIP 23362 &            B9V &    05:01:25.58 &    -20:03:6.91 &  6946.93 &     IGRINS &      240 &     290 \\
+   HIP 23916 &          B8III &    05:08:20.19 &   -08:39:55.17 &  6555.82 &     CHIRON &     1200 &      40 \\
+   HIP 23916 &          B8III &    05:08:20.19 &   -08:39:55.17 &  6946.95 &     IGRINS &      280 &     260 \\
+   HIP 24244 &         B7.5Vn &    05:12:17.90 &    -11:52:9.19 &  6949.84 &     CHIRON &      370 &     560 \\
+   HIP 24244 &         B7.5Vn &    05:12:17.90 &    -11:52:9.19 &  6554.91 &     CHIRON &      488 &     330 \\
+   HIP 24327 &            B7V &    05:13:13.88 &   -12:56:28.65 &  6529.88 &     CHIRON &      277 &     560 \\
+   HIP 24505 &            B9V &    05:15:24.37 &   -26:56:36.63 &  7036.69 &     CHIRON &     2045 &     480 \\
+   HIP 24902 &            A3V &    05:20:14.67 &   +41:05:10.35 &  6946.88 &     IGRINS &      224 &     300 \\
+   HIP 25048 &            B3V &    05:21:48.42 &   +41:48:16.46 &  6299.69 &       TS23 &      900 &     420 \\
+ ADS 3962 AB &           B1Vn &    05:22:50.30 &   +03:32:52.00 &  6946.92 &     IGRINS &      280 &     330 \\
+   HIP 25143 &            A3V &    05:22:50.31 &   +41:01:45.33 &  7084.65 &     IGRINS &      960 &     170 \\
+   HIP 25143 &            A3V &    05:22:50.31 &   +41:01:45.33 &  6946.89 &     IGRINS &      224 &     290 \\
+   HIP 25280 &            A0V &    05:24:28.49 &   -16:58:32.81 &  6950.75 &     CHIRON &      597 &     540 \\
+   HIP 25280 &            A0V &    05:24:28.49 &   -16:58:32.81 &  6947.91 &     IGRINS &      240 &     250 \\
+   HIP 25281 &        B1V+B2: &    05:24:28.62 &   -02:23:49.73 &  6299.71 &       TS23 &      583 &    1120 \\
+   HIP 25555 &         B9.5Vn &    05:27:45.61 &   +15:52:26.58 &  6670.63 &       TS23 &      600 &    1950 \\
+   HIP 25608 &            A1V &    05:28:15.34 &   -37:13:50.75 &  6718.62 &     CHIRON &     1030 &     360 \\
+   HIP 25695 &           B9Vn &    05:29:16.50 &    +25:09:0.78 &  6669.65 &       TS23 &     1200 &    1860 \\
+   HIP 25790 &           A3Vn &    05:30:26.16 &   +15:21:37.61 &  6946.90 &     IGRINS &      224 &     260 \\
+   HIP 25813 &            B5V &    05:30:47.05 &   +05:56:53.29 &  7083.58 &     IGRINS &     1020 &     630 \\
+   HIP 25813 &            B5V &    05:30:47.05 &   +05:56:53.29 &  6544.88 &     CHIRON &      384 &     260 \\
+   HIP 26063 &            B1V &    05:33:31.45 &   -01:09:21.87 &  6582.80 &     CHIRON &     1139 &     250 \\
+   HIP 26093 &            B3V &    05:33:54.28 &   +14:18:20.08 &  6946.91 &     IGRINS &      280 &     260 \\
+   HIP 26093 &            B3V &    05:33:54.28 &   +14:18:20.08 &  6676.66 &       TS23 &      525 &    1380 \\
+   HIP 26093 &            B3V &    05:33:54.28 &   +14:18:20.08 &  7084.72 &     IGRINS &     1800 &     370 \\
+   HIP 26126 &            A2V &    05:34:16.77 &    +03:46:0.82 &  6946.96 &     IGRINS &      240 &     470 \\
+   HIP 26126 &            A2V &    05:34:16.77 &    +03:46:0.82 &  6721.50 &     CHIRON &      507 &     450 \\
+   HIP 26126 &            A2V &    05:34:16.77 &    +03:46:0.82 &  6948.81 &     CHIRON &      550 &     360 \\
+     HR 1880 &          B0.5V &     05:35:8.48 &    +09:56:6.10 &  6594.74 &     CHIRON &      472 &     540 \\
+   HIP 26563 &           A4Vn &    05:38:53.08 &   -07:12:46.18 &  6677.68 &       TS23 &      502 &    1550 \\
+   HIP 27100 &            A7V &    05:44:46.38 &    -65:44:7.90 &  6692.59 &     CHIRON &      294 &     680 \\
+   HIP 27100 &            A7V &    05:44:46.38 &    -65:44:7.90 &  6727.54 &     CHIRON &      177 &     560 \\
+   HIP 27321 &            A6V &    05:47:17.09 &   -51:03:59.44 &  6696.62 &     CHIRON &      178 &     640 \\
+   HIP 27713 &           A2Vn &     05:52:7.73 &   -09:02:30.84 &  6946.97 &     IGRINS &      240 &     270 \\
+   HIP 28691 &            B8V &    06:03:27.37 &   +19:41:26.02 &  6298.78 &       TS23 &      646 &    1300 \\
+   HIP 28756 &          B2.5V &    06:04:20.27 &   -32:10:20.74 &  6571.74 &     CHIRON &     1200 &     320 \\
+   HIP 28910 &            A0V &     06:06:9.32 &    -14:56:6.92 &  6693.61 &     CHIRON &      343 &     560 \\
+   HIP 29150 &            A0V &    06:08:57.87 &   -22:25:38.68 &  6697.63 &     CHIRON &      950 &     380 \\
+   HIP 29151 &           A3Vn &    06:08:57.90 &   +02:29:58.89 &  6946.99 &     IGRINS &      264 &     340 \\
+   HIP 29151 &           A3Vn &    06:08:57.90 &   +02:29:58.89 &  6953.82 &     CHIRON &      617 &     540 \\
+   HIP 29735 &            B9V &    06:15:44.89 &    -13:43:6.29 &  6559.80 &     CHIRON &      803 &     380 \\
+   HIP 29735 &            B9V &    06:15:44.89 &    -13:43:6.29 &  6946.98 &     IGRINS &      240 &     250 \\
+   HIP 29997 &           A0Vn &    06:18:50.78 &   +69:19:11.23 &  6679.70 &       TS23 &      415 &    1460 \\
+   HIP 30069 &            B9V &    06:19:40.96 &   -34:23:47.73 &  6573.75 &     CHIRON &     1200 &     250 \\
+   HIP 30073 &          B2.5V &  06:19:42.7989 &  -07:49:22.473 &  6581.82 &     CHIRON &     1011 &     280 \\
+   HIP 30666 &           A3Vn &    06:26:39.59 &   -01:30:26.41 &  6947.00 &     IGRINS &      280 &     310 \\
+   HIP 30788 &            B4V &    06:28:10.21 &   -32:34:48.25 &  6574.75 &     CHIRON &      488 &     340 \\
+   HIP 31278 &           B5Vn &    06:33:37.92 &   -01:13:12.55 &  7084.69 &     IGRINS &      960 &     350 \\
+   HIP 31278 &           B5Vn &    06:33:37.92 &   -01:13:12.55 &  6668.71 &       TS23 &      797 &    1920 \\
+   HIP 31278 &           B5Vn &    06:33:37.92 &   -01:13:12.55 &  6947.01 &     IGRINS &      280 &     390 \\
+   HIP 31362 &            B8V &    06:34:35.33 &   -32:42:58.51 &  6598.72 &     CHIRON &     1200 &     250 \\
+   HIP 31434 &          A0Vnn &    06:35:12.06 &   +28:01:20.32 &  6676.71 &       TS23 &      611 &    1480 \\
+   HIP 32474 &          B9.5V &    06:46:39.02 &   -10:06:26.50 &  6592.74 &     CHIRON &     1200 &     340 \\
+   HIP 32607 &        A8VnkA6 &    06:48:11.46 &   -61:56:29.00 &  7037.75 &     CHIRON &       56 &     210 \\
+   HIP 32607 &        A8VnkA6 &    06:48:11.46 &   -61:56:29.00 &  7039.62 &     CHIRON &       49 &     210 \\
+   HIP 32607 &        A8VnkA6 &    06:48:11.46 &   -61:56:29.00 &  6724.56 &     CHIRON &       67 &     560 \\
+   HIP 33372 &           B8Vn &    06:56:25.83 &   +09:57:23.67 &  6948.00 &     IGRINS &      320 &     330 \\
+   HIP 33372 &           B8Vn &    06:56:25.83 &   +09:57:23.67 &  6678.72 &       TS23 &      720 &    1380 \\
+   HIP 33575 &            B2V &    06:58:35.90 &   -25:24:50.97 &  6599.72 &     CHIRON &     1200 &     390 \\
+   HIP 34769 &            A2V &    07:11:51.86 &   -00:29:33.96 &  6677.75 &       TS23 &      279 &    1520 \\
+   HIP 35180 &            A1V &    07:16:14.55 &    -15:35:8.49 &  6696.76 &     CHIRON &      925 &     290 \\
+   HIP 35341 &           A5Vn &     07:18:2.22 &    +40:53:0.22 &  6680.75 &       TS23 &      833 &    1070 \\
+   HIP 36393 &            A4V &    07:29:20.44 &    +28:07:5.79 &  6676.76 &       TS23 &      616 &    1550 \\
+   HIP 36393 &            A4V &    07:29:20.44 &    +28:07:5.79 &  6670.76 &       TS23 &      494 &    1400 \\
+   HIP 36760 &           A1Vn &    07:33:36.48 &   +15:49:35.98 &  7084.74 &     IGRINS &      720 &     760 \\
+   HIP 36760 &           A1Vn &    07:33:36.48 &   +15:49:35.98 &  7037.76 &     CHIRON &     4284 &     370 \\
+   HIP 36760 &           A1Vn &    07:33:36.48 &   +15:49:35.98 &  7039.68 &     CHIRON &     3127 &     480 \\
+   HIP 36760 &           A1Vn &    07:33:36.48 &   +15:49:35.98 &  6668.79 &       TS23 &      836 &     700 \\
+   HIP 36812 &          A0Vnn &    07:34:15.89 &   +03:22:18.19 &  6947.99 &     IGRINS &      280 &     320 \\
+   HIP 36917 &            B7V &    07:35:22.89 &    -28:22:9.57 &  6583.81 &     CHIRON &      571 &     420 \\
+   HIP 36917 &            B7V &    07:35:22.89 &    -28:22:9.57 &  6971.83 &     CHIRON &      435 &     690 \\
+     HR 2948 &            B6V &    07:38:49.38 &    -26:48:6.49 &  6584.81 &     CHIRON &      576 &     370 \\
+   HIP 37297 &          B2.5V &    07:39:27.34 &   -38:18:28.88 &  6698.74 &     CHIRON &      370 &     480 \\
+   HIP 37297 &          B2.5V &    07:39:27.34 &   -38:18:28.88 &  6574.82 &     CHIRON &      686 &     340 \\
+   HIP 37297 &          B2.5V &    07:39:27.34 &   -38:18:28.88 &  6729.53 &     CHIRON &      231 &     460 \\
+   HIP 37322 &            B5V &    07:39:43.81 &   -38:08:21.44 &  6975.79 &     CHIRON &      817 &     540 \\
+   HIP 37450 &            B5V &    07:41:15.81 &    -38:32:0.72 &  6600.74 &     CHIRON &     1171 &     450 \\
+   HIP 38538 &           A5IV &    07:53:29.81 &   +26:45:56.82 &  6669.78 &       TS23 &      474 &    1990 \\
+   HIP 38593 &            B2V &    07:54:11.01 &   -35:52:38.23 &  7039.70 &     CHIRON &      331 &     170 \\
+   HIP 38593 &            B2V &    07:54:11.01 &   -35:52:38.23 &  6599.82 &     CHIRON &     1200 &     410 \\
+   HIP 38593 &            B2V &    07:54:11.01 &   -35:52:38.23 &  6592.87 &     CHIRON &     1200 &     300 \\
+   HIP 38846 &          B2.5V &    07:56:57.80 &    -43:30:1.48 &  6601.76 &     CHIRON &     1098 &     400 \\
+   HIP 39095 &            A1V &    07:59:52.05 &   -18:23:57.23 &  6765.53 &     CHIRON &      430 &     450 \\
+   HIP 39095 &            A1V &    07:59:52.05 &   -18:23:57.23 &  6757.56 &     CHIRON &      238 &     490 \\
+   HIP 39095 &            A1V &    07:59:52.05 &   -18:23:57.23 &  6711.62 &     CHIRON &      288 &     500 \\
+   HIP 39236 &         B9.5Vn &    08:01:30.29 &   +16:27:19.12 &  6679.73 &       TS23 &      730 &    1420 \\
+   HIP 39567 &            A1V &     08:05:4.49 &    +13:07:5.58 &  6668.80 &       TS23 &      613 &    1940 \\
+   HIP 39847 &            A2V &    08:08:27.45 &   +51:30:24.01 &  7084.68 &     IGRINS &      480 &     570 \\
+   HIP 39847 &            A2V &    08:08:27.45 &   +51:30:24.01 &  6676.80 &       TS23 &      402 &    1500 \\
+   HIP 39906 &            B5V &     08:09:1.64 &   -19:14:42.05 &  6580.86 &     CHIRON &      457 &     270 \\
+   HIP 40429 &            A2V &    08:15:15.92 &   -62:54:56.32 &  6691.72 &     CHIRON &      710 &     560 \\
+   HIP 40706 &            A8V &    08:18:33.31 &   -36:39:33.44 &  6327.64 &     CHIRON &      277 &     630 \\
+   HIP 40881 &          B9.5V &    08:20:32.14 &   +24:01:20.32 &  6947.97 &     IGRINS &      240 &     310 \\
+   HIP 41039 &            B1V &    08:22:31.69 &   -48:29:25.36 &  7039.73 &     CHIRON &     1728 &     530 \\
+   HIP 41039 &            B1V &    08:22:31.69 &   -48:29:25.36 &  6330.77 &     CHIRON &      404 &     400 \\
+   HIP 41307 &           A0Va &    08:25:39.63 &   -03:54:23.12 &  6667.82 &       TS23 &      700 &    1220 \\
+   HIP 42090 &          A2Vnn &    08:34:43.88 &   +36:25:10.63 &  7124.62 &     IGRINS &      630 &     280 \\
+   HIP 42129 &        B3V+... &    08:35:15.56 &   -58:13:29.05 &  6603.80 &     CHIRON &     1001 &     370 \\
+   HIP 42313 &          A0Vnn &    08:37:39.37 &   +05:42:13.61 &  6681.81 &       TS23 &      489 &    1020 \\
+   HIP 42334 &            A0V &    08:37:52.15 &   -26:15:18.01 &  6712.64 &     CHIRON &      381 &     480 \\
+   HIP 43142 &            A3V &    08:47:14.99 &   -01:53:49.31 &  6670.79 &       TS23 &      647 &    1980 \\
+   HIP 44127 &     A7V(n)+M1V &    08:59:12.45 &   +48:02:30.57 &  6677.88 &       TS23 &      239 &    1600 \\
+   HIP 44307 &            A2V &    09:01:24.13 &    +32:15:8.26 &  6947.98 &     IGRINS &      280 &     500 \\
+   HIP 45336 &    B9.5V+DA1.6 &    09:14:21.86 &   +02:18:51.34 &  6328.70 &     CHIRON &      171 &     290 \\
+   HIP 45336 &    B9.5V+DA1.6 &    09:14:21.86 &   +02:18:51.34 &  7122.66 &     IGRINS &      270 &     230 \\
+   HIP 45336 &    B9.5V+DA1.6 &    09:14:21.86 &   +02:18:51.34 &  7084.75 &     IGRINS &      240 &     330 \\
+   HIP 45344 &            B4V &    09:14:24.48 &   -43:13:38.97 &  6612.79 &     CHIRON &     1001 &     320 \\
+   HIP 45688 &            A1V &    09:18:50.64 &    +36:48:9.33 &  6299.93 &       TS23 &      600 &     880 \\
+   HIP 46225 &            A4V &    09:25:27.23 &    -61:57:1.72 &  6679.84 &       TS23 &      933 &    1300 \\
+   HIP 46283 &            B6V &    09:26:17.96 &   -53:22:44.07 &  6732.56 &     CHIRON &      357 &     490 \\
+   HIP 46283 &            B6V &    09:26:17.96 &   -53:22:44.07 &  6619.80 &     CHIRON &      872 &     430 \\
+   HIP 46283 &            B6V &    09:26:17.96 &   -53:22:44.07 &  6712.70 &     CHIRON &      352 &     450 \\
+   HIP 46897 &          B9.5V &    09:33:26.05 &   -22:51:49.99 &  7084.78 &     IGRINS &     1200 &     230 \\
+   HIP 46897 &          B9.5V &    09:33:26.05 &   -22:51:49.99 &  7139.59 &     IGRINS &      720 &     400 \\
+   HIP 47006 &           A0Vn &    09:34:49.43 &    +52:03:5.32 &  6677.03 &       TS23 &      373 &    1590 \\
+   HIP 47175 &            A7V &    09:36:49.54 &   -49:21:18.09 &  6424.56 &     CHIRON &      264 &     660 \\
+   HIP 50303 &           A0Vn &    10:16:14.43 &   +29:18:37.81 &  6677.78 &       TS23 &     1200 &    1350 \\
+   HIP 50860 &          A5IVn &     10:23:6.33 &   +33:54:29.31 &  6678.81 &       TS23 &     1151 &    1470 \\
+   HIP 51362 &          B9.5V &    10:29:28.70 &   -02:44:20.69 &  7043.79 &     CHIRON &     1298 &     340 \\
+   HIP 51362 &          B9.5V &    10:29:28.70 &   -02:44:20.69 &  6625.81 &     CHIRON &      947 &     200 \\
+   HIP 51362 &          B9.5V &    10:29:28.70 &   -02:44:20.69 &  6673.75 &     CHIRON &      606 &     510 \\
+   HIP 51362 &          B9.5V &    10:29:28.70 &   -02:44:20.69 &  7084.76 &     IGRINS &      720 &     240 \\
+   HIP 51685 &           A2Vn &    10:33:30.91 &   +34:59:19.30 &  6677.90 &       TS23 &     1046 &    1460 \\
+   HIP 52422 &           A4Vn &     10:43:1.88 &   +26:19:32.09 &  6676.87 &       TS23 &      522 &    1540 \\
+   HIP 52457 &           A3Vn &    10:43:24.96 &   +23:11:18.25 &  6676.83 &       TS23 &      647 &    1500 \\
+   HIP 52638 &           A1Vn &    10:45:51.89 &   +30:40:56.33 &  6669.83 &       TS23 &      711 &    1900 \\
+   HIP 52678 &          B6Vnn &    10:46:16.56 &   -64:30:52.41 &  6748.56 &     CHIRON &      375 &     500 \\
+   HIP 52678 &          B6Vnn &    10:46:16.56 &   -64:30:52.41 &  6690.70 &     CHIRON &      618 &     610 \\
+   HIP 52736 &         B2.5Vn &    10:46:51.22 &    -64:23:0.50 &  6748.52 &     CHIRON &      530 &     540 \\
+   HIP 52736 &         B2.5Vn &    10:46:51.22 &    -64:23:0.50 &  6713.70 &     CHIRON &      263 &     490 \\
+   HIP 52911 &            A2V &    10:49:15.43 &   +10:32:42.73 &  6670.86 &       TS23 &      758 &    1950 \\
+     HR 4259 &            A1V &    10:55:36.80 &   +24:44:59.00 &  6335.70 &     CHIRON &      304 &     330 \\
+   HIP 54849 &            A0V &    11:13:45.55 &   -00:04:10.20 &  6670.94 &       TS23 &      797 &    2080 \\
+   HIP 55266 &            A2V &     11:19:7.90 &    +38:11:8.03 &  6300.00 &       TS23 &      900 &     200 \\
+   HIP 55434 &         B9.5Vs &  11:21:08.1934 &  +06:01:45.571 &  6332.77 &     CHIRON &      199 &     410 \\
+   HIP 56034 &            A2V &     11:29:4.12 &   +39:20:13.11 &  6676.91 &       TS23 &      502 &    1460 \\
+   HIP 56633 &          B9.5V &    11:36:40.91 &    -09:48:8.09 &  6669.91 &       TS23 &      447 &    1990 \\
+   HIP 56633 &          B9.5V &    11:36:40.91 &    -09:48:8.09 &  6335.75 &     CHIRON &      358 &     470 \\
+   HIP 57328 &            A4V &    11:45:17.04 &   +08:15:29.21 &  6338.68 &     CHIRON &      419 &     490 \\
+   HIP 57328 &            A4V &    11:45:17.04 &   +08:15:29.21 &  6370.62 &     CHIRON &      419 &     450 \\
+   HIP 58590 &            A5V &    12:00:52.39 &   +06:36:51.56 &  6338.72 &     CHIRON &      352 &     520 \\
+   HIP 59394 &            A1V &     12:11:3.84 &    -23:36:8.72 &  6754.57 &     CHIRON &      815 &     500 \\
+   HIP 59394 &            A1V &     12:11:3.84 &    -23:36:8.72 &  6690.78 &     CHIRON &      940 &     370 \\
+   HIP 59449 &            B3V &    12:11:39.12 &    -52:22:6.44 &  6711.88 &     CHIRON &      186 &     440 \\
+   HIP 59449 &            B3V &    12:11:39.12 &    -52:22:6.44 &  6641.76 &     CHIRON &      305 &     150 \\
+   HIP 59819 &            A3V &     12:16:0.19 &   +14:53:56.65 &  6669.96 &       TS23 &      465 &    1940 \\
+   HIP 60009 &          B2.5V &    12:18:26.25 &   -64:00:11.05 &  6370.66 &     CHIRON &      200 &     520 \\
+   HIP 60009 &          B2.5V &    12:18:26.25 &   -64:00:11.05 &  7009.78 &     CHIRON &      206 &     510 \\
+   HIP 60030 &           A5Vn &    12:18:40.32 &   -00:47:13.87 &  7084.81 &     IGRINS &     2400 &     230 \\
+   HIP 60595 &            A1V &    12:25:11.76 &   -11:36:38.12 &  6676.94 &       TS23 &      746 &    1540 \\
+   HIP 60710 &           B3Vn &    12:26:31.76 &    -51:27:2.29 &  7062.77 &     CHIRON &     1515 &     470 \\
+   HIP 60957 &            A3V &    12:29:43.24 &   +20:53:45.99 &  6678.92 &       TS23 &      904 &    1500 \\
+   HIP 61558 &            A3V &    12:36:47.35 &   -05:49:54.84 &  7139.67 &     IGRINS &     1440 &     390 \\
+   HIP 61558 &            A3V &    12:36:47.35 &   -05:49:54.84 &  7084.84 &     IGRINS &     1200 &     130 \\
+   HIP 61622 &         A1IVnn &    12:37:42.16 &   -48:32:28.69 &  6378.69 &     CHIRON &      167 &     620 \\
+   HIP 62541 &            A1V &    12:48:54.21 &   +14:07:21.31 &  7124.80 &     IGRINS &      480 &     270 \\
+   HIP 62541 &            A1V &    12:48:54.21 &   +14:07:21.31 &  7084.86 &     IGRINS &     1500 &     110 \\
+   HIP 62576 &            A2V &    12:49:17.45 &    +27:33:8.57 &  7122.83 &     IGRINS &      546 &     290 \\
+   HIP 63724 &            A0V &    13:03:33.31 &   -49:31:38.15 &  6338.76 &     CHIRON &      412 &     560 \\
+   HIP 63724 &            A0V &    13:03:33.31 &   -49:31:38.15 &  6371.72 &     CHIRON &      412 &     630 \\
+   HIP 63945 &            B5V &    13:06:16.70 &   -48:27:47.85 &  6371.68 &     CHIRON &      362 &     560 \\
+   HIP 65198 &            A2V &    13:21:41.64 &   +02:05:14.07 &  7044.85 &     CHIRON &     3352 &     430 \\
+   HIP 65477 &      A5V+M3-4V &    13:25:13.54 &   +54:59:16.65 &  6670.01 &       TS23 &      207 &    2520 \\
+   HIP 65728 &           A1Vn &    13:28:27.09 &   +59:56:44.83 &  6677.98 &       TS23 &     1200 &    1710 \\
+   HIP 66249 &          A2Van &    13:34:41.74 &   -00:35:45.38 &  6378.71 &     CHIRON &      110 &     520 \\
+   HIP 66798 &            A2V &    13:41:29.89 &   +64:49:20.68 &  6377.82 &        HRS &      362 &     610 \\
+   HIP 66821 &  B8.5Vn+A2.5Va &    13:41:44.77 &   -54:33:33.93 &  6718.75 &     CHIRON &      610 &     540 \\
+   HIP 67143 &            A0V &    13:45:36.89 &   -26:06:57.63 &  7139.77 &     IGRINS &      480 &     270 \\
+   HIP 67194 &            A5V &    13:46:13.55 &   +41:05:19.48 &  6389.70 &        HRS &      368 &     740 \\
+   HIP 67782 &           A8IV &    13:53:10.28 &   +28:38:53.28 &  6394.92 &        HRS &      359 &     680 \\
+   HIP 68092 &            A8V &    13:56:27.88 &    +01:03:2.09 &  7139.80 &     IGRINS &      840 &     640 \\
+   HIP 68520 &            A3V &    14:01:38.79 &   +01:32:40.31 &  6403.59 &     CHIRON &      239 &     470 \\
+   HIP 70327 &            A0V &    14:23:22.70 &   +08:26:47.84 &  7123.90 &     IGRINS &      420 &     300 \\
+   HIP 70327 &            A0V &    14:23:22.70 &   +08:26:47.84 &  6681.98 &       TS23 &     1152 &     230 \\
+   HIP 70327 &            A0V &    14:23:22.70 &   +08:26:47.84 &  6719.80 &     CHIRON &      368 &     460 \\
+   HIP 70384 &            A3V &     14:24:0.88 &   +08:14:38.30 &  6403.73 &        HRS &      420 &     560 \\
+   HIP 70400 &            A3V &    14:24:11.34 &   +05:49:12.47 &  6669.00 &       TS23 &      602 &    2000 \\
+   HIP 70915 &           B8Vn &     14:30:8.63 &   -45:19:16.88 &  7136.63 &     CHIRON &     3281 &     480 \\
+   HIP 70915 &           B8Vn &     14:30:8.63 &   -45:19:16.88 &  7090.71 &     CHIRON &     2985 &     460 \\
+     HR 5476 &            A6V &    14:40:43.94 &    +16:25:3.90 &  6408.71 &        HRS &      305 &     660 \\
+   HIP 71865 &            B3V &    14:41:57.59 &   -37:47:36.59 &  6383.71 &     CHIRON &      190 &     460 \\
+   HIP 71865 &            B3V &    14:41:57.59 &   -37:47:36.59 &  7060.80 &     CHIRON &     1205 &     500 \\
+   HIP 71974 &          B9.5V &    14:43:13.55 &   -24:59:51.91 &  7078.80 &     CHIRON &     3786 &     470 \\
+   HIP 72104 &         A0IVnn &    14:44:59.20 &   -35:11:30.57 &  6720.86 &     CHIRON &      492 &     490 \\
+   HIP 72154 &          B9.5V &    14:45:30.20 &    +00:43:2.19 &  6403.75 &        HRS &      300 &     470 \\
+   HIP 72250 &            A1V &    14:46:28.99 &   -47:26:28.02 &  7070.72 &     CHIRON &     4025 &     490 \\
+   HIP 72378 &            B9V &    14:47:57.56 &   -26:38:46.16 &  7139.82 &     IGRINS &      720 &     450 \\
+   HIP 72552 &            A4V &    14:49:58.40 &   +28:36:57.00 &  7124.81 &     IGRINS &      600 &     200 \\
+   HIP 73049 &            A0V &    14:55:44.71 &   -33:51:20.82 &  6715.73 &     CHIRON &      749 &     530 \\
+     HR 5605 &            B5V &     15:05:7.18 &    -47:03:4.00 &  6383.74 &     CHIRON &      330 &     530 \\
+   HIP 74117 &            B3V &    15:08:50.62 &   -45:16:47.49 &  6383.77 &     CHIRON &      204 &     370 \\
+   HIP 74689 &            A4V &    15:15:49.08 &   +00:22:19.70 &  6872.52 &     CHIRON &      693 &     550 \\
+   HIP 75178 &           B9Vn &    15:21:48.58 &    +32:56:1.30 &  6678.99 &       TS23 &      815 &    1620 \\
+   HIP 75304 &            B4V &     15:23:9.35 &   -36:51:30.55 &  6427.78 &     CHIRON &      309 &     340 \\
+   HIP 76267 &           A1IV &    15:34:41.27 &   +26:42:52.89 &  6380.88 &     CHIRON &       36 &     290 \\
+   HIP 76600 &          B2.5V &    15:38:39.37 &   -29:46:39.89 &  6380.91 &     CHIRON &      137 &     500 \\
+   HIP 76852 &            A1V &    15:41:33.05 &   +19:40:13.44 &  6426.65 &     CHIRON &      306 &     370 \\
+   HIP 77233 &            A3V &    15:46:11.25 &   +15:25:18.59 &  6426.69 &     CHIRON &      140 &     320 \\
+   HIP 77336 &            A3V &    15:47:17.32 &   +14:06:55.26 &  6396.79 &        HRS &      264 &     610 \\
+   HIP 77336 &            A3V &    15:47:17.32 &   +14:06:55.26 &  7122.91 &     IGRINS &      480 &     230 \\
+   HIP 77516 &            A0V &    15:49:37.21 &   -03:25:48.73 &  6380.89 &     CHIRON &      126 &     450 \\
+   HIP 77635 &         B1.5Vn &    15:50:58.74 &    -25:45:4.66 &  6725.72 &     CHIRON &      288 &     420 \\
+   HIP 77858 &            B5V &    15:53:53.92 &   -24:31:59.37 &  6733.75 &     CHIRON &      628 &     490 \\
+   HIP 78105 &            A3V &    15:56:53.50 &   -33:57:58.01 &  6870.54 &     CHIRON &      655 &     590 \\
+   HIP 78106 &            B9V &    15:56:54.12 &   -33:57:51.34 &  6736.70 &     CHIRON &      584 &     500 \\
+   HIP 78265 &      B1V+B2:V: &  15:58:51.1132 &  -26:06:50.788 &  6766.77 &     CHIRON &       22 &     250 \\
+   HIP 78554 &            A3V &    16:02:17.69 &   +22:48:16.03 &  6427.74 &     CHIRON &      408 &     270 \\
+   HIP 78820 &            B1V &    16:05:26.23 &   -19:48:19.63 &  6380.93 &     CHIRON &       53 &     490 \\
+   HIP 78820 &            B1V &    16:05:26.23 &   -19:48:19.63 &  7139.83 &     IGRINS &      120 &     840 \\
+   HIP 78820 &            B1V &    16:05:26.23 &   -19:48:19.63 &  7060.85 &     CHIRON &      263 &     360 \\
+   HIP 78820 &            B1V &    16:05:26.23 &   -19:48:19.63 &  7156.63 &     CHIRON &      164 &     390 \\
+   HIP 78821 &            B2V &    16:05:26.57 &    -19:48:6.85 &  7139.84 &     IGRINS &      210 &     100 \\
+     HR 6025 &           A0Vn &  16:06:19.6762 &  +67:48:36.480 &  6847.83 &     IGRINS &      600 &     610 \\
+   HIP 78918 &         B2.5Vn &    16:06:35.55 &    -36:48:8.26 &  6718.86 &     CHIRON &      300 &     610 \\
+   HIP 78933 &            B1V &  16:06:48.4269 &  -20:40:09.090 &  6737.76 &     CHIRON &       77 &     250 \\
+   HIP 79005 &            B9V &    16:07:36.42 &   -12:44:43.46 &  7090.77 &     CHIRON &     4646 &     430 \\
+   HIP 79007 &            A7V &    16:07:37.54 &   +09:53:30.27 &  6874.48 &     CHIRON &      659 &     550 \\
+   HIP 79199 &            B8V &    16:09:52.59 &   -33:32:44.90 &  6734.71 &     CHIRON &      451 &     470 \\
+   HIP 79404 &            B2V &    16:12:18.20 &   -27:55:34.95 &  6415.77 &     CHIRON &      324 &     470 \\
+   HIP 79404 &            B2V &    16:12:18.20 &   -27:55:34.95 &  7076.81 &     CHIRON &     1307 &     430 \\
+   HIP 79404 &            B2V &    16:12:18.20 &   -27:55:34.95 &  7090.88 &     CHIRON &     1135 &     450 \\
+   HIP 79387 &            A4V &     16:12:7.32 &   -08:32:51.28 &  6746.75 &     CHIRON &      573 &     500 \\
+   HIP 79653 &            B8V &    16:15:15.32 &   -47:22:19.27 &  6740.79 &     CHIRON &      469 &     490 \\
+   HIP 80460 &            A5V &    16:25:24.17 &   +37:23:38.68 &  7122.93 &     IGRINS &      720 &     400 \\
+   HIP 80815 &            B3V &    16:30:12.48 &   -25:06:54.80 &  6378.86 &     CHIRON &      393 &     530 \\
+   HIP 80883 &           A1IV &    16:30:54.82 &    +01:59:2.12 &  6378.84 &     CHIRON &      174 &     550 \\
+   HIP 80991 &            A2V &    16:32:25.68 &   +60:49:23.96 &  6389.86 &        HRS &      404 &     720 \\
+   HIP 81126 &            B9V &     16:34:6.18 &   +42:26:13.34 &  7122.95 &     IGRINS &      720 &     620 \\
+   HIP 81641 &            A1V &    16:40:38.69 &   +04:13:11.23 &  6404.83 &        HRS &      320 &     540 \\
+   HIP 82350 &            A1V &    16:49:34.66 &   +13:15:40.10 &  6391.84 &        HRS &      404 &     660 \\
+   HIP 82514 &     B1.5Vp+... &  16:51:52.2311 &  -38:02:50.569 &  6726.81 &     CHIRON &       34 &     250 \\
+   HIP 82673 &            B8V &     16:54:0.47 &   +10:09:55.30 &  6871.58 &     CHIRON &      250 &     310 \\
+   HIP 82673 &            B8V &     16:54:0.47 &   +10:09:55.30 &  6410.86 &     CHIRON &      272 &     180 \\
+   HIP 83635 &            B1V &    17:05:32.26 &   -00:53:31.45 &  6407.86 &        HRS &      316 &     480 \\
+   HIP 84606 &            A2V &    17:17:40.25 &   +37:17:29.40 &  6945.54 &     IGRINS &      224 &     460 \\
+   HIP 85290 &           A1Vn &    17:25:41.35 &   +60:02:54.23 &  6946.56 &     IGRINS &      224 &     240 \\
+   HIP 85379 &            A4V &    17:26:44.24 &   +48:15:36.23 &  6398.85 &        HRS &      330 &     740 \\
+   HIP 85385 &            B5V &    17:26:49.13 &   +20:04:51.52 &  6848.83 &     IGRINS &      480 &   40390 \\
+   HIP 85537 &           A8Vp &    17:28:49.65 &   +00:19:50.25 &  7096.88 &     CHIRON &     4227 &     570 \\
+   HIP 85537 &           A8Vp &    17:28:49.65 &   +00:19:50.25 &  6792.73 &     CHIRON &      900 &     600 \\
+   HIP 85537 &           A8Vp &    17:28:49.65 &   +00:19:50.25 &  6848.73 &     IGRINS &      240 &   68720 \\
+   HIP 85727 &           B8Vn &     17:31:5.91 &    -60:41:1.85 &  6771.85 &     CHIRON &      175 &     570 \\
+   HIP 85922 &     A4III-IVnn &    17:33:29.85 &   -05:44:41.29 &  6847.82 &     IGRINS &      480 &     760 \\
+   HIP 85922 &     A4III-IVnn &    17:33:29.85 &   -05:44:41.29 &  7139.95 &     IGRINS &      240 &     290 \\
+   HIP 85922 &     A4III-IVnn &    17:33:29.85 &   -05:44:41.29 &  6886.56 &     CHIRON &      791 &     590 \\
+   HIP 85922 &     A4III-IVnn &    17:33:29.85 &   -05:44:41.29 &  7103.85 &     CHIRON &     2543 &     370 \\
+   HIP 85922 &     A4III-IVnn &    17:33:29.85 &   -05:44:41.29 &  7104.82 &     CHIRON &     7386 &     360 \\
+   HIP 85998 &            A2V &    17:34:36.69 &   +09:35:12.12 &  7122.96 &     IGRINS &      480 &     120 \\
+   HIP 85998 &            A2V &    17:34:36.69 &   +09:35:12.12 &  7230.64 &     IGRINS &      720 &     700 \\
+   HIP 85998 &            A2V &    17:34:36.69 &   +09:35:12.12 &  6407.84 &        HRS &      324 &     490 \\
+   HIP 85998 &            A2V &    17:34:36.69 &   +09:35:12.12 &  7079.89 &     CHIRON &     1600 &     220 \\
+   HIP 86019 &           B8Vn &    17:34:46.35 &   -11:14:31.19 &  6747.85 &     CHIRON &      228 &     510 \\
+   HIP 86782 &            A2V &    17:43:59.18 &    +53:48:6.17 &  6404.85 &        HRS &      310 &     500 \\
+   HIP 87108 &     A1VnkA0mA0 &    17:47:53.56 &   +02:42:26.20 &  6847.87 &     IGRINS &      120 &     630 \\
+   HIP 87108 &     A1VnkA0mA0 &    17:47:53.56 &   +02:42:26.20 &  6445.79 &     CHIRON &      152 &     300 \\
+   HIP 88116 &             A0 &    17:59:47.56 &   -23:48:58.09 &  6488.71 &     CHIRON &      373 &     590 \\
+   HIP 88116 &             A0 &    17:59:47.56 &   -23:48:58.09 &  6876.54 &     CHIRON &      320 &     380 \\
+   HIP 88290 &           A2Vn &    18:01:45.20 &   +01:18:18.28 &  6873.59 &     CHIRON &      365 &     540 \\
+   HIP 88818 &            A3V &    18:07:49.45 &    +26:06:4.13 &  7122.98 &     IGRINS &      960 &     530 \\
+   HIP 88818 &            A3V &    18:07:49.45 &    +26:06:4.13 &  7230.66 &     IGRINS &      600 &     830 \\
+   HIP 88818 &            A3V &    18:07:49.45 &    +26:06:4.13 &  6397.85 &        HRS &      355 &     510 \\
+   HIP 88817 &            A3V &    18:07:49.50 &   +26:05:50.40 &  7123.00 &     IGRINS &      960 &     430 \\
+   HIP 88817 &            A3V &    18:07:49.50 &   +26:05:50.40 &  6405.84 &        HRS &      400 &     720 \\
+   HIP 89156 &            A3V &    18:11:45.12 &   +33:26:49.41 &  6405.82 &        HRS &      470 &     610 \\
+   HIP 89935 &            A7V &     18:21:1.02 &   +28:52:11.83 &  6848.85 &     IGRINS &      240 &   77520 \\
+   HIP 89935 &            A7V &     18:21:1.02 &   +28:52:11.83 &  6945.56 &     IGRINS &      224 &     620 \\
+   HIP 90052 &            A2V &    18:22:35.32 &   +12:01:46.85 &  6405.88 &        HRS &      500 &     760 \\
+   HIP 90762 &            A2V &     18:31:4.45 &   +16:55:42.80 &  6848.85 &     IGRINS &      480 &   47190 \\
+   HIP 90762 &            A2V &     18:31:4.45 &   +16:55:42.80 &  6945.57 &     IGRINS &      480 &     570 \\
+   HIP 90887 &           A3Vn &    18:32:21.33 &   -39:42:14.40 &  6748.80 &     CHIRON &      710 &     560 \\
+   HIP 91118 &           A0Vn &    18:35:12.60 &   +18:12:12.28 &  6945.58 &     IGRINS &      360 &     390 \\
+   HIP 91875 &           A2Vn &    18:43:46.94 &   -38:19:24.39 &  6745.81 &     CHIRON &      680 &     580 \\
+   HIP 92027 &        A1V+... &    18:45:28.36 &    +05:30:0.44 &  6405.91 &        HRS &      360 &     570 \\
+   HIP 92312 &            A1V &    18:48:53.39 &   +19:19:43.40 &  6408.88 &        HRS &      390 &     650 \\
+   HIP 92728 &          B2.5V &    18:53:43.56 &   +36:58:18.19 &  6405.86 &        HRS &      280 &     560 \\
+   HIP 92855 &            B2V &    18:55:15.93 &   -26:17:48.21 &  6880.57 &     CHIRON &       30 &     550 \\
+   HIP 92855 &            B2V &    18:55:15.93 &   -26:17:48.21 &  6415.80 &     CHIRON &       32 &     400 \\
+   HIP 92946 &            A5V &    18:56:13.18 &   +04:12:12.91 &  6475.79 &     CHIRON &      339 &     500 \\
+   HIP 93225 &            B4V &    18:59:23.80 &   -12:50:25.86 &  6946.54 &     IGRINS &      224 &     640 \\
+   HIP 93225 &            B4V &    18:59:23.80 &   -12:50:25.86 &  6516.69 &     CHIRON &     1200 &     540 \\
+   HIP 93225 &            B4V &    18:59:23.80 &   -12:50:25.86 &  6962.56 &       TS23 &      562 &    1430 \\
+   HIP 93393 &            B5V &    19:01:17.36 &   +26:17:29.08 &  6404.88 &        HRS &      320 &     540 \\
+   HIP 93580 &            A4V &    19:03:32.25 &    +01:49:7.57 &  7116.84 &     CHIRON &     5594 &     520 \\
+   HIP 93580 &            A4V &    19:03:32.25 &    +01:49:7.57 &  6848.84 &     IGRINS &      480 &   55820 \\
+   HIP 93713 &           A0Vn &    19:04:55.17 &   +53:23:47.96 &  6848.87 &     IGRINS &      600 &   42950 \\
+   HIP 93747 &       A0IV-Vnn &    19:05:24.61 &   +13:51:48.52 &  6587.54 &       TS23 &       85 &    1880 \\
+   HIP 93805 &           B9Vn &    19:06:14.94 &   -04:52:57.20 &  6852.82 &     IGRINS &     2640 &  188380 \\
+   HIP 93805 &           B9Vn &    19:06:14.94 &   -04:52:57.20 &  7139.96 &     IGRINS &      120 &     280 \\
+   HIP 93805 &           B9Vn &    19:06:14.94 &   -04:52:57.20 &  6775.78 &     CHIRON &      150 &     520 \\
+   HIP 94620 &            A4V &    19:15:17.36 &   +21:13:55.62 &  6848.88 &     IGRINS &      480 &   69950 \\
+   HIP 94720 &          B9.5V &    19:16:26.79 &   +14:32:40.62 &  6517.78 &        HRS &      400 &     880 \\
+   HIP 95241 &            B9V &    19:22:38.30 &   -44:27:32.25 &  6869.63 &     CHIRON &      325 &     120 \\
+   HIP 95241 &            B9V &    19:22:38.30 &   -44:27:32.25 &  6508.80 &     CHIRON &      294 &     600 \\
+   HIP 95241 &            B9V &    19:22:38.30 &   -44:27:32.25 &  6459.89 &     CHIRON &      183 &     360 \\
+   HIP 95560 &            A0V &    19:26:13.25 &   +20:05:51.84 &  6848.89 &     IGRINS &      480 &   57010 \\
+   HIP 95619 &          B8.5V &    19:26:56.48 &   -29:44:35.62 &  7139.97 &     IGRINS &      480 &     310 \\
+   HIP 95619 &          B8.5V &    19:26:56.48 &   -29:44:35.62 &  7118.79 &     CHIRON &     3451 &     320 \\
+   HIP 95619 &          B8.5V &    19:26:56.48 &   -29:44:35.62 &  6523.61 &     CHIRON &      768 &     670 \\
+   HIP 95853 &            A5V &    19:29:42.36 &   +51:43:47.21 &  6585.54 &       TS23 &      129 &    2010 \\
+   HIP 96288 &            A2V &    19:34:41.26 &   +42:24:45.04 &  6585.56 &       TS23 &      489 &    1860 \\
+   HIP 96840 &            B5V &     19:41:5.53 &   +13:48:56.45 &  6408.92 &        HRS &      552 &     940 \\
+   HIP 97376 &           B8Vn &    19:47:27.78 &   +38:24:27.41 &  6848.90 &     IGRINS &     1680 &   35630 \\
+   HIP 97496 &            A3V &    19:48:58.66 &   +19:08:31.35 &  6584.54 &       TS23 &      342 &    1820 \\
+   HIP 97870 &            B5V &    19:53:17.38 &   +57:31:24.53 &  6517.81 &        HRS &      185 &     830 \\
+   HIP 97966 &           B7Vn &    19:54:37.65 &   -08:13:38.24 &  6925.51 &     CHIRON &      655 &     380 \\
+   HIP 97966 &           B7Vn &    19:54:37.65 &   -08:13:38.24 &  6881.70 &     CHIRON &     1158 &     660 \\
+   HIP 98055 &           A4Vn &    19:55:37.79 &   +52:26:20.21 &  6586.54 &       TS23 &      320 &    1820 \\
+   HIP 98194 &            B5V &    19:57:13.87 &    +40:22:4.17 &  6583.54 &       TS23 &      495 &    1750 \\
+   HIP 98325 &           B9Vn &    19:58:37.98 &    +30:59:1.19 &  6587.56 &       TS23 &      543 &    1750 \\
+   HIP 99080 &            B3V &    20:06:53.41 &   +23:36:51.93 &  6583.63 &       TS23 &      358 &    1740 \\
+   HIP 99742 &           A1Va &    20:14:16.62 &   +15:11:51.39 &  6945.59 &     IGRINS &      224 &     540 \\
+  HIP 100069 &  O9IV(n)+B1.5V &     20:18:6.99 &   +40:43:55.50 &  6409.91 &        HRS &      451 &     560 \\
+  HIP 100221 &            B9V &    20:19:36.72 &   +62:15:26.90 &  7230.72 &     IGRINS &     1100 &     930 \\
+  HIP 100221 &            B9V &    20:19:36.72 &   +62:15:26.90 &  6523.79 &        HRS &      874 &     830 \\
+  HIP 100881 &            B4V &    20:27:19.21 &   -18:12:42.20 &  6511.69 &     CHIRON &     1011 &     570 \\
+  HIP 100907 &            A3V &    20:27:34.26 &   +38:26:25.19 &  6946.57 &     IGRINS &      224 &     730 \\
+  HIP 100907 &            A3V &    20:27:34.26 &   +38:26:25.19 &  7230.67 &     IGRINS &      600 &    1030 \\
+  HIP 101123 &            A1V &    20:29:53.91 &   -18:34:59.48 &  6945.70 &     IGRINS &      224 &     810 \\
+  HIP 101589 &            A3V &    20:35:18.54 &   +14:40:27.17 &  6448.83 &     CHIRON &      352 &     420 \\
+  HIP 101716 &            B8V &     20:37:4.67 &   +26:27:43.01 &  6582.60 &       TS23 &      549 &    1260 \\
+  HIP 101867 &            A0V &    20:38:31.34 &    +21:12:4.25 &  6489.78 &     CHIRON &      408 &     440 \\
+  HIP 101909 &            B3V &     20:39:4.97 &   +15:50:17.52 &  6945.60 &     IGRINS &      360 &     280 \\
+  HIP 101909 &            B3V &     20:39:4.97 &   +15:50:17.52 &  7230.69 &     IGRINS &      720 &     430 \\
+  HIP 102487 &            A1V &     20:46:9.99 &   -21:30:50.52 &  6847.80 &     IGRINS &      480 &     530 \\
+  HIP 103298 &            A5V &    20:55:38.57 &    +12:34:6.81 &  6946.58 &     IGRINS &      224 &     630 \\
+  HIP 103298 &            A5V &    20:55:38.57 &    +12:34:6.81 &  7230.70 &     IGRINS &      600 &     870 \\
+  HIP 103298 &            A5V &    20:55:38.57 &    +12:34:6.81 &  7155.93 &     CHIRON &     1141 &     290 \\
+  HIP 104019 &            A5V &    21:04:24.30 &   -19:51:17.97 &  6474.90 &     CHIRON &      423 &     550 \\
+  HIP 104105 &           B8Vn &    21:05:29.27 &   +78:07:35.02 &  6945.69 &     IGRINS &      280 &     310 \\
+  HIP 104139 &            A1V &    21:05:56.83 &   -17:13:58.30 &  6448.90 &     CHIRON &      204 &     490 \\
+  HIP 104365 &            A0V &    21:08:33.63 &   -21:11:37.22 &  6847.81 &     IGRINS &      480 &     710 \\
+  HIP 104365 &            A0V &    21:08:33.63 &   -21:11:37.22 &  7237.82 &     IGRINS &      720 &    2150 \\
+  HIP 105140 &            A1V &    21:17:56.28 &   -32:10:21.15 &  6485.90 &     CHIRON &      372 &     420 \\
+  HIP 105282 &            B6V &    21:19:28.75 &   +49:30:37.06 &  6522.65 &        HRS &     1006 &     850 \\
+  HIP 105891 &          B7III &    21:26:44.97 &   +52:53:54.73 &  6946.59 &     IGRINS &      224 &     210 \\
+  HIP 105942 &            B3V &    21:27:21.37 &    +37:07:0.47 &  6523.87 &        HRS &      480 &     760 \\
+  HIP 105966 &         A1VmA3 &    21:27:40.06 &   +27:36:30.94 &  6585.64 &       TS23 &      530 &    1800 \\
+  HIP 105972 &            B7V &    21:27:46.14 &   +66:48:32.74 &  6507.82 &        HRS &      267 &     690 \\
+  HIP 106711 &           A3Vn &    21:36:56.98 &   +40:24:48.67 &  6584.60 &       TS23 &      689 &     700 \\
+  HIP 106711 &           A3Vn &    21:36:56.98 &   +40:24:48.67 &  6618.53 &       TS23 &      557 &    2010 \\
+  HIP 106786 &            A7V &    21:37:45.11 &   -07:51:15.13 &  6945.64 &     IGRINS &      224 &     830 \\
+  HIP 106786 &            A7V &    21:37:45.11 &   -07:51:15.13 &  6962.59 &       TS23 &      284 &    1620 \\
+  HIP 106786 &            A7V &    21:37:45.11 &   -07:51:15.13 &  6794.81 &     CHIRON &      232 &     470 \\
+  HIP 107517 &            A1V &    21:46:32.10 &   -11:21:57.44 &  6873.74 &     CHIRON &     1025 &     490 \\
+  HIP 107608 &            A2V &    21:47:44.15 &   -30:53:53.90 &  6788.84 &     CHIRON &      620 &     470 \\
+  HIP 108294 &           A2Vn &    21:56:22.77 &   -37:15:13.16 &  6790.81 &     CHIRON &      470 &     510 \\
+  HIP 108339 &          A2Vnn &    21:56:56.37 &   +12:04:35.37 &  6945.65 &     IGRINS &      224 &     320 \\
+  HIP 109056 &           B9Vn &    22:05:34.67 &   +28:57:50.32 &  6945.66 &     IGRINS &      240 &     280 \\
+  HIP 109056 &           B9Vn &    22:05:34.67 &   +28:57:50.32 &  6948.56 &     IGRINS &     1156 &    1510 \\
+  HIP 109056 &           B9Vn &    22:05:34.67 &   +28:57:50.32 &  6946.65 &     IGRINS &      784 &    1070 \\
+  HIP 109056 &           B9Vn &    22:05:34.67 &   +28:57:50.32 &  6947.57 &     IGRINS &     1746 &     850 \\
+  HIP 109139 &            B8V &    22:06:26.23 &   -13:52:10.86 &  6524.67 &     CHIRON &      207 &     590 \\
+  HIP 109139 &            B8V &    22:06:26.23 &   -13:52:10.86 &  6447.91 &     CHIRON &      248 &     470 \\
+  HIP 109521 &            A5V &     22:11:9.89 &   +50:49:24.26 &  6586.58 &       TS23 &      511 &    1860 \\
+  HIP 109521 &            A5V &     22:11:9.89 &   +50:49:24.26 &  6962.60 &       TS23 &      587 &    1500 \\
+  HIP 109521 &            A5V &     22:11:9.89 &   +50:49:24.26 &  6945.68 &     IGRINS &      224 &     590 \\
+  HIP 109831 &          A2Vnn &    22:14:44.37 &   +42:57:14.07 &  6945.67 &     IGRINS &      224 &     380 \\
+  HIP 109831 &          A2Vnn &    22:14:44.37 &   +42:57:14.07 &  7237.77 &     IGRINS &     1440 &     860 \\
+  HIP 109831 &          A2Vnn &    22:14:44.37 &   +42:57:14.07 &  7288.73 &     IGRINS &      900 &    2560 \\
+  HIP 110838 &       B9Vn+G0V &    22:27:19.97 &   -64:57:58.88 &  6543.82 &     CHIRON &      506 &     550 \\
+  HIP 110838 &       B9Vn+G0V &    22:27:19.97 &   -64:57:58.88 &  6880.76 &     CHIRON &      354 &     780 \\
+  HIP 110935 &            A4V &    22:28:37.67 &   -67:29:20.62 &  6896.67 &     CHIRON &      696 &     630 \\
+  HIP 111056 &            A3V &    22:29:52.98 &   +78:49:27.43 &  7288.80 &     IGRINS &      180 &    1010 \\
+  HIP 111056 &            A3V &    22:29:52.98 &   +78:49:27.43 &  6945.76 &     IGRINS &      224 &     380 \\
+  HIP 111068 &          B9.5V &     22:30:1.81 &   +32:34:21.50 &  6512.74 &        HRS &      362 &     500 \\
+  HIP 111169 &            A1V &    22:31:17.50 &   +50:16:56.97 &  6585.62 &       TS23 &      121 &    1900 \\
+  HIP 111841 &            O9V &    22:39:15.68 &    +39:03:0.97 &  6583.68 &       TS23 &      267 &    1670 \\
+  HIP 112029 &            B8V &    22:41:27.73 &   +10:49:52.64 &  6487.85 &     CHIRON &      109 &     460 \\
+  HIP 112029 &            B8V &    22:41:27.73 &   +10:49:52.64 &  6892.74 &     CHIRON &       95 &     250 \\
+  HIP 113788 &            A1V &    23:02:36.38 &   +42:45:28.06 &  6586.63 &       TS23 &      367 &    1830 \\
+  HIP 114520 &           A5Vn &    23:11:44.19 &   +08:43:12.40 &  6587.64 &       TS23 &      541 &    1880 \\
+  HIP 114822 &            A2V &    23:15:34.26 &   -03:29:46.96 &  6886.68 &     CHIRON &      715 &     550 \\
+  HIP 114822 &            A2V &    23:15:34.26 &   -03:29:46.96 &  6884.68 &     CHIRON &      530 &     530 \\
+  HIP 115115 &            A0V &    23:18:57.68 &   -09:36:38.70 &  7163.90 &     CHIRON &      600 &     190 \\
+  HIP 115115 &            A0V &    23:18:57.68 &   -09:36:38.70 &  7230.95 &     IGRINS &      500 &    1040 \\
+  HIP 115115 &            A0V &    23:18:57.68 &   -09:36:38.70 &  6797.87 &     CHIRON &      610 &     330 \\
+  HIP 116247 &            A0V &    23:33:16.62 &   -20:54:52.21 &  6463.89 &     CHIRON &      368 &     560 \\
+  HIP 116247 &            A0V &    23:33:16.62 &   -20:54:52.21 &  7237.94 &     IGRINS &      240 &     980 \\
+  HIP 116582 &            B8V &    23:37:32.04 &   +44:25:44.37 &  6510.77 &        HRS &      534 &     670 \\
+  HIP 116611 &           A0Vn &    23:37:56.80 &    +18:24:2.40 &  6946.61 &     IGRINS &      224 &     400 \\
+  HIP 116631 &            B8V &     23:38:8.20 &    +43:16:5.06 &  6962.63 &       TS23 &      249 &    1980 \\
+  HIP 116631 &            B8V &     23:38:8.20 &    +43:16:5.06 &  6946.78 &     IGRINS &      224 &     680 \\
+  HIP 116631 &            B8V &     23:38:8.20 &    +43:16:5.06 &  6583.71 &       TS23 &      162 &    1740 \\
+  HIP 116631 &            B8V &     23:38:8.20 &    +43:16:5.06 &  7288.80 &     IGRINS &      180 &    2150 \\
+  HIP 116805 &            A0V &    23:40:24.51 &    +44:20:2.16 &  6528.84 &       TS23 &      158 &    1680 \\
+  HIP 116971 &            B9V &    23:42:43.34 &   -14:32:41.65 &  6527.85 &       TS23 &      407 &    1650 \\
+  HIP 116971 &            B9V &    23:42:43.34 &   -14:32:41.65 &  6487.88 &     CHIRON &      298 &     540 \\
+  HIP 116971 &            B9V &    23:42:43.34 &   -14:32:41.65 &  6555.56 &     CHIRON &      497 &     430 \\
+  HIP 116971 &            B9V &    23:42:43.34 &   -14:32:41.65 &  6869.76 &     CHIRON &      380 &     110 \\
+  HIP 116971 &            B9V &    23:42:43.34 &   -14:32:41.65 &  6936.73 &     CHIRON &      344 &     600 \\
+  HIP 117089 &            B9V &    23:44:12.08 &   -18:16:36.97 &  7288.81 &     IGRINS &      180 &    1130 \\
+  HIP 117089 &            B9V &    23:44:12.08 &   -18:16:36.97 &  7237.95 &     IGRINS &      720 &    1610 \\
+  HIP 117089 &            B9V &    23:44:12.08 &   -18:16:36.97 &  6513.86 &     CHIRON &      853 &     600 \\
+  HIP 117371 &           A1Vn &    23:47:54.77 &   +67:48:24.51 &  6586.67 &       TS23 &      349 &    1760 \\
+  HIP 117452 &          A0Vnp &    23:48:55.55 &   -28:07:48.97 &  6469.90 &     CHIRON &      327 &     540 \\
+  HIP 118121 &            A1V &    23:57:35.08 &   -64:17:53.63 &  6795.86 &     CHIRON &      233 &     500 \\
+  HIP 118243 &            B1V &     23:59:0.54 &   +55:45:17.74 &  6945.73 &     IGRINS &      224 &     370 \\
+  HIP 118243 &            B1V &     23:59:0.54 &   +55:45:17.74 &  6583.74 &       TS23 &      351 &    1760 \\
+\label{tab:observations}
+\end{longtable*}
+
+
+\begin{longtable*}{|l|lllll|}
+\hline
+            &        $T_\mathrm{eff}$ &      $\log{g}$ &             Mass &            Age & \\
+       star &        (K)              &      (cgs)     &      ($M_{\odot}$) &          (Myr) & source \\
+\hline
+\endhead
+\hline
+\multicolumn{3}{r}{{Continued on next page}} \\
+\endfoot
+
+\hline
+\endlastfoot
+   HIP 2548 &   $11864 \pm 403$ &  $4.4 \pm 0.14$ &  $2.8^{+0.16}_{-0.15}$ &     $79^{+68}_{-53}$ &      DH2015 \\
+   HIP 3478 &  $14250 \pm 1000$ &  $4.2 \pm 0.25$ &  $3.8^{+0.50}_{-0.45}$ &     $22^{+40}_{-15}$ &  This Study \\
+   HIP 5310 &    $8611 \pm 293$ &  $4.4 \pm 0.14$ &  $1.8^{+0.10}_{-0.08}$ &  $306^{+236}_{-196}$ &      DH2015 \\
+     HR 545 &  $11000 \pm 1000$ &  $4.3 \pm 0.25$ &  $2.5^{+0.39}_{-0.35}$ &    $37^{+105}_{-28}$ &  This Study \\
+     HR 604 &  $11000 \pm 1000$ &  $4.5 \pm 0.25$ &  $2.4^{+0.37}_{-0.34}$ &     $28^{+87}_{-20}$ &  This Study \\
+  HIP 10732 &    $9500 \pm 300$ &  $4.0 \pm 0.25$ &  $2.1^{+0.18}_{-0.16}$ &    $80^{+237}_{-70}$ &  This Study \\
+  HIP 12332 &    $7750 \pm 300$ &  $3.5 \pm 0.25$ &  $1.9^{+0.37}_{-0.30}$ &  $687^{+218}_{-425}$ &  This Study \\
+  HIP 12706 &    $8551 \pm 291$ &  $4.3 \pm 0.14$ &  $1.9^{+0.15}_{-0.12}$ &  $650^{+104}_{-180}$ &      DH2015 \\
+  HIP 13165 &  $15000 \pm 1000$ &  $4.0 \pm 0.25$ &  $4.2^{+0.58}_{-0.50}$ &     $31^{+42}_{-22}$ &  This Study \\
+  HIP 13327 &  $15000 \pm 1000$ &  $4.5 \pm 0.25$ &  $4.0^{+0.50}_{-0.45}$ &      $15^{+26}_{-9}$ &  This Study \\
+  HIP 14576 &   $13070 \pm 444$ &  $4.0 \pm 0.14$ &  $3.6^{+0.29}_{-0.23}$ &    $139^{+17}_{-25}$ &      DH2015 \\
+  HIP 14764 &  $11750 \pm 1000$ &  $4.2 \pm 0.25$ &  $2.8^{+0.42}_{-0.39}$ &     $35^{+91}_{-27}$ &  This Study \\
+  HIP 16244 &  $16333 \pm 1000$ &  $4.3 \pm 0.25$ &  $4.7^{+0.57}_{-0.50}$ &      $15^{+22}_{-9}$ &  This Study \\
+  HIP 16340 &  $12500 \pm 1000$ &  $4.0 \pm 0.25$ &  $3.1^{+0.51}_{-0.42}$ &     $49^{+92}_{-39}$ &  This Study \\
+  HIP 16611 &   $12514 \pm 425$ &  $4.0 \pm 0.14$ &  $3.3^{+0.25}_{-0.20}$ &    $157^{+23}_{-46}$ &      DH2015 \\
+  HIP 17563 &  $19000 \pm 1000$ &  $4.5 \pm 0.25$ &  $6.0^{+0.66}_{-0.59}$ &      $10^{+11}_{-4}$ &  This Study \\
+  HIP 18396 &  $15000 \pm 1000$ &  $4.5 \pm 0.25$ &  $4.0^{+0.52}_{-0.47}$ &      $15^{+27}_{-9}$ &  This Study \\
+  HIP 18724 &  $21000 \pm 1000$ &  $4.5 \pm 0.25$ &  $7.1^{+0.68}_{-0.64}$ &        $8^{+7}_{-3}$ &  This Study \\
+  HIP 19949 &    $9825 \pm 334$ &  $3.8 \pm 0.14$ &  $2.2^{+0.11}_{-0.10}$ &  $198^{+136}_{-125}$ &      DH2015 \\
+  HIP 20380 &    $8738 \pm 297$ &  $3.9 \pm 0.14$ &  $1.9^{+0.09}_{-0.08}$ &  $339^{+210}_{-207}$ &      DH2015 \\
+  HIP 21589 &    $8591 \pm 292$ &  $3.9 \pm 0.14$ &  $1.8^{+0.09}_{-0.07}$ &  $302^{+225}_{-196}$ &      DH2015 \\
+  HIP 22833 &    $8278 \pm 281$ &  $3.9 \pm 0.14$ &  $1.8^{+0.12}_{-0.09}$ &  $649^{+163}_{-295}$ &      DH2015 \\
+  HIP 22958 &  $16000 \pm 1000$ &  $4.5 \pm 0.25$ &  $4.5^{+0.53}_{-0.50}$ &      $14^{+21}_{-8}$ &  This Study \\
+  HIP 23362 &   $12450 \pm 423$ &  $4.3 \pm 0.14$ &  $3.2^{+0.20}_{-0.16}$ &    $147^{+29}_{-58}$ &      DH2015 \\
+  HIP 23916 &  $16500 \pm 1000$ &  $4.2 \pm 0.25$ &  $4.8^{+0.56}_{-0.52}$ &     $16^{+26}_{-10}$ &  This Study \\
+  HIP 24244 &   $13781 \pm 469$ &  $4.2 \pm 0.14$ &  $3.9^{+0.29}_{-0.23}$ &    $114^{+11}_{-23}$ &      DH2015 \\
+  HIP 24902 &    $8275 \pm 281$ &  $4.0 \pm 0.14$ &  $1.7^{+0.10}_{-0.08}$ &  $466^{+252}_{-286}$ &      DH2015 \\
+  HIP 25143 &    $8101 \pm 275$ &  $3.8 \pm 0.14$ &  $1.7^{+0.06}_{-0.06}$ &  $236^{+247}_{-160}$ &      DH2015 \\
+  HIP 26126 &    $9542 \pm 324$ &  $3.9 \pm 0.14$ &  $2.1^{+0.09}_{-0.08}$ &  $175^{+148}_{-112}$ &      DH2015 \\
+  HIP 32607 &    $7770 \pm 264$ &  $3.8 \pm 0.14$ &  $1.6^{+0.07}_{-0.06}$ &  $519^{+342}_{-335}$ &      DH2015 \\
+  HIP 38538 &    $8551 \pm 291$ &  $4.0 \pm 0.14$ &  $1.9^{+0.14}_{-0.12}$ &  $637^{+109}_{-211}$ &      DH2015 \\
+  HIP 38593 &  $21667 \pm 1000$ &  $4.5 \pm 0.25$ &  $7.6^{+0.74}_{-0.68}$ &        $8^{+6}_{-3}$ &  This Study \\
+  HIP 38846 &  $22000 \pm 1000$ &  $4.5 \pm 0.25$ &  $7.8^{+0.74}_{-0.71}$ &        $8^{+6}_{-3}$ &  This Study \\
+  HIP 39847 &   $10014 \pm 340$ &  $4.0 \pm 0.14$ &  $2.2^{+0.13}_{-0.12}$ &  $195^{+131}_{-121}$ &      DH2015 \\
+  HIP 40881 &    $9500 \pm 300$ &  $4.0 \pm 0.25$ &  $2.1^{+0.17}_{-0.16}$ &    $71^{+239}_{-60}$ &  This Study \\
+  HIP 42129 &  $18000 \pm 1000$ &  $4.5 \pm 0.25$ &  $5.4^{+0.63}_{-0.54}$ &      $11^{+14}_{-5}$ &  This Study \\
+  HIP 51362 &   $10899 \pm 371$ &  $4.0 \pm 0.14$ &  $2.6^{+0.14}_{-0.12}$ &   $182^{+79}_{-102}$ &      DH2015 \\
+  HIP 52678 &  $15000 \pm 1000$ &  $4.5 \pm 0.25$ &  $4.0^{+0.49}_{-0.50}$ &     $16^{+26}_{-10}$ &  This Study \\
+  HIP 55266 &    $8720 \pm 296$ &  $4.5 \pm 0.14$ &  $1.9^{+0.09}_{-0.07}$ &  $346^{+209}_{-215}$ &      DH2015 \\
+  HIP 63945 &  $18000 \pm 1000$ &  $4.5 \pm 0.25$ &  $5.4^{+0.60}_{-0.56}$ &      $11^{+14}_{-5}$ &  This Study \\
+  HIP 72154 &  $10500 \pm 1000$ &  $4.5 \pm 0.25$ &  $2.3^{+0.36}_{-0.33}$ &    $32^{+101}_{-24}$ &  This Study \\
+  HIP 76267 &   $10342 \pm 352$ &  $4.0 \pm 0.14$ &  $2.5^{+0.19}_{-0.16}$ &    $314^{+53}_{-99}$ &      DH2015 \\
+  HIP 77336 &    $8917 \pm 303$ &  $4.0 \pm 0.14$ &  $2.9^{+0.23}_{-0.20}$ &    $404^{+73}_{-70}$ &      DH2015 \\
+  HIP 77516 &    $9250 \pm 300$ &  $4.0 \pm 0.25$ &  $2.1^{+0.17}_{-0.16}$ &    $74^{+275}_{-64}$ &  This Study \\
+  HIP 78820 &  $24062 \pm 1000$ &  $3.9 \pm 0.25$ &  $9.2^{+0.51}_{-0.64}$ &        $9^{+6}_{-4}$ &  This Study \\
+  HIP 78821 &    $7250 \pm 300$ &  $4.0 \pm 0.25$ &  $9.1^{+0.65}_{-0.96}$ &        $8^{+6}_{-3}$ &  This Study \\
+  HIP 79199 &  $12500 \pm 1000$ &  $4.5 \pm 0.25$ &  $3.0^{+0.42}_{-0.39}$ &     $23^{+55}_{-16}$ &  This Study \\
+  HIP 79404 &  $21667 \pm 1000$ &  $4.5 \pm 0.25$ &  $7.6^{+0.75}_{-0.69}$ &        $8^{+6}_{-3}$ &  This Study \\
+  HIP 80460 &    $7810 \pm 266$ &  $3.7 \pm 0.14$ &  $1.7^{+0.11}_{-0.08}$ &  $783^{+232}_{-394}$ &      DH2015 \\
+  HIP 82673 &  $11750 \pm 1000$ &  $3.5 \pm 0.25$ &  $3.4^{+0.65}_{-0.57}$ &    $171^{+73}_{-64}$ &  This Study \\
+  HIP 84606 &    $9702 \pm 330$ &  $4.0 \pm 0.14$ &  $2.1^{+0.10}_{-0.09}$ &   $154^{+137}_{-99}$ &      DH2015 \\
+  HIP 85379 &    $8250 \pm 300$ &  $3.5 \pm 0.25$ &  $2.1^{+0.37}_{-0.34}$ &  $550^{+154}_{-260}$ &  This Study \\
+  HIP 85998 &    $8812 \pm 300$ &  $4.0 \pm 0.25$ &  $1.9^{+0.16}_{-0.13}$ &    $95^{+332}_{-84}$ &  This Study \\
+  HIP 88116 &    $9750 \pm 300$ &  $3.5 \pm 0.25$ &  $2.7^{+0.43}_{-0.39}$ &   $305^{+68}_{-150}$ &  This Study \\
+  HIP 88818 &    $9162 \pm 312$ &  $4.3 \pm 0.14$ &  $2.7^{+0.24}_{-0.23}$ &    $441^{+86}_{-72}$ &      DH2015 \\
+  HIP 88817 &    $9162 \pm 312$ &  $4.3 \pm 0.14$ &  $2.1^{+0.16}_{-0.12}$ &   $480^{+84}_{-168}$ &      DH2015 \\
+  HIP 91118 &    $9500 \pm 300$ &  $4.0 \pm 0.25$ &  $2.1^{+0.19}_{-0.15}$ &    $70^{+244}_{-60}$ &  This Study \\
+  HIP 93805 &   $11962 \pm 407$ &  $4.2 \pm 0.14$ &  $3.5^{+0.32}_{-0.26}$ &    $194^{+19}_{-21}$ &      DH2015 \\
+ HIP 100221 &    $9750 \pm 300$ &  $4.5 \pm 0.25$ &  $2.2^{+0.15}_{-0.15}$ &    $34^{+110}_{-26}$ &  This Study \\
+ HIP 100907 &    $9042 \pm 307$ &  $4.0 \pm 0.14$ &  $2.1^{+0.16}_{-0.13}$ &  $512^{+100}_{-168}$ &      DH2015 \\
+ HIP 103298 &    $9093 \pm 309$ &  $4.1 \pm 0.14$ &  $2.0^{+0.13}_{-0.11}$ &  $399^{+146}_{-209}$ &      DH2015 \\
+ HIP 109139 &   $12641 \pm 430$ &  $4.3 \pm 0.14$ &  $3.2^{+0.20}_{-0.16}$ &    $122^{+38}_{-61}$ &      DH2015 \\
+ HIP 109521 &    $8420 \pm 286$ &  $4.2 \pm 0.14$ &  $2.0^{+0.19}_{-0.16}$ &  $728^{+109}_{-104}$ &      DH2015 \\
+ HIP 115115 &   $10671 \pm 363$ &  $4.2 \pm 0.14$ &  $2.6^{+0.19}_{-0.16}$ &    $284^{+38}_{-81}$ &      DH2015 \\
+\label{tab:primary}
+\end{longtable*}
+
+
+\newpage
+\clearpage
+\bibliography{references}
+
+\end{document}
