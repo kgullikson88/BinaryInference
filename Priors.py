@@ -78,7 +78,8 @@ def get_primary_mass(star, spt, size=1e4, mass_err=0.1):
     
     Returns:
     ========
-    Samples of the primary star mass
+    - Samples of the primary star mass
+    - source of the estimate ('DH2015', 'This Study', or 'SpT')
     """
     # Is this star in the david & hillenbrand sample?
     if star.startswith('HIP'):
@@ -97,18 +98,20 @@ def get_primary_mass(star, spt, size=1e4, mass_err=0.1):
                 inv_cdf = spline(df.cdf.values, df.mass.values, k=1)
                 
                 mass_samples = inv_cdf(np.random.uniform(size=size))
-                return mass_samples
+                return mass_samples, 'DH2015'
     
     # Try the evolutionary grid mass
     mass_samples = get_padova_posterior(star, var='mass')
-    
+    source = 'This Study'
+
     if mass_samples is None:
         # Fall back on the spectral type and assume main sequence
         sptnum = MS.SpT_To_Number(spt)
         mass = sptnum2mass(sptnum)
         mass_samples = np.random.normal(loc=mass, scale=mass_err*mass, size=size)
+        source = 'SpT'
         
-    return mass_samples
+    return mass_samples, source
 
 def get_ages(starname, spt, size=1e4):
     """
@@ -120,7 +123,8 @@ def get_ages(starname, spt, size=1e4):
     :param starname: The name of the star. To find in the posteriod data, it must be of the form HIPNNNNN
                      (giving the hipparchos number)
     :param N_age: The number of age samples to take
-    :return: a numpy array of random samples from the age of the star
+    :return: a numpy array of random samples from the age of the star (in Myr), and
+             the source of the estimate ('DH2015', 'This Study', or 'SpT')
     """
     # Is this star in the david & hillenbrand sample?
     if starname.startswith('HIP'):
@@ -140,10 +144,11 @@ def get_ages(starname, spt, size=1e4):
                 inv_cdf = spline(df.cdf.values, df.age.values, k=1)
                 
                 age_samples = inv_cdf(np.random.uniform(size=size))
-                return 10**(age_samples-6.0)
+                return 10**(age_samples-6.0), 'DH2015'
     
     # Try the evolutionary grid mass
     age_samples = get_padova_posterior(starname, var='age')
+    source = 'This Study'
     
     if age_samples is None:
         logging.debug('Falling back to Main Sequence Age')
@@ -159,10 +164,10 @@ def get_ages(starname, spt, size=1e4):
 
         # Sample from 0 to the ms_age
         age_samples = np.random.uniform(0, ms_age, size=size)
-        return age_samples
+        return age_samples, 'SpT'
         
     logging.debug('Using Padova Evolutionary Grids')
-    return 10**(age_samples-6)
+    return 10**(age_samples-6), source
 
 
 
