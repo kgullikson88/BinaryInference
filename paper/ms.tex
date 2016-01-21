@@ -39,7 +39,7 @@ Beyond the overall multiplicity rate, the mass ratio, period, and eccentricity d
 
 The mass ratio, period, and eccentricity distributions are fairly well-known for solar type stars \citep{Duquennoy1991, Raghavan2010} and cooler stars \citep{Fischer1992, Delfosse2004}. Interestingly, the mass ratio distribution appears to be invariant to separation for these stars \citep{Meyer2013}, contrary to the theoretical expectations. All of the distributions are much less certain for more massive stars. The reason for this is two-fold: first, more massive stars tend to more rare and farther away, meaning many of the companions are angularly close to the very bright primaries. Second, the primary stars tend to be rapid rotators, which limits radial velocity precision to $\sim 1 \mathrm{km\ s}^{-1}$. Worse, radial velocity monitoring can only measure a mass ratio if spectral lines from both components are visible; this typically suffers from the same flux ratio difficulty as imaging techniques. Nonetheless, \citet{DeRosa2014} performed an adaptive optics imaging survey of nearby A-type stars and found initial evidence that the mass ratio distribution for companions inside $125$ AU is much flatter than that of wide companions. Unfortunately they had only very few detections at these near separations, and the result is complicated by the inherent difficulty of detecting close companions with low mass ratios in an imaging survey.
 
-In this paper, we describe a spectroscopic survey of nearby intermediate-mass stars. We search for companions using the direct spectral detection technique \citep{Gullikson2016}, which has a separation-invariant detection rate for all separations inside $\sim 1 ''$. We describe the stellar sample and data used for the survey in Section \ref{sec:obs}, as well as the data reduction steps in the same section. Next, we describe our estimation of the stellar parameters for the primary stars in our sample in Section \ref{sec:sp}. We then describe the direct spectroscopic detection and tabulate the companion detections in Section \ref{sec:companions}, and discuss the survey completeness in Section \ref{sec:completeness}. Finally, we end with a derivation of the mass ratio distribution from our sample in Section \ref{sec:mrd} and discuss its implications for binary formation in Section \ref{sec:discussion}.
+In this paper, we describe a spectroscopic survey of nearby intermediate-mass stars. We search for companions using the direct spectral detection technique \citep{Gullikson2016}, which has a separation-invariant detection rate for all separations inside $\sim 1 ''$. We describe the stellar sample and data used for the survey in Section \ref{sec:obs}, as well as the data reduction steps in the same section. Next, we describe the direct spectroscopic detection and tabulate the companion detections in Section \ref{sec:companions}, and discuss the survey completeness in Section \ref{sec:completeness}. We then describe our estimation of the stellar parameters for the primary stars in our sample in Section \ref{sec:sp}. Finally, we end with a derivation of the mass ratio distribution from our sample in Section \ref{sec:mrd} and discuss its implications for binary formation in Section \ref{sec:discussion}.
 
 
 
@@ -65,7 +65,7 @@ The stellar sample for this survey is defined by the following criteria:
 \end{itemize}
 \end{itemize}
 
-The first two criteria are to ensure that the direct spectral detection technique (Section \ref{sec:companions}) both works and is well-calibrated. The magnitude limit ensures that a sufficiently high signal-to-noise ratio can be achieved in a short period of time. It does introduce a Malmquist bias in the derived mass ratio, which we discuss and correct for in Section \ref{sec:mrd}. Likewise, the $v\sin{i}$ limit makes accounting for the primary star spectrum in the companion search trivial; since most A- or B-type stars are rapid rotators, it does not actually remove very many stars from the sample. Finally we only include normal, main sequence stars in the sample because the binary flux ratio would be even less favorable to companion detection in an evolved star. 
+The first two criteria are to ensure that the direct spectral detection technique (Section \ref{sec:companions}) both works and is well-calibrated. The magnitude limit ensures that a sufficiently high signal-to-noise ratio can be achieved in a short period of time. It does introduce a Malmquist bias in the derived mass ratio, which we discuss and correct for in Section \ref{sec:mrd}. Likewise, the $v\sin{i}$ limit makes accounting for the primary star spectrum in the companion search trivial; since most A- or B-type stars are rapid rotators, it does not actually remove very many stars from the sample. Finally we only include normal, main sequence stars in the sample because the binary flux ratio would be even less favorable to companion detection in an evolved star. The target list and observing details are given in Table \ref{tab:observations}.
 
 We use several high spectral resolution, cross-dispersed \'echelle spectrographs for this survey. We use the CHIRON spectrograph \citep{CHIRON} on the 1.5m telescope at Cerro Tololo Inter-American Observatory for most southern targets. This spectrograph is an $R\equiv \lambda / \Delta \lambda = 80000$ spectrograph with wavelength coverage from 450 - 850 nm, and is fed by a $2.7''$ optical fiber. The data are automatically reduced with a standard CHIRON data reduction pipeline, but the pipeline leaves residuals of strong lines in adjacent orders. We therefore bias-correct, flat-field and extract the spectra with the optimum extraction technique \citep{Horne1986} using standard IRAF\footnote{IRAF is distributed by the National Optical Astronomy Observatories, which are operated by the Association of Universities for Research in Astronomy, Inc., under cooperative agreement with the National Science Foundation.} tasks, and use the wavelength calibration from the pipeline reduced spectra.
 
@@ -79,14 +79,15 @@ After reducing the data, we fit and remove the telluric spectrum using the TelFi
 
 TODO: MAKE THE SPECTRA AVAILABLE SOMEHOW...
 
-\section{Stellar Parameters}
-\label{sec:sp}
 
 \section{Companion Search}
 \label{sec:companions}
 
 \section{Survey Completeness}
 \label{sec:completeness}
+
+\section{Stellar Parameters}
+\label{sec:sp}
 
 \section{Mass-Ratio Distribution}
 \label{sec:mrd}
