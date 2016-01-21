@@ -378,7 +378,7 @@ class VelocityPDF(object):
         # Calculate approximate maxwellian parameters from the velocities.
         alpha = np.sqrt(np.nanvar(v_eq) * np.pi / (3*np.pi - 8))
         l = np.nanmedian(v_eq) - 2*alpha*np.sqrt(2/np.pi)
-
+          
         # Add a row to the dataframe with this information
         df.loc[df.index.max()+1] = [1.0, 1.24, 0, 25, 100, alpha*np.sqrt(2), l]
 
@@ -499,7 +499,7 @@ def get_completeness(starname, date):
 
     # Get the primary mass 
     spt = StarData.GetData(starname).spectype
-    primary_mass_samples = Priors.get_primary_mass(starname, spt)
+    primary_mass_samples, _ = Priors.get_primary_mass(starname, spt)
     comp_df['M1'] = np.median(primary_mass_samples)
 
     # Convert the companion temperature to mass using spectral type relations 
