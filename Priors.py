@@ -10,14 +10,14 @@ import numpy as np
 import os
 import h5py
 from scipy.interpolate import InterpolatedUnivariateSpline as spline
-import SpectralTypeRelations
+from kglib.spectral_type import SpectralTypeRelations
 import pandas as pd
 import Mamajek_Table
-import Feiden
-from Feiden import Feiden_Isochrone
+from kglib.isochrone_helpers import Feiden
+from kglib.isochrone_helpers.Feiden import Feiden_Isochrone
 import scipy.interpolate
 import logging
-import StarData
+from kglib.utils import StarData
 
 
 

@@ -3,6 +3,7 @@
 \usepackage{graphicx}
 \usepackage{natbib}
 \usepackage{subfigure}
+\usepackage{amsmath}
 \usepackage{url}
 \bibliographystyle{astroads}
 \providecommand{\e}[1]{\ensuremath{\times 10^{#1}}}
@@ -103,7 +104,36 @@ We list the companion detections in Table \ref{tab:companions}, and report the e
 
 TODO: Make plots for all of the CCFs.
 
-Most of the detected companions have follow-up spectra to confirm the existence of the companion. [MENTION THAT YOU CAN SEE THEM ALL IN THE FIGURES]. In most cases, there is a clear shift in the radial velocity of the companion, indicating that it is orbiting the target star and is not a foreground or background companion. In addition we obtained Gemini/NIRI adaptive optics imaging data for some of the northern companions, and were able to resolve 7 of the companions. 
+Most of the detected companions have follow-up spectra to confirm the existence of the companion. [MENTION THAT YOU CAN SEE THEM ALL IN THE FIGURES]. In most cases, there is a clear shift in the radial velocity of the companion, indicating that it is orbiting the target star and is not a foreground or background companion. In addition we obtained Gemini/NIRI adaptive optics imaging data for 19 of the northern companions, and were able to resolve 7 of the companions. 
+
+
+
+
+\section{Stellar Parameters}
+\label{sec:sp}
+
+In order to convert from companion temperature to mass ratio, we first need an estimate of the primary mass. In addition, since the primary stars in our systems are A- or B-type stars with main-sequence lifetimes from $\sim 10 - 1000$ Myr, very late-type companions may still be contracting onto the main sequence and so an age estimate for the system is necessary. 
+
+About half of our detections have robust mass and age estimates for the primary stars from Str\"omgren uvby$\beta$ photometry \citep{David2015}. For those that do not, we estimate the mass and age of the system as follows. We first cross-correlate the data against a grid of Kurucz model spectra [CITE] spanning $7000\ K < T_\mathrm{eff} < 30000\ K$, $3.0 < \log{g} < 4.5$, and $75 < v\sin{i} < 300$. For the optical data, we use the blue echelle orders ($\lambda < 5550 \AA$). We ignore the strong hydrogren lines in the spectrum, because they span several echelle orders and make continuum normalization very difficult. There are sufficient metal lines in the optical spectra that the resulting CCF always has a very strong peak at the radial velocity of the primary star. The near-infrared IGRINS spectra do not have enough strong metal lines in their spectrum to justify ignoring the hydrogen lines; we use the subset from $1.51 - 1.73 \micron$ for these spectra. We then estimate the temperature and surface gravity of the primary stars from the CCF with the largest peak. We assume the following errors on the temperature and surface gravity:
+
+\begin{align}
+ \sigma_T &= \begin{cases}
+      \hfill 300\ K \hfill & T < 10000\ K \\
+      \hfill 1000\ K \hfill & T >= 10000\ K \\
+     \end{cases} \\
+ \sigma_{\log{g}} &= 0.25
+\end{align}
+
+Next, we use Padova stellar evolutionary tracks [CITE] and the isochrones code [CITE] to estimate the mass and age of the system from the measured temperature and $\log{g}$. As a consistency check, we also interpolate a table of spectral type relations [CITE mamajek table] to estimate the primary mass from the published spectral types. We show the comparison in Figure \ref{fig:prim_mass}. We estimate uncertainties in the spectral type mass by assuming a spectral type uncertainty of $\pm 0.5$ spectral types. There is excellent agreement between the masses we measure and the spectral type masses.
+
+\begin{figure}
+\includegraphics[width=\columnwidth]{PrimaryMassEstimates.pdf}
+\caption{Comparison of primary star masses derived from our cross-correlation analysis and Padova isochrones [CITE] with those expected from the published spectral type. There is excellent agreement between the two measures across the entire range of masses.}
+\label{fig:prim_mass}.
+\end{figure}
+
+
+
 
 
 \section{Survey Completeness}
@@ -122,7 +152,7 @@ where $N_\mathrm{rv} = 17$ is the number of radial velocity trial points.
 
 Finally, we interpolated between the grid points using a linear radial basis function interpolator. In order to extrapolate from our grids to estimate the detection rate at high temperature and low $v\sin{i}$ and at low temperature and high $v\sin{i}$, we made the following assumptions about the shape of the two-dimensional detection rate surface: First, we assumed that if all companions are detected at temperature $T=6500$ K and rotation speed $v\sin{i}$, then all companions with the same $v\sin{i}$ and larger temperature will also be detected. Likewise, we assume that if no companions are detected at temperature $T$ and rotation speed $v\sin{i} = 50\ \mathrm{km\ s}^{-1}$, we assume that no companions will be detected at the same temperature and faster rotation speeds. We show a typical detection rate surface in Figure \ref{fig:detrate_2d} to illustrate both the shape of the surface and the grid we interpolate from. The figure shows a clear diagonal dividing line between hot, slow rotators that are always detected and cool, fast rotators that never are. Additionally the figure shows that very fast rotators are never detected, regardless of their temperature, because the signal is completely removed when we high-pass filter the data (see Section \ref{sec:companions}).
 
-
+TODO: Discuss marginalization of vsini.
 
 
 \begin{figure}
@@ -130,9 +160,6 @@ Finally, we interpolated between the grid points using a linear radial basis fun
 \caption{Detection rate as a function of companion temperature and $v\sin{i}$ for HIP 24244. All companions that are shaded yellow are detectable, while companions in the purple region are never detectable. The grids of squares in the lower left and upper right show the low temperature and high temperature grid points we used in the sensitivity analysis. The remaining squares come from assumptions about the shape of the detection rate surface and allow us to fully interpolate (see text for details).}
 \label{fig:detrate_2d}
 \end{figure}
-
-\section{Stellar Parameters}
-\label{sec:sp}
 
 \section{Mass-Ratio Distribution}
 \label{sec:mrd}
