@@ -5,8 +5,11 @@
 \usepackage{subfigure}
 \usepackage{amsmath}
 \usepackage{url}
+\usepackage{bm}
 \bibliographystyle{astroads}
 \providecommand{\e}[1]{\ensuremath{\times 10^{#1}}}
+\renewcommand{\vec}[1]{\bm{#1}}
+\DeclareMathOperator\erf{erf}
 \begin{document}
 
 \title{The Inner Mass-Ratio Distribution of Intermediate-Mass Stars}
@@ -139,9 +142,11 @@ Next, we use Padova stellar evolutionary tracks [CITE] and the isochrones code [
 \section{Survey Completeness}
 \label{sec:completeness}
 
-The detectability of a companion mostly depends on its temperature: cooler companions emit much less light and so are increasingly lost in the Poisson noise from the primary star spectrum. A companion with a high rotation rate is also more difficult to detect because the cross-correlation function gets most of its power from narrow spectral lines. To quantify the detection rate as a function of companion temperature and $v\sin{i}$, we performed a series of injection/recovery experiments. 
+The detectability of a companion mostly depends on its temperature: cooler companions emit much less light and so are increasingly lost in the Poisson noise from the primary star spectrum. A companion with a high rotation rate is also more difficult to detect because the cross-correlation function gets most of its power from narrow spectral lines.  
 
-We started by creating synthetic binary star observations from each of our spectra. We made two distinct grids of companion stars: a low temperature grid spanning $3000\ K < T_\mathrm{eff} < 6500\ K$ and $0\ \mathrm{km\ s}^{-1} < v\sin{i} < 50\ \mathrm{km\ s}^{-1}$, and a high temperature grid spanning $7000\ K < T_\mathrm{eff} < 12000\ K$ and $100\ \mathrm{km\ s}^{-1} < v\sin{i} < 250\ \mathrm{km\ s}^{-1}$. The low temperature grid has a temperature spacing of $100$ K and a $v\sin{i}$ spacing of $10 \mathrm{km\ s}^{-1}$; the high temperature grid has a temperature spacing of $1000$ K and a $v\sin{i}$ spacing of $50 \mathrm{km\ s}^{-1}$. For each grid point, we added a solar metallicity Phoenix model spectrum to the observed data after scaling to replicate the expected flux between a main sequence companion of the model temperature and the known target star spectral type. If the target star had known companions within $3''$, we included the expected flux from the companion when computing the flux ratio. We repeated each grid point at different radial velocities spanning $-400\ \mathrm{km\ s}^{-1} < v < 400\ \mathrm{km\ s}^{-1}$ in $50\ \mathrm{km\ s}^{-1}$ steps to estimate a probability of detection at each point.
+\subsection{Sensitivity Analysis}
+
+To quantify the detection rate as a function of companion temperature and $v\sin{i}$, we performed a series of injection/recovery experiments. We started by creating synthetic binary star observations from each of our spectra. We made two distinct grids of companion stars: a low temperature grid spanning $3000\ K < T_\mathrm{eff} < 6500\ K$ and $0\ \mathrm{km\ s}^{-1} < v\sin{i} < 50\ \mathrm{km\ s}^{-1}$, and a high temperature grid spanning $7000\ K < T_\mathrm{eff} < 12000\ K$ and $100\ \mathrm{km\ s}^{-1} < v\sin{i} < 250\ \mathrm{km\ s}^{-1}$. The low temperature grid has a temperature spacing of $100$ K and a $v\sin{i}$ spacing of $10 \mathrm{km\ s}^{-1}$; the high temperature grid has a temperature spacing of $1000$ K and a $v\sin{i}$ spacing of $50 \mathrm{km\ s}^{-1}$. For each grid point, we added a solar metallicity Phoenix model spectrum to the observed data after scaling to replicate the expected flux between a main sequence companion of the model temperature and the known target star spectral type. If the target star had known companions within $3''$, we included the expected flux from the companion when computing the flux ratio. We repeated each grid point at different radial velocities spanning $-400\ \mathrm{km\ s}^{-1} < v < 400\ \mathrm{km\ s}^{-1}$ in $50\ \mathrm{km\ s}^{-1}$ steps to estimate a probability of detection at each point.
 
 Next, we cross correlated all of the synthetic observations against the Phoenix model template that was used to construct them. We counted the companion as detected if the highest point in the resulting CCF was found at the correct radial velocity. We then combined all of the radial velocity points for each grid point to estimate a probability of detection at that grid point:
 
@@ -160,7 +165,7 @@ Finally, we interpolated between the grid points using a linear radial basis fun
 \label{fig:detrate_2d}
 \end{figure}
 
-
+\subsection{Marginalization}
 To estimate the survey completeness as a function of mass ratio, we first need to remove the dependence on $v\sin{i}$. We do this by sampling a suitable distribution of $v\sin{i}$ values for a star of each temperature and marginalizing over the completeness:
 
 \begin{equation}
@@ -191,14 +196,81 @@ Typical velocities from the gyrochronology relationships are $10-20 \mathrm{km s
 \label{fig:marginalized}
 \end{figure}
 
-TODO: Discuss conversion from temperature to mass, and introduce the overall completeness curve.
+\subsection{Conversion to Mass Ratio}
+
+The result of the previous analysis is a series of estimates for the detection rate as a function of companion temperature for each star. We convert each companion temperature to a mass by interpolating the spectral type relations table given in [CITE Mamajek table]. Next, we estimate the primary mass for each star as the median of the mass samples developed in Section \ref{sec:sp}. We then convert each detection rate curve to be a function of mass ratio ($Q_j(q)$, where $j$ denotes the $j$th star in the sample), and linearly interpolate onto a grid in mass ratio from $0 < q_i < 1$. Finally, we combine the detection rate curves for each star into an estimate of the survey-wide completeness by taking the average of the detection rate for all stars:
+
+\begin{equation}
+Q(q_i) = \frac{1}{N_i} \sum_j Q_j(q_i)
+\label{eqn:completeness}
+\end{equation}
+In the equation above, $N_i$ is the number of sample stars that contain an estimate for $Q(q_i)$. For $q_i \sim 0.2$, $N_i$ is near the total sample size. However, $N_i$ falls for both low and high q, since a $3000\ K$/$12000\ K$ companion converts into $q = 0.08/2.0$ for an A9V primary, but converts into $q = 0.007/0.19$ for a B0V primary. Our sensitivity analysis therefore does not sample large mass ratios around the very early-type primary stars in the sample, and does not sample very low mass ratios around late-type primary stars.
 
 
+\begin{figure}
+\includegraphics[width=\columnwidth]{SurveyCompleteness.pdf}
+\caption{Survey completeness as a function of mass ratio ($q$).}
+\label{fig:completeness}
+\end{figure}
 
-
+We show the total survey completeness in Figure \ref{fig:completeness}. The completeness falls very rapidly towards low mass ratios, although we are still $\sim 70\%$ complete at $q = 0.1$. The slow fall-off towards large mass ratios is caused by the same effect as in Figure \ref{fig:marginalized}: large mass ratio companions tend to be rapid rotators that are more difficult to detect.
 
 \section{Mass-Ratio Distribution}
 \label{sec:mrd}
+
+We are now finally in a position to estimate the mass-ratio distribution for our sample. We estimate the mass for each detected companion star by sampling the temperatures given in Table \ref{tab:companions} as a gaussian, and converting each temperature sample into a mass sample. We do the conversion to mass both by interpolating the spectral type relations from [CITE mamajek table], and by interpolating from temperature and system age (see Section \ref{sec:sp}) to mass with Dartmouth isochrones [CITE]. Both methods give similar results in most cases, although the isochrone masses are significantly higher for very young systems. We sample the mass ratio of the system by dividing the companion mass samples by samples of the primary mass (Section \ref{sec:sp}). We denote the $n$th mass ratio sample for the $k$th star as $q_k^{(n)}$, and denote the number of these samples as $N_k$.
+
+We use the methodology developed in \citet{Foreman2014} to perform bayesian inference on the shape and form of the mass ratio distribution. The log-likelihood function in this formalism is:
+
+\begin{multline}
+\ln{\mathcal{L}(\{\vec{x_k}\}| \vec{\theta})} = -K \int_0^1 Q(q)P(q|\vec{\theta})dq + \\ \sum_{k=1}^K \ln{\frac{K}{N_k} \sum_{n=1}^{N_k} Q(q_k^{(n)}) P(q_k^{(n)}|\vec{\theta})}
+\end{multline}
+
+In the above equation, $\{\vec{x_k}\}$ denote all of the data for each star, and $\vec{\theta}$ denotes the parameters for the model we are fitting. $K=380$ [TODO: make sure this count is correct!] is the total sample size for our survey, $Q(q)$ is the completeness function shown in Figure \ref{fig:completeness}, and $P(q|\vec{\theta})$ is the likelihood function for the mass ratio given the model parameters. We fit the data to two distinct distributions: a histogram ($P_1$) and a log-normal distribution ($P_2$):
+
+\begin{align}
+ P_1(q|\vec{\theta}) &= \begin{cases}
+      \hfill \theta_1 \hfill & q \in \Delta_1 \\
+      \hfill \theta_2 \hfill & q \in \Delta_2 \\
+      \hfill \ldots \\
+      \hfill \theta_7 \hfill & q \in \Delta_7
+     \end{cases} \\
+ P_2(q|\vec{\theta}) &= \frac{A}{q \sqrt{2\pi\sigma^2}} e^{-\frac{(\ln{q} - \mu)^2}{2\sigma^2}}
+\end{align}
+The constant $A$ in the log-normal distribution is a renormalization factor such that the distribution is only defined from $0 < q < 1$:
+
+\begin{equation}
+A = \frac{2}{1 - \erf(\mu / (\sigma \sqrt{2}))}
+\end{equation}
+
+We fit both distributions via Nested Sampling with the MultiNest code [CITE]. Following \citet{Foreman2014}, we apply a smoothing prior on the parameters $\vec{\theta}$:
+
+\begin{align}
+P(\vec{\theta}| \alpha, m, \tau, \epsilon) &= \mathcal{N}(\vec{\theta} | m, K(\{\Delta_j\}, \alpha, \tau, \epsilon)) \\
+K_{ij} &= \sqrt{\left[\alpha \exp{\left(-\frac{(\Delta_i - \Delta_j)^2}{2\tau^2}\right)}\right]^2 + \epsilon^2 \delta_{ij}}
+\end{align}
+The smoothing prior is an 7-dimensional gaussian with mean $m$ and covariance matrix $K_{ij}$, and encodes our belief that the mass ratio distribution is a smoothly varying function while leaving enough flexibility to let the data drive the shape of the function. Since we have introduced three new hyperparameters ($a, m, \tau, \epsilon$), we must apply a prior to them and marginalize over them when estimating the true bin heights. We choose log-uniform priors for $a, \tau$, and $\epsilon$, and a uniform prior for the mean $m$. The full posterior probability distribution for the histogram model is:
+
+\begin{equation}
+P_1(\vec{\theta} | \{\vec{x_k}\}) \propto P_1(q|\vec{\theta}) P(\vec{\theta}| \alpha, m, \tau, \epsilon) P(\alpha, m, \tau, \epsilon)
+\end{equation}
+
+The log-normal fit only has two parameters ($\mu, \sigma$), and was chosen because it has a similar shape to the histogram resulting from the first model. We use uniform priors on both $\mu$ and $\sigma$, resulting in the posterior probability 
+
+\begin{equation}
+P_2(\mu, \sigma | \{\vec{x_k}\}) \propto P_2(q|\mu, \sigma) 
+\end{equation}
+
+We show the resulting distribution in Figure \ref{fig:mrd}. The $1\sigma$ uncertainties in the bin heights from the histogram model are shown as error bars, and we overplot 500 samples of the log-normal fit to show the spread allowed by the data. 
+
+\begin{figure}
+\includegraphics[width=\columnwidth]{MRD_lognormal.pdf}
+\caption{Mass ratio distribution for our sample. The data was fit to both a histogram and a log-normal distribution. The histogram is shown in the solid blue blocks, with $1 \sigma$ uncertainties marked with error bars. The variance of the log-normal fit is shown with 500 samples from the posterior probability distribution for the parameters.}
+\label{fig:mrd}
+\end{figure}
+
+
+
 
 \section{Discussion}
 \label{sec:discussion}
@@ -215,7 +287,6 @@ The Hobby-Eberly Telescope (HET) is a joint project of the University of Texas a
 
 Based on observations at Cerro Tololo Inter-American Observatory, National Optical Astronomy Observatory (NOAO Prop. IDs: 13A-0139, 13B-0112, 2014A-0260, 14A-0260, 15A-0245; PI: Kevin Gullikson), which is operated by the Association of Universities for Research in Astronomy (AURA) under a cooperative agreement with the National Science Foundation. 
 
-We would like to thank Bill Cochran and Mike Endl for observing some of the spectra used in this project. . Finally, we would like to thank the anonymous referee for numerous comments that improved the paper.
 
 
 
