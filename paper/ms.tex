@@ -127,7 +127,7 @@ About half of our detections have robust mass and age estimates for the primary 
 Next, we use Padova stellar evolutionary tracks [CITE] and the isochrones code [CITE] to estimate the mass and age of the system from the measured temperature and $\log{g}$. As a consistency check, we also interpolate a table of spectral type relations [CITE mamajek table] to estimate the primary mass from the published spectral types. We show the comparison in Figure \ref{fig:prim_mass}. We estimate uncertainties in the spectral type mass by assuming a spectral type uncertainty of $\pm 0.5$ spectral types. There is excellent agreement between the masses we measure and the spectral type masses.
 
 \begin{figure}
-\includegraphics[width=\columnwidth]{PrimaryMassEstimates.pdf}
+\includegraphics[width=\columnwidth]{PrimaryMassEstimates_log.pdf}
 \caption{Comparison of primary star masses derived from our cross-correlation analysis and Padova isochrones [CITE] with those expected from the published spectral type. There is excellent agreement between the two measures across the entire range of masses.}
 \label{fig:prim_mass}.
 \end{figure}
@@ -152,7 +152,6 @@ where $N_\mathrm{rv} = 17$ is the number of radial velocity trial points.
 
 Finally, we interpolated between the grid points using a linear radial basis function interpolator. In order to extrapolate from our grids to estimate the detection rate at high temperature and low $v\sin{i}$ and at low temperature and high $v\sin{i}$, we made the following assumptions about the shape of the two-dimensional detection rate surface: First, we assumed that if all companions are detected at temperature $T=6500$ K and rotation speed $v\sin{i}$, then all companions with the same $v\sin{i}$ and larger temperature will also be detected. Likewise, we assume that if no companions are detected at temperature $T$ and rotation speed $v\sin{i} = 50\ \mathrm{km\ s}^{-1}$, we assume that no companions will be detected at the same temperature and faster rotation speeds. We show a typical detection rate surface in Figure \ref{fig:detrate_2d} to illustrate both the shape of the surface and the grid we interpolate from. The figure shows a clear diagonal dividing line between hot, slow rotators that are always detected and cool, fast rotators that never are. Additionally the figure shows that very fast rotators are never detected, regardless of their temperature, because the signal is completely removed when we high-pass filter the data (see Section \ref{sec:companions}).
 
-TODO: Discuss marginalization of vsini.
 
 
 \begin{figure}
@@ -160,6 +159,43 @@ TODO: Discuss marginalization of vsini.
 \caption{Detection rate as a function of companion temperature and $v\sin{i}$ for HIP 24244. All companions that are shaded yellow are detectable, while companions in the purple region are never detectable. The grids of squares in the lower left and upper right show the low temperature and high temperature grid points we used in the sensitivity analysis. The remaining squares come from assumptions about the shape of the detection rate surface and allow us to fully interpolate (see text for details).}
 \label{fig:detrate_2d}
 \end{figure}
+
+
+To estimate the survey completeness as a function of mass ratio, we first need to remove the dependence on $v\sin{i}$. We do this by sampling a suitable distribution of $v\sin{i}$ values for a star of each temperature and marginalizing over the completeness:
+
+\begin{equation}
+Q(T_\mathrm{eff}) = \sum_k Q(T, v_k) v_k 
+\end{equation} 
+where $Q(T, v\sin{i})$ is the surface plotted in Figure \ref{fig:detrate_2d} and $v_k$ are the samples from the distribution of $v\sin{i}$. For $T < 6000$ K, we sample $v\sin{i}$ using the gyrochronology relation given in \citet{Barnes2010b}:
+
+\begin{equation}
+\frac{k_Ct}{\tau} = \ln\left ( \frac{P}{P_0} \right ) \frac{k_Ik_C}{2\tau^2} (P^2 - P_0^2)
+\label{eqn:gyro}
+\end{equation}
+In Equation \ref{eqn:gyro}, $k_C$ and $k_I$ are constants fit to data with known ages and rotation periods, $P$ and $P_0$ are respectively the current and zero-age main sequence (ZAMS) rotation periods, $\tau$ is the convective turnover time scale and $t$ is the current age of the star. We use the same values that \cite{Barnes2010b} use for the constants:
+
+\begin{itemize}
+\item $k_C = 0.646$ day/Myr
+\item $k_I = 452$ Myr/day
+\end{itemize}
+We estimate the convective timescale ($\tau$) by interpolating Table 1 of \citet{Barnes2010}. We then sample the system age $t$ (see Section \ref{sec:sp} and Table \ref{tab:primary}), and sample the initial rotation period $P_0$ as log-uniform from 0.2 to 10 days. Equation \ref{eqn:gyro} then gives a current rotation period for each sample, which we convert to an equatorial velocity with the stellar radius $R$. We estimate the stellar radius by interpolating Dartmouth pre main sequence isochrones [CITE] using the temperature temperature and age. TODO: Probably need to rewrite at least parts of this... 
+
+The gyrochronology relations do not work for stars with $T \gtrsim 6250\ K$, the canonical limit at which the convective zone is too small to efficiently remove angular momentum to the stellar wind and spin down the star \citep{Pinsonneault2001}. \citet{Zorec2012} fit maxwellian distributions to the equatorial velocity of A- and B-type stars in several mass bins. For $T > 7000\ K$, we interpolate the fit parameters, and sample the maxwellian probability density function. 
+
+Typical velocities from the gyrochronology relationships are $10-20 \mathrm{km s}^{-1}$, while the maxwellian velocity distributions have typical velocities $\sim 100 \mathrm{km s}^{-1}$. We transition between the two regimes for temperatures in the range $6000\ K < T < 7000\ K$ by first estimating the equatorial velocities from the gyrochronology relationship (Equation \ref{eqn:gyro}). We then fit the velocities to a maxwellian distribution, and interpolate the fitted parameters for temperatures in the transition range. We show the marginalized detection rate and mean value of $v\sin{i}$ as a function of temperature in Figure \ref{fig:marginalized}. Both the detection rate and the average $v\sin{i}$ are smoothly varying, and show the correct behaviour with temperature. The detection rate actually falls with hotter temperatures because the companions are expected to be fast rotators, which are more difficult to detect.
+
+
+\begin{figure}
+\includegraphics[width=\columnwidth]{HIP_24244_20130919_marginalized.pdf}
+\caption{Marginalized detection rate for the same star as shown in Figure \ref{fig:detrate_2d}. The fall in detection rate towards hotter stars is caused by the increase in typical rotational speeds.}
+\label{fig:marginalized}
+\end{figure}
+
+TODO: Discuss conversion from temperature to mass, and introduce the overall completeness curve.
+
+
+
+
 
 \section{Mass-Ratio Distribution}
 \label{sec:mrd}
