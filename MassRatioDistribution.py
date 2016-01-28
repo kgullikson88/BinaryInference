@@ -6,9 +6,9 @@ from scipy.optimize import minimize
 from scipy.stats import truncnorm, gaussian_kde
 from scipy.integrate import quad
 
-from HelperFunctions import BinomialErrors
-import Mamajek_Table
-import fitters
+from kglib.utils.HelperFunctions import BinomialErrors
+from kglib.spectral_type import Mamajek_Table
+from kglib import fitters
 
 
 MT = Mamajek_Table.MamajekTable()
