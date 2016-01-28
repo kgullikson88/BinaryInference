@@ -218,12 +218,15 @@ We show the total survey completeness in Figure \ref{fig:completeness}. The comp
 \section{Mass-Ratio Distribution}
 \label{sec:mrd}
 
-We are now finally in a position to estimate the mass-ratio distribution for our sample. We estimate the mass for each detected companion star by sampling the temperatures given in Table \ref{tab:companions} as a gaussian, and converting each temperature sample into a mass sample. We do the conversion to mass both by interpolating the spectral type relations from [CITE mamajek table], and by interpolating from temperature and system age (see Section \ref{sec:sp}) to mass with Dartmouth isochrones [CITE]. Both methods give similar results in most cases, although the isochrone masses are significantly higher for very young systems. We sample the mass ratio of the system by dividing the companion mass samples by samples of the primary mass (Section \ref{sec:sp}). We denote the $n$th mass ratio sample for the $k$th star as $q_k^{(n)}$, and denote the number of these samples as $N_k$.
+We are now finally in a position to estimate the mass-ratio distribution for our sample. We estimate the mass for each detected companion star by sampling the temperatures given in Table \ref{tab:companions} as a gaussian, and converting each temperature sample into a mass sample. We do the conversion to mass both by interpolating the spectral type relations from [CITE mamajek table], and by interpolating from temperature and system age (see Section \ref{sec:sp}) to mass with Dartmouth isochrones [CITE]. Both methods give similar results in most cases, although the isochrone masses are significantly higher for very young systems. We therefore only show the results obtained with the isochrone masses. We sample the mass ratio of the system by dividing the companion mass samples by samples of the primary mass (Section \ref{sec:sp}). We denote the $n$th mass ratio sample for the $k$th star as $q_k^{(n)}$, and denote the number of these samples as $N_k$.
 
-We use the methodology developed in \citet{Foreman2014} to perform bayesian inference on the shape and form of the mass ratio distribution. The log-likelihood function in this formalism is:
+\subsection{Fitting  Methodology}
+
+We use the methodology developed in \citet{Foreman2014} to perform bayesian inference on the shape and form of the mass ratio distribution. The log-likelihood function in this formalism is derived from modeling the survey as a draw from the inhomogeneous Poisson process with rate density $\Gamma \equiv KQ(q)P(q)$:
 
 \begin{multline}
 \ln{\mathcal{L}(\{\vec{x_k}\}| \vec{\theta})} = -K \int_0^1 Q(q)P(q|\vec{\theta})dq + \\ \sum_{k=1}^K \ln{\frac{K}{N_k} \sum_{n=1}^{N_k} Q(q_k^{(n)}) P(q_k^{(n)}|\vec{\theta})}
+\label{eqn:money}
 \end{multline}
 
 In the above equation, $\{\vec{x_k}\}$ denote all of the data for each star, and $\vec{\theta}$ denotes the parameters for the model we are fitting. $K=380$ [TODO: make sure this count is correct!] is the total sample size for our survey, $Q(q)$ is the completeness function shown in Figure \ref{fig:completeness}, and $P(q|\vec{\theta})$ is the likelihood function for the mass ratio given the model parameters. We fit the data to two distinct distributions: a histogram ($P_1$) and a log-normal distribution ($P_2$):
@@ -234,8 +237,8 @@ In the above equation, $\{\vec{x_k}\}$ denote all of the data for each star, and
       \hfill \theta_2 \hfill & q \in \Delta_2 \\
       \hfill \ldots \\
       \hfill \theta_7 \hfill & q \in \Delta_7
-     \end{cases} \\
- P_2(q|\vec{\theta}) &= \frac{A}{q \sqrt{2\pi\sigma^2}} e^{-\frac{(\ln{q} - \mu)^2}{2\sigma^2}}
+     \end{cases} \label{eqn:P1} \\
+ P_2(q|\vec{\theta}) &= \frac{A}{q \sqrt{2\pi\sigma^2}} e^{-\frac{(\ln{q} - \mu)^2}{2\sigma^2}} \label{eqn:P2}
 \end{align}
 The constant $A$ in the log-normal distribution is a renormalization factor such that the distribution is only defined from $0 < q < 1$:
 
@@ -252,7 +255,7 @@ K_{ij} &= \sqrt{\left[\alpha \exp{\left(-\frac{(\Delta_i - \Delta_j)^2}{2\tau^2}
 The smoothing prior is an 7-dimensional gaussian with mean $m$ and covariance matrix $K_{ij}$, and encodes our belief that the mass ratio distribution is a smoothly varying function while leaving enough flexibility to let the data drive the shape of the function. Since we have introduced three new hyperparameters ($a, m, \tau, \epsilon$), we must apply a prior to them and marginalize over them when estimating the true bin heights. We choose log-uniform priors for $a, \tau$, and $\epsilon$, and a uniform prior for the mean $m$. The full posterior probability distribution for the histogram model is:
 
 \begin{equation}
-P_1(\vec{\theta} | \{\vec{x_k}\}) \propto P_1(q|\vec{\theta}) P(\vec{\theta}| \alpha, m, \tau, \epsilon) P(\alpha, m, \tau, \epsilon)
+P_1(\vec{\theta} | \{\vec{x_k}\}) \propto \mathcal{L}_1(\{\vec{x_k}\}| \vec{\theta}) P(\vec{\theta}| \alpha, m, \tau, \epsilon) P(\alpha, m, \tau, \epsilon)
 \end{equation}
 
 The log-normal fit only has two parameters ($\mu, \sigma$), and was chosen because it has a similar shape to the histogram resulting from the first model. We use uniform priors on both $\mu$ and $\sigma$, resulting in the posterior probability 
@@ -261,7 +264,32 @@ The log-normal fit only has two parameters ($\mu, \sigma$), and was chosen becau
 P_2(\mu, \sigma | \{\vec{x_k}\}) \propto P_2(q|\mu, \sigma) 
 \end{equation}
 
-We show the resulting distribution in Figure \ref{fig:mrd}. The $1\sigma$ uncertainties in the bin heights from the histogram model are shown as error bars, and we overplot 500 samples of the log-normal fit to show the spread allowed by the data. 
+\subsection{Malmquist Bias Correction}
+
+We are trying to recover the intrinsic distribution from an observed sample; thus we should fit the data to the probability distribution function (PDF) for mass ratio, \emph{given that we observed the star}: $P(q|\vec{\theta}, \mathrm{obs})$. In a volume-limited sample, this is equal to $P(q|\vec{\theta})$; however, our sample is volume-limited and therefore suffers from Malmquist bias. There is a higher probability of equal-mass binary systems in our data because they contribute twice the flux and are therefore more likely to fall under the magnitude limit. We can calculate the PDF for mass ratio given that we observed the system from Bayes' theorem:
+
+\begin{equation}
+P(q|\vec{\theta}, \mathrm{obs}) = \frac{P(\mathrm{obs}|q, \vec{\theta}) P(q|\vec{\theta})}{\int_0^1 P(\mathrm{obs}|q, \vec{\theta}) P(q|\vec{\theta}) dq}
+\end{equation}
+
+We already know $P(q|\vec{\theta})$ (Equations \ref{eqn:P1} and \ref{eqn:P2}). We estimate $P(\mathrm{obs}|q)$ by simulating a very large sample of binary stars:
+
+\begin{enumerate}
+\item Sample primary star masses from the Kroupa IMF [CITE]
+\item Sample a distance for each star from a disk with infinite extent and scale height of $300$ pc. 
+\item For each $q$ from 0 to 1, in steps of 0.01:
+\begin{enumerate}
+  \item Add a companion star to each primary with the appropriate mass to make a binary system with mass ratio $q$.
+  \item Calculate the combined absolute V-magnitude by interpolating the spectral type relations in [CITE mamajek]
+  \item Calculate apparent magnitude $V$
+  \item Find fraction of stars ($f(q)$) with apparent $V < 6$
+\end{enumerate}
+\item Fit the sampled fractions $f(q)$ to a 5th-order polynomial.
+\end{enumerate}
+
+With the fitted malmquist-correction polynomial, we then substitute $P(q|\vec{\theta}, \mathrm{obs})$ everywhere $P(q|\vec{\theta})$ appears in Equation \ref{eqn:money}.
+
+We show the resulting fits in Figure \ref{fig:mrd}. The $1\sigma$ uncertainties in the bin heights from the histogram model are shown as error bars, and we overplot 500 samples of the log-normal fit to show the spread allowed by the data. 
 
 \begin{figure}
 \includegraphics[width=\columnwidth]{MRD_lognormal.pdf}
