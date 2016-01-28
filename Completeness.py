@@ -10,16 +10,16 @@ from scipy.optimize import minimize_scalar
 from scipy.interpolate import InterpolatedUnivariateSpline as spline
 from scipy.stats import gaussian_kde
 import pandas as pd 
-import Mamajek_Table
+from kglib.spectral_type import Mamajek_Table
 from astropy import units as u, constants
 import os
 import h5py
-import StarData
+from kglib.utils import StarData
 import Priors
 import logging
 import pickle
 from scipy.interpolate import LinearNDInterpolator
-from HelperFunctions import IsListlike
+from kglib.utils.HelperFunctions import IsListlike
 
 PRIOR_HDF5 = 'data/OrbitPrior.h5'
 
