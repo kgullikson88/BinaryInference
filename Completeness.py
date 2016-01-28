@@ -4,22 +4,24 @@ Functions for estimating the completeness functions
 
 from __future__ import print_function, division, absolute_import
 
-import numpy as np
 import multiprocessing
+from astropy import units as u, constants
+import os
+import logging
+import pickle
+
+import numpy as np
 from scipy.optimize import minimize_scalar
 from scipy.interpolate import InterpolatedUnivariateSpline as spline
 from scipy.stats import gaussian_kde
-import pandas as pd 
-from kglib.spectral_type import Mamajek_Table
-from astropy import units as u, constants
-import os
+import pandas as pd
 import h5py
+from scipy.interpolate import LinearNDInterpolator
+
+from kglib.spectral_type import Mamajek_Table
 from kglib.utils import StarData
 import Priors
-import logging
-import pickle
-from scipy.interpolate import LinearNDInterpolator
-from kglib.utils.HelperFunctions import IsListlike
+
 
 PRIOR_HDF5 = 'data/OrbitPrior.h5'
 
@@ -181,9 +183,8 @@ def get_age(star):
     """
     with h5py.File(PRIOR_HDF5, 'r') as infile:
         if star in infile.keys():
-            return infile[star]['system_age'].value 
+            return infile[star]['system_age'].value
 
-    from Priors import get_age
     spt = StarData.GetData(star).spectype
     return get_ages(star, spt)
 

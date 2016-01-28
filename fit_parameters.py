@@ -1,11 +1,11 @@
-import pymultinest
+import sys
+import os
+
 from isochrones import StarModel
 from isochrones.padova import Padova_Isochrone
-import sys
 import pandas as pd
-import os
 import numpy as np
-import h5py
+
 
 HDF5_OUTPUT = 'Primary_Parameters.h5'
 
