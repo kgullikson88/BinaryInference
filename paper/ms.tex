@@ -23,8 +23,9 @@
 
 
 \begin{abstract}
-Abstract here
+Binary stars and higher-order multiple systems are a ubiquitous outcome of star formation, especially as the system mass increases. The mass-ratio distribution is a unique probe into the physics of the collapsing molecular core as well as the circumstellar disk of the binary fragments. The mass-ratio distribution should change as the companion gets with $a \sim 1000$ AU, at which point the disks from the two forming stars can interact, and companions can form directly from the disk of the primary star. Unfortunately, close companions to A- and B-type stars are very difficult to detect and characterize because they are so much dimmer than the primary star. We present the results of a survey searching for companions to A- and B-type stars using the direct spectroscopic detection technique, which is sensitive to late-type companions within $\sim 1''$ of the primary. We estimate the temperatures and masses of the 58 companion detections, 25 of which are new detections. We present the mass-ratio distribution for our sample, and find that it is well described by a gaussian with mean of $q = 0.35 \pm 0.04$. TODO: discuss implications.
 \end{abstract}
+\keywords{binaries: spectroscopic, stars:early-type, stars:formation, stars:statistics}
 
 \maketitle
 
@@ -241,6 +242,8 @@ We show the total survey completeness in Figure \ref{fig:completeness}. The comp
 
 We are now finally in a position to estimate the mass-ratio distribution for our sample. We estimate the mass for each detected companion star by sampling the temperatures given in Table \ref{tab:companions} as a gaussian, and converting each temperature sample into a mass sample. We do the conversion to mass both by interpolating Table 5 from \citet{Pecaut2013}, and by interpolating from temperature and system age (see Section \ref{sec:sp}) to mass with Dartmouth isochrones [CITE]. Both methods give similar results in most cases, although the isochrone masses are significantly higher for very young systems. We therefore only show the results obtained with the isochrone masses. We sample the mass ratio of the system by dividing the companion mass samples by samples of the primary mass (Section \ref{sec:sp}). We denote the $n$th mass ratio sample for the $k$th star as $q_k^{(n)}$, and denote the number of these samples as $N_k$.
 
+TODO: Discuss the stars I actually use in the fit, and the ones I don't!
+
 \subsection{Fitting  Methodology}
 
 We use the methodology developed in \citet{Foreman2014} to perform bayesian inference on the shape and form of the mass ratio distribution. The log-likelihood function in this formalism is derived from modeling the survey as a draw from the inhomogeneous Poisson process with rate density $\Gamma \equiv KQ(q)P(q)$:
@@ -343,8 +346,7 @@ TODO: Discuss physical mechanism to generate a preferrence for $q = 0.3$. Saying
 
 \section*{Acknowledgements}
 This research has made use of the SIMBAD database, operated at CDS, Strasbourg, France, and of Astropy, a community-developed core Python package for Astronomy (Astropy Collaboration, 2013).
-It was supported by a start-up grant to Adam Kraus as well as a University of Texas Continuing Fellowship to Kevin Gullikson. J.-E. Lee was supported by the Basic Science Research Program through the National Research Foundation of Korea (NRF) (grant No. NRF-2015R1A2A2A01004769) and the Korea
-Astronomy and Space Science Institute under the R\&D program (Project No. 2015-1-320-18) supervised by the Ministry of Science, ICT and Future Planning.
+It was supported by a start-up grant to Adam Kraus as well as a University of Texas Continuing Fellowship to Kevin Gullikson.
 
 This work used the Immersion Grating Infrared Spectrograph (IGRINS) that was developed under a collaboration between the University of Texas at Austin and the Korea Astronomy and Space Science Institute (KASI) with the financial support of the US National Science Foundation under grant AST-1229522, of the University of Texas at Austin, and of the Korean GMT Project of KASI.
 
