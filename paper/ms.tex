@@ -117,7 +117,7 @@ Most of the detected companions have follow-up spectra to confirm the existence 
 
 In order to convert from companion temperature to mass ratio, we first need an estimate of the primary mass. In addition, since the primary stars in our systems are A- or B-type stars with main-sequence lifetimes from $\sim 10 - 1000$ Myr, very late-type companions may still be contracting onto the main sequence and so an age estimate for the system is necessary. 
 
-About half of our detections have robust mass and age estimates for the primary stars from Str\"omgren uvby$\beta$ photometry \citep{David2015}. For those that do not, we estimate the mass and age of the system as follows. We first cross-correlate the data against a grid of Kurucz model spectra [CITE] spanning $7000\ K < T_\mathrm{eff} < 30000\ K$, $3.0 < \log{g} < 4.5$, and $75 < v\sin{i} < 300$. For the optical data, we use the blue echelle orders ($\lambda < 5550 \AA$). We ignore the strong hydrogren lines in the spectrum, because they span several echelle orders and make continuum normalization very difficult. There are sufficient metal lines in the optical spectra that the resulting CCF always has a very strong peak at the radial velocity of the primary star. The near-infrared IGRINS spectra do not have enough strong metal lines in their spectrum to justify ignoring the hydrogen lines; we use the subset from $1.51 - 1.73 \micron$ for these spectra. We then estimate the temperature and surface gravity of the primary stars from the CCF with the largest peak. We assume the following errors on the temperature and surface gravity:
+About half of our detections have robust mass and age estimates for the primary stars from Str\"omgren uvby$\beta$ photometry \citep{David2015}. For those that do not, we estimate the mass and age of the system as follows. We first cross-correlate the data against a grid of Kurucz model spectra \citep{Castelli2003} spanning $7000\ K < T_\mathrm{eff} < 30000\ K$, $3.0 < \log{g} < 4.5$, and $75 < v\sin{i} < 300$. For the optical data, we use the blue echelle orders ($\lambda < 5550 \AA$). We ignore the strong hydrogren lines in the spectrum, because they span several echelle orders and make continuum normalization very difficult. There are sufficient metal lines in the optical spectra that the resulting CCF always has a very strong peak at the radial velocity of the primary star. The near-infrared IGRINS spectra do not have enough strong metal lines in their spectrum to justify ignoring the hydrogen lines; we use the subset from $1.51 - 1.73 \micron$ for these spectra. We then estimate the temperature and surface gravity of the primary stars from the CCF with the largest peak. We assume the following errors on the temperature and surface gravity:
 
 \begin{align}
  \sigma_T &= \begin{cases}
@@ -127,11 +127,11 @@ About half of our detections have robust mass and age estimates for the primary 
  \sigma_{\log{g}} &= 0.25
 \end{align}
 
-Next, we use Padova stellar evolutionary tracks [CITE] and the isochrones code [CITE] to estimate the mass and age of the system from the measured temperature and $\log{g}$. As a consistency check, we also interpolate a table of spectral type relations [CITE mamajek table] to estimate the primary mass from the published spectral types. We show the comparison in Figure \ref{fig:prim_mass}. We estimate uncertainties in the spectral type mass by assuming a spectral type uncertainty of $\pm 0.5$ spectral types. There is excellent agreement between the masses we measure and the spectral type masses.
+Next, we use Padova stellar evolutionary tracks \citep{Bressan2012} and the isochrones code \citep{isochrones_code} to estimate the mass and age of the system from the measured temperature and $\log{g}$. As a consistency check, we also interpolate from a table of stellar properties as a function of spectral type \citep{Pecaut2013} to estimate the primary mass from the published spectral types. We show the comparison in Figure \ref{fig:prim_mass}. We estimate uncertainties in the spectral type mass by assuming a spectral type uncertainty of $\pm 0.5$ spectral types. There is excellent agreement between the masses we measure and the spectral type masses.
 
 \begin{figure}
 \includegraphics[width=\columnwidth]{PrimaryMassEstimates_log.pdf}
-\caption{Comparison of primary star masses derived from our cross-correlation analysis and Padova isochrones [CITE] with those expected from the published spectral type. There is excellent agreement between the two measures across the entire range of masses.}
+\caption{Comparison of primary star masses derived from our cross-correlation analysis and Padova isochrones \citep{Bressan2012} with those expected from the published spectral type. There is excellent agreement between the two measures across the entire range of masses.}
 \label{fig:prim_mass}.
 \end{figure}
 
@@ -198,7 +198,7 @@ Typical velocities from the gyrochronology relationships are $10-20 \mathrm{km s
 
 \subsection{Conversion to Mass Ratio}
 
-The result of the previous analysis is a series of estimates for the detection rate as a function of companion temperature for each star. We convert each companion temperature to a mass by interpolating the spectral type relations table given in [CITE Mamajek table]. Next, we estimate the primary mass for each star as the median of the mass samples developed in Section \ref{sec:sp}. We then convert each detection rate curve to be a function of mass ratio ($Q_j(q)$, where $j$ denotes the $j$th star in the sample), and linearly interpolate onto a grid in mass ratio from $0 < q_i < 1$. Finally, we combine the detection rate curves for each star into an estimate of the survey-wide completeness by taking the average of the detection rate for all stars:
+The result of the previous analysis is a series of estimates for the detection rate as a function of companion temperature for each star. We convert each companion temperature to a mass by interpolating Table 5 of \citet{Pecaut2013}. Next, we estimate the primary mass for each star as the median of the mass samples developed in Section \ref{sec:sp}. We then convert each detection rate curve to be a function of mass ratio ($Q_j(q)$, where $j$ denotes the $j$th star in the sample), and linearly interpolate onto a grid in mass ratio from $0 < q_i < 1$. Finally, we combine the detection rate curves for each star into an estimate of the survey-wide completeness by taking the average of the detection rate for all stars:
 
 \begin{equation}
 Q(q_i) = \frac{1}{N_i} \sum_j Q_j(q_i)
@@ -218,7 +218,7 @@ We show the total survey completeness in Figure \ref{fig:completeness}. The comp
 \section{Mass-Ratio Distribution}
 \label{sec:mrd}
 
-We are now finally in a position to estimate the mass-ratio distribution for our sample. We estimate the mass for each detected companion star by sampling the temperatures given in Table \ref{tab:companions} as a gaussian, and converting each temperature sample into a mass sample. We do the conversion to mass both by interpolating the spectral type relations from [CITE mamajek table], and by interpolating from temperature and system age (see Section \ref{sec:sp}) to mass with Dartmouth isochrones [CITE]. Both methods give similar results in most cases, although the isochrone masses are significantly higher for very young systems. We therefore only show the results obtained with the isochrone masses. We sample the mass ratio of the system by dividing the companion mass samples by samples of the primary mass (Section \ref{sec:sp}). We denote the $n$th mass ratio sample for the $k$th star as $q_k^{(n)}$, and denote the number of these samples as $N_k$.
+We are now finally in a position to estimate the mass-ratio distribution for our sample. We estimate the mass for each detected companion star by sampling the temperatures given in Table \ref{tab:companions} as a gaussian, and converting each temperature sample into a mass sample. We do the conversion to mass both by interpolating Table 5 from \citet{Pecaut2013}, and by interpolating from temperature and system age (see Section \ref{sec:sp}) to mass with Dartmouth isochrones [CITE]. Both methods give similar results in most cases, although the isochrone masses are significantly higher for very young systems. We therefore only show the results obtained with the isochrone masses. We sample the mass ratio of the system by dividing the companion mass samples by samples of the primary mass (Section \ref{sec:sp}). We denote the $n$th mass ratio sample for the $k$th star as $q_k^{(n)}$, and denote the number of these samples as $N_k$.
 
 \subsection{Fitting  Methodology}
 
@@ -246,7 +246,7 @@ The constant $A$ in the log-normal distribution is a renormalization factor such
 A = \frac{2}{1 - \erf(\mu / (\sigma \sqrt{2}))}
 \end{equation}
 
-We fit both distributions via Nested Sampling with the MultiNest code [CITE]. Following \citet{Foreman2014}, we apply a smoothing prior on the parameters $\vec{\theta}$:
+We fit both distributions via Importance Nested Sampling with the MultiNest code \citep{multinest}. Following \citet{Foreman2014}, we apply a smoothing prior on the parameters $\vec{\theta}$:
 
 \begin{align}
 P(\vec{\theta}| \alpha, m, \tau, \epsilon) &= \mathcal{N}(\vec{\theta} | m, K(\{\Delta_j\}, \alpha, \tau, \epsilon)) \\
@@ -275,12 +275,12 @@ P(q|\vec{\theta}, \mathrm{obs}) = \frac{P(\mathrm{obs}|q, \vec{\theta}) P(q|\vec
 We already know $P(q|\vec{\theta})$ (Equations \ref{eqn:P1} and \ref{eqn:P2}). We estimate $P(\mathrm{obs}|q)$ by simulating a very large sample of binary stars:
 
 \begin{enumerate}
-\item Sample primary star masses from the Kroupa IMF [CITE]
+\item Sample primary star masses from the Kroupa IMF \citep{Kroupa2002}
 \item Sample a distance for each star from a disk with infinite extent and scale height of $300$ pc. 
 \item For each $q$ from 0 to 1, in steps of 0.01:
 \begin{enumerate}
   \item Add a companion star to each primary with the appropriate mass to make a binary system with mass ratio $q$.
-  \item Calculate the combined absolute V-magnitude by interpolating the spectral type relations in [CITE mamajek]
+  \item Calculate the combined absolute V-magnitude by interpolating Table 5 of \citet{Pecaut2013}.
   \item Calculate apparent magnitude $V$
   \item Find fraction of stars ($f(q)$) with apparent $V < 6$
 \end{enumerate}
