@@ -203,7 +203,7 @@ In Equation \ref{eqn:gyro}, $k_C$ and $k_I$ are constants fit to data with known
 \item $k_C = 0.646$ day/Myr
 \item $k_I = 452$ Myr/day
 \end{itemize}
-We estimate the convective timescale ($\tau$) by interpolating Table 1 of \citet{Barnes2010a}. We then sample the system age $t$ (see Section \ref{sec:sp} and Table \ref{tab:primary}), and sample the initial rotation period $P_0$ as log-uniform from 0.2 to 10 days. Equation \ref{eqn:gyro} then gives a current rotation period for each sample, which we convert to an equatorial velocity with the stellar radius $R$. We estimate the stellar radius by interpolating Dartmouth pre main sequence isochrones [CITE] using the companion temperature and system age. TODO: 
+We estimate the convective timescale ($\tau$) by interpolating Table 1 of \citet{Barnes2010a}. We then sample the system age $t$ (see Section \ref{sec:sp} and Table \ref{tab:primary}), and sample the initial rotation period $P_0$ as log-uniform from 0.2 to 10 days. Equation \ref{eqn:gyro} then gives a current rotation period for each sample, which we convert to an equatorial velocity with the stellar radius $R$. We estimate the stellar radius by interpolating Dartmouth pre main sequence isochrones [CITE] using the companion temperature and system age. 
 
 The gyrochronology relations do not work for stars with $T \gtrsim 6250\ K$, the canonical limit at which the convective zone is too small to efficiently remove angular momentum to the stellar wind and spin down the star \citep{Pinsonneault2001}. \citet{Zorec2012} fit maxwellian distributions to the equatorial velocity of A- and B-type stars in several mass bins. For $T > 7000\ K$, we interpolate the fit parameters, and sample the maxwellian probability density function. 
 
@@ -242,7 +242,7 @@ We show the total survey completeness in Figure \ref{fig:completeness}. The comp
 
 We are now finally in a position to estimate the mass-ratio distribution for our sample. We estimate the mass for each detected companion star by sampling the temperatures given in Table \ref{tab:companions} as a gaussian, and converting each temperature sample into a mass sample. We do the conversion to mass both by interpolating Table 5 from \citet{Pecaut2013}, and by interpolating from temperature and system age (see Section \ref{sec:sp}) to mass with Dartmouth isochrones [CITE]. Both methods give similar results in most cases, although the isochrone masses are significantly higher for very young systems. We therefore only show the results obtained with the isochrone masses. We sample the mass ratio of the system by dividing the companion mass samples by samples of the primary mass (Section \ref{sec:sp}). We denote the $n$th mass ratio sample for the $k$th star as $q_k^{(n)}$, and denote the number of these samples as $N_k$.
 
-TODO: Discuss the stars I actually use in the fit, and the ones I don't!
+We do not use systems with more than one companion, unless known the wider companion separated by $ > 10''$ from the primary star (TODO: Check that this limit is true...). We mark the 47 companions we use in the mass ratio analysis with the fourth column of Table \ref{tab:companions}. Many of the companions we use in the analysis only have one detection in our data; 12/22 of these are previously known companions. The remaining 10 are new and unconfirmed detections; these all have very strong CCF signals and are likely to be confirmed with follow-up spectroscopy or imaging. We do not expect their inclusion to significantly alter the results. TODO: test this statement...
 
 \subsection{Fitting  Methodology}
 
@@ -948,73 +948,74 @@ Based on observations at Cerro Tololo Inter-American Observatory, National Optic
 \newpage
 
 \LongTables
-\begin{deluxetable*}{|l|rrlrrrll|}
+\begin{deluxetable*}{|l|rrlrrrrll|}
 \tabletypesize{\small}
 \tablewidth{0pt}
 \tablecaption{Companion Detections}
 \tablehead{
-       \colhead{star} & \colhead{component} & \colhead{$N_\mathrm{obs}$}   &   \colhead{$T_\mathrm{eff}$} &   \colhead{$v\sin{i}$} &  \colhead{[Fe/H]} & \colhead{$\Delta K$} &   \colhead{Isochrone Mass} &   \colhead{Spectral Type Mass}
+     \colhead{} & \colhead{} & \colhead{} & \colhead{Used in} & \colhead{$T_\mathrm{eff}$} & \colhead{$v\sin{i}$} & \colhead{[Fe/H]} & \colhead{} & \multicolumn{2}{c}{Mass ($M_{\odot}$)} \\ 
+       \colhead{star} & \colhead{component} & \colhead{$N_\mathrm{obs}$} & \colhead{Analysis}  &   \colhead{(K)} &   \colhead{($\mathrm{km\ s}^{-1}$)} &  \colhead{(dex)} & \colhead{$\Delta K$} &   \colhead{Isochrone} &   \colhead{Spectral Type}
        }
        
 \startdata
-   HIP 2548 & Aa,Ab &     2 &  $5732 \pm 112$ &      30 &    -0.5 &          0 &  $1.0^{+0.06}_{-0.04}$ &  $1.0^{+0.04}_{-0.03}$ \\
-   HIP 5310 & AB &     1 &  $3343 \pm 154$ &      30 &     0.0 &          0 &  $0.3^{+0.13}_{-0.08}$ &  $0.4^{+0.12}_{-0.12}$ \\
-     HR 545 & Aa,Ab$^{\dagger}$ &     3 &   $4312 \pm 87$ &       5 &    -0.5 &          0 &  $0.8^{+0.11}_{-0.10}$ &  $0.7^{+0.01}_{-0.02}$ \\
-     HR 604 & AB &     1 &  $4736 \pm 150$ &       5 &     0.5 &          0 &    $nan^{+nan}_{-nan}$ &  $0.8^{+0.02}_{-0.02}$ \\
-  HIP 10732 & AB$^{\dagger}$ &     2 &  $5578 \pm 109$ &       5 &     0.0 &          0 &  $1.0^{+0.29}_{-0.04}$ &  $1.0^{+0.02}_{-0.04}$ \\
-  HIP 12332 & AB$^{\dagger}$ &     2 &  $5551 \pm 107$ &      10 &     0.0 &          0 &    $nan^{+nan}_{-nan}$ &  $1.0^{+0.01}_{-0.04}$ \\
-  HIP 12706 & AB &     2 &  $6051 \pm 107$ &      10 &     0.0 &          0 &  $1.1^{+0.03}_{-0.03}$ &  $1.1^{+0.04}_{-0.05}$ \\
-  HIP 13165 & AB? &     1 &  $5773 \pm 163$ &       5 &    -0.5 &          0 &  $1.1^{+0.31}_{-0.08}$ &  $1.0^{+0.10}_{-0.03}$ \\
-  HIP 13327 & AB$^{\dagger}$ &     1 &  $5524 \pm 150$ &       5 &    -0.5 &          0 &  $1.2^{+0.20}_{-0.21}$ &  $1.0^{+0.03}_{-0.04}$ \\
-  HIP 14576 & Aa,Ab &     2 &  $6980 \pm 103$ &      10 &     0.0 &          0 &  $1.4^{+0.03}_{-0.03}$ &  $1.5^{+0.05}_{-0.03}$ \\
-  HIP 14764 & AB$^{\dagger}$ &     2 &  $5601 \pm 108$ &      30 &     0.5 &          0 &    $nan^{+nan}_{-nan}$ &  $1.0^{+0.03}_{-0.03}$ \\
-  HIP 16244 & AB &     2 &  $5592 \pm 107$ &       5 &    -0.5 &          0 &  $1.2^{+0.20}_{-0.22}$ &  $1.0^{+0.03}_{-0.03}$ \\
-  HIP 16340 & AB$^{\dagger}$ &     1 &  $6214 \pm 150$ &       5 &    -0.5 &          0 &  $1.2^{+0.29}_{-0.07}$ &  $1.2^{+0.06}_{-0.05}$ \\
-  HIP 16611 & AB &     1 &  $5476 \pm 154$ &       1 &     0.5 &          0 &  $0.9^{+0.04}_{-0.04}$ &  $0.9^{+0.04}_{-0.03}$ \\
-  HIP 17563 & AB &     1 &  $8574 \pm 147$ &       5 &     0.5 &          0 &  $1.9^{+0.25}_{-0.11}$ &  $2.0^{+0.05}_{-0.06}$ \\
-  HIP 18724 & AB &     1 &  $6831 \pm 154$ &      20 &     0.0 &          0 &  $1.7^{+0.13}_{-0.23}$ &  $1.4^{+0.04}_{-0.04}$ \\
-  HIP 19949 & AB$^{\dagger}$ &     1 &  $6492 \pm 155$ &      20 &    -0.5 &          0 &  $1.3^{+0.06}_{-0.05}$ &  $1.3^{+0.06}_{-0.06}$ \\
-  HIP 20380 & AB$^{\dagger}$ &     2 &  $6492 \pm 109$ &      20 &    -0.5 &          0 &  $1.3^{+0.04}_{-0.04}$ &  $1.3^{+0.03}_{-0.05}$ \\
-  HIP 21589 & Aa,Ab? &     1? &  $4562 \pm 154$ &       5 &     0.0 &          0 &  $0.7^{+0.04}_{-0.03}$ &  $0.8^{+0.02}_{-0.03}$ \\
-  HIP 22833 & AB &     2 &  $4745 \pm 107$ &      10 &     0.0 &          0 &  $0.8^{+0.02}_{-0.02}$ &  $0.8^{+0.02}_{-0.01}$ \\
-  HIP 22958 & Aa,Ab &     2 &  $6126 \pm 112$ &      30 &    -0.5 &          0 &  $1.4^{+0.22}_{-0.21}$ &  $1.2^{+0.04}_{-0.04}$ \\
-  HIP 23362 & AB$^{\dagger}$ &     1 &  $6283 \pm 158$ &       5 &    -0.5 &          0 &  $1.2^{+0.06}_{-0.05}$ &  $1.2^{+0.07}_{-0.05}$ \\
-  HIP 23916 & Aa,Ab$^{\dagger}$ &     1 &  $5450 \pm 158$ &       5 &    -0.5 &          0 &  $1.1^{+0.20}_{-0.20}$ &  $0.9^{+0.04}_{-0.03}$ \\
-  HIP 24902 & AB &     1 &  $5679 \pm 154$ &      30 &     0.0 &          0 &  $1.0^{+0.05}_{-0.04}$ &  $1.0^{+0.04}_{-0.03}$ \\
-  HIP 25143 & AB$^{\dagger}$ &     2 &  $5883 \pm 109$ &      30 &     0.0 &          0 &  $1.1^{+0.04}_{-0.03}$ &  $1.1^{+0.05}_{-0.07}$ \\
-  HIP 26126 & AB? &     3 &   $5841 \pm 91$ &       5 &    -0.5 &          0 &  $1.0^{+0.03}_{-0.03}$ &  $1.0^{+0.05}_{-0.04}$ \\
-  HIP 32607 & AB$^{\dagger}$ &     3 &   $5068 \pm 91$ &       5 &    -0.5 &          0 &  $0.8^{+0.02}_{-0.02}$ &  $0.9^{+0.01}_{-0.01}$ \\
-  HIP 37450 & AB$^{\dagger}$ &     1 &   $nan \pm nan$ & \nodata & \nodata &          0 &    $nan^{+nan}_{-nan}$ &    $nan^{+nan}_{-nan}$ \\
-  HIP 38593 & AB$^{\dagger}$ &     2 &  $5398 \pm 112$ &       5 &    -0.5 &          0 &  $1.3^{+0.08}_{-0.13}$ &  $0.9^{+0.03}_{-0.03}$ \\
-  HIP 38846 & AB$^{\dagger}$ &     1 &  $6595 \pm 158$ &      10 &     0.0 &          0 &  $1.7^{+0.12}_{-0.21}$ &  $1.3^{+0.09}_{-0.05}$ \\
-  HIP 39847 & Aa,Ab$^{\dagger}$ &     2 &  $5750 \pm 107$ &      10 &    -0.5 &          0 &  $1.0^{+0.04}_{-0.03}$ &  $1.0^{+0.05}_{-0.03}$ \\
-  HIP 40881 & AB$^{\dagger}$ &     1 &  $4562 \pm 154$ &      10 &    -0.5 &          0 &  $0.8^{+0.18}_{-0.05}$ &  $0.8^{+0.02}_{-0.03}$ \\
-  HIP 42129 & AB &     1 &  $5241 \pm 158$ &      10 &    -0.5 &          0 &  $1.2^{+0.12}_{-0.18}$ &  $0.9^{+0.04}_{-0.02}$ \\
-  HIP 46283 & AB? &     3 &   $9268 \pm 85$ &      10 &     0.5 &          0 &    $nan^{+nan}_{-nan}$ &  $2.2^{+0.02}_{-0.02}$ \\
-  HIP 55266 & AB &     1 &  $8483 \pm 139$ &      30 &    -0.5 &          0 &  $1.8^{+0.06}_{-0.04}$ &  $2.0^{+0.06}_{-0.05}$ \\
-  HIP 63945 & Aa,Ab or AC? &     1 &  $7038 \pm 162$ &      10 &    -0.5 &          0 &  $1.6^{+0.26}_{-0.16}$ &  $1.5^{+0.08}_{-0.06}$ \\
-  HIP 72154 & AB$^{\dagger}$ &     1 &  $4918 \pm 162$ &      30 &    -0.5 &          0 &  $0.9^{+0.22}_{-0.09}$ &  $0.8^{+0.03}_{-0.03}$ \\
-  HIP 76267 & AB &     1 &  $5449 \pm 158$ &       5 &    -0.5 &          0 &  $0.9^{+0.04}_{-0.04}$ &  $0.9^{+0.04}_{-0.03}$ \\
-  HIP 77336 & AB$^{\dagger}$ &     2 &  $6407 \pm 112$ &      20 &     0.0 &          0 &  $1.2^{+0.04}_{-0.04}$ &  $1.3^{+0.04}_{-0.05}$ \\
-  HIP 77516 & AB &     1 &  $6825 \pm 141$ &       5 &     0.5 &          0 &  $1.4^{+0.21}_{-0.06}$ &  $1.4^{+0.03}_{-0.04}$ \\
-  HIP 78820 & AB &     1 &  $5658 \pm 158$ &       5 &    -0.5 &          0 &  $1.3^{+0.11}_{-0.13}$ &  $1.0^{+0.04}_{-0.04}$ \\
-  HIP 79199 & AB &     1 &  $4616 \pm 158$ &       5 &    -0.5 &          0 &  $0.9^{+0.14}_{-0.14}$ &  $0.8^{+0.02}_{-0.03}$ \\
-  HIP 79404 & AB$^{\dagger}$ &     2 &  $4773 \pm 112$ &      10 &    -0.5 &          0 &  $1.1^{+0.07}_{-0.08}$ &  $0.8^{+0.02}_{-0.01}$ \\
-  HIP 80460 & AB &     1 &  $6391 \pm 155$ &      10 &     0.0 &          0 &  $1.2^{+0.06}_{-0.05}$ &  $1.3^{+0.06}_{-0.06}$ \\
-  HIP 82673 & AB$^{\dagger}$ &     2 &  $4668 \pm 112$ &       5 &     0.5 &          0 &  $0.8^{+0.03}_{-0.03}$ &  $0.8^{+0.01}_{-0.02}$ \\
-  HIP 84606 & AB &     1 &  $5476 \pm 154$ &      10 &    -0.5 &          0 &  $0.9^{+0.05}_{-0.04}$ &  $0.9^{+0.04}_{-0.03}$ \\
-  HIP 88116 & AB$^{\dagger}$ &     2 &  $5293 \pm 112$ &       5 &     0.0 &          0 &  $0.9^{+0.03}_{-0.03}$ &  $0.9^{+0.02}_{-0.03}$ \\
-  HIP 88817 & Ba,Bb$^{\dagger}$ &     1 &  $3647 \pm 154$ &      20 &     0.0 &          0 &  $0.5^{+0.07}_{-0.10}$ &  $0.5^{+0.03}_{-0.05}$ \\
-  HIP 88818 & Aa,Ab &     3 &   $5296 \pm 91$ &      20 &    -0.5 &          0 &  $0.9^{+0.02}_{-0.02}$ &  $0.9^{+0.02}_{-0.03}$ \\
-  HIP 91118 & AB &     1 &  $6492 \pm 155$ &      10 &    -0.5 &          0 &  $1.3^{+0.26}_{-0.07}$ &  $1.3^{+0.06}_{-0.06}$ \\
-  HIP 93805 & Aa,Ab$^{\dagger}$ &     2 &  $4054 \pm 109$ &       5 &    -0.5 &          0 &  $0.6^{+0.03}_{-0.03}$ &  $0.6^{+0.04}_{-0.02}$ \\
-  HIP 96840 & AB &     1 &  $9942 \pm 152$ &      10 &     0.0 &          0 &    $nan^{+nan}_{-nan}$ &  $2.3^{+0.03}_{-0.01}$ \\
- HIP 100221 & AB &     1 &  $5273 \pm 154$ &      20 &    -0.5 &          0 &  $0.9^{+0.29}_{-0.07}$ &  $0.9^{+0.04}_{-0.03}$ \\
- HIP 100907 & AB$^{\dagger}$ &     2 &  $5222 \pm 109$ &      10 &     0.0 &          0 &  $0.9^{+0.03}_{-0.03}$ &  $0.9^{+0.04}_{-0.02}$ \\
- HIP 103298 & Aa,Ab &     3 &   $4615 \pm 90$ &       5 &    -0.5 &          0 &  $0.7^{+0.02}_{-0.02}$ &  $0.8^{+0.01}_{-0.02}$ \\
- HIP 109139 & AB &     2 &  $5710 \pm 112$ &      20 &    -0.5 &          0 &  $1.0^{+0.04}_{-0.03}$ &  $1.0^{+0.03}_{-0.03}$ \\
- HIP 109521 & Aa,Ab$^{\dagger}$ &     3 &   $4412 \pm 87$ &      10 &     0.0 &          0 &  $0.7^{+0.02}_{-0.02}$ &  $0.7^{+0.01}_{-0.01}$ \\
- HIP 115115 & AB &     3 &   $4943 \pm 91$ &       5 &    -0.5 &          0 &  $0.8^{+0.02}_{-0.02}$ &  $0.8^{+0.02}_{-0.02}$ 
+   HIP 2548 & Aa,Ab &     2 & yes &  $5732 \pm 112$ &      30 &    -0.5 &          0 &  $1.0^{+0.06}_{-0.04}$ &  $1.0^{+0.04}_{-0.03}$ \\
+   HIP 5310 & AB &     1 & yes &  $3343 \pm 154$ &      30 &     0.0 &          0 &  $0.3^{+0.13}_{-0.08}$ &  $0.4^{+0.12}_{-0.12}$ \\
+     HR 545 & Aa,Ab$^{\dagger}$ &     3 & yes &   $4312 \pm 87$ &       5 &    -0.5 &          0 &  $0.8^{+0.11}_{-0.10}$ &  $0.7^{+0.01}_{-0.02}$ \\
+     HR 604 & AB &     1 & no &  $4736 \pm 150$ &       5 &     0.5 &          0 &    $nan^{+nan}_{-nan}$ &  $0.8^{+0.02}_{-0.02}$ \\
+  HIP 10732 & AB$^{\dagger}$ &     2 & yes &  $5578 \pm 109$ &       5 &     0.0 &          0 &  $1.0^{+0.29}_{-0.04}$ &  $1.0^{+0.02}_{-0.04}$ \\
+  HIP 12332 & AB$^{\dagger}$ &     2 & yes &  $5551 \pm 107$ &      10 &     0.0 &          0 &    $nan^{+nan}_{-nan}$ &  $1.0^{+0.01}_{-0.04}$ \\
+  HIP 12706 & AB &     2 & yes &  $6051 \pm 107$ &      10 &     0.0 &          0 &  $1.1^{+0.03}_{-0.03}$ &  $1.1^{+0.04}_{-0.05}$ \\
+  HIP 13165 & AB? &     1 & no &  $5773 \pm 163$ &       5 &    -0.5 &          0 &  $1.1^{+0.31}_{-0.08}$ &  $1.0^{+0.10}_{-0.03}$ \\
+  HIP 13327 & AB$^{\dagger}$ &     1 & yes &  $5524 \pm 150$ &       5 &    -0.5 &          0 &  $1.2^{+0.20}_{-0.21}$ &  $1.0^{+0.03}_{-0.04}$ \\
+  HIP 14576 & Aa,Ab &     2 & no &  $6980 \pm 103$ &      10 &     0.0 &          0 &  $1.4^{+0.03}_{-0.03}$ &  $1.5^{+0.05}_{-0.03}$ \\
+  HIP 14764 & AB$^{\dagger}$ &     2 & yes &  $5601 \pm 108$ &      30 &     0.5 &          0 &    $nan^{+nan}_{-nan}$ &  $1.0^{+0.03}_{-0.03}$ \\
+  HIP 16244 & AB &     2 & yes &  $5592 \pm 107$ &       5 &    -0.5 &          0 &  $1.2^{+0.20}_{-0.22}$ &  $1.0^{+0.03}_{-0.03}$ \\
+  HIP 16340 & AB$^{\dagger}$ &     1 & yes &  $6214 \pm 150$ &       5 &    -0.5 &          0 &  $1.2^{+0.29}_{-0.07}$ &  $1.2^{+0.06}_{-0.05}$ \\
+  HIP 16611 & AB &     1 & no &  $5476 \pm 154$ &       1 &     0.5 &          0 &  $0.9^{+0.04}_{-0.04}$ &  $0.9^{+0.04}_{-0.03}$ \\
+  HIP 17563 & AB &     1 & yes &  $8574 \pm 147$ &       5 &     0.5 &          0 &  $1.9^{+0.25}_{-0.11}$ &  $2.0^{+0.05}_{-0.06}$ \\
+  HIP 18724 & AB &     1 & no &  $6831 \pm 154$ &      20 &     0.0 &          0 &  $1.7^{+0.13}_{-0.23}$ &  $1.4^{+0.04}_{-0.04}$ \\
+  HIP 19949 & AB$^{\dagger}$ &     1 & yes &  $6492 \pm 155$ &      20 &    -0.5 &          0 &  $1.3^{+0.06}_{-0.05}$ &  $1.3^{+0.06}_{-0.06}$ \\
+  HIP 20380 & AB$^{\dagger}$ &     2 & yes &  $6492 \pm 109$ &      20 &    -0.5 &          0 &  $1.3^{+0.04}_{-0.04}$ &  $1.3^{+0.03}_{-0.05}$ \\
+  HIP 21589 & Aa,Ab &     1 & yes &  $4562 \pm 154$ &       5 &     0.0 &          0 &  $0.7^{+0.04}_{-0.03}$ &  $0.8^{+0.02}_{-0.03}$ \\
+  HIP 22833 & AB &     2 & yes &  $4745 \pm 107$ &      10 &     0.0 &          0 &  $0.8^{+0.02}_{-0.02}$ &  $0.8^{+0.02}_{-0.01}$ \\
+  HIP 22958 & Aa,Ab &     2 & yes &  $6126 \pm 112$ &      30 &    -0.5 &          0 &  $1.4^{+0.22}_{-0.21}$ &  $1.2^{+0.04}_{-0.04}$ \\
+  HIP 23362 & AB$^{\dagger}$ &     1 & yes &  $6283 \pm 158$ &       5 &    -0.5 &          0 &  $1.2^{+0.06}_{-0.05}$ &  $1.2^{+0.07}_{-0.05}$ \\
+  HIP 23916 & Aa,Ab$^{\dagger}$ &     1 & yes &  $5450 \pm 158$ &       5 &    -0.5 &          0 &  $1.1^{+0.20}_{-0.20}$ &  $0.9^{+0.04}_{-0.03}$ \\
+  HIP 24902 & AB &     1 & yes &  $5679 \pm 154$ &      30 &     0.0 &          0 &  $1.0^{+0.05}_{-0.04}$ &  $1.0^{+0.04}_{-0.03}$ \\
+  HIP 25143 & AB$^{\dagger}$ &     2 & yes &  $5883 \pm 109$ &      30 &     0.0 &          0 &  $1.1^{+0.04}_{-0.03}$ &  $1.1^{+0.05}_{-0.07}$ \\
+  HIP 26126 & AB? &     3 & yes &   $5841 \pm 91$ &       5 &    -0.5 &          0 &  $1.0^{+0.03}_{-0.03}$ &  $1.0^{+0.05}_{-0.04}$ \\
+  HIP 32607 & AB$^{\dagger}$ &     3 & yes &   $5068 \pm 91$ &       5 &    -0.5 &          0 &  $0.8^{+0.02}_{-0.02}$ &  $0.9^{+0.01}_{-0.01}$ \\
+  HIP 37450 & AB$^{\dagger}$ &     1 & yes &   $nan \pm nan$ & \nodata & \nodata &          0 &    $nan^{+nan}_{-nan}$ &    $nan^{+nan}_{-nan}$ \\
+  HIP 38593 & AB$^{\dagger}$ &     2 & yes &  $5398 \pm 112$ &       5 &    -0.5 &          0 &  $1.3^{+0.08}_{-0.13}$ &  $0.9^{+0.03}_{-0.03}$ \\
+  HIP 38846 & AB$^{\dagger}$ &     1 & yes &  $6595 \pm 158$ &      10 &     0.0 &          0 &  $1.7^{+0.12}_{-0.21}$ &  $1.3^{+0.09}_{-0.05}$ \\
+  HIP 39847 & Aa,Ab$^{\dagger}$ &     2 & no &  $5750 \pm 107$ &      10 &    -0.5 &          0 &  $1.0^{+0.04}_{-0.03}$ &  $1.0^{+0.05}_{-0.03}$ \\
+  HIP 40881 & AB$^{\dagger}$ &     1 & yes &  $4562 \pm 154$ &      10 &    -0.5 &          0 &  $0.8^{+0.18}_{-0.05}$ &  $0.8^{+0.02}_{-0.03}$ \\
+  HIP 42129 & AB &     1 & yes &  $5241 \pm 158$ &      10 &    -0.5 &          0 &  $1.2^{+0.12}_{-0.18}$ &  $0.9^{+0.04}_{-0.02}$ \\
+  HIP 46283 & AB? &     3 & yes &   $9268 \pm 85$ &      10 &     0.5 &          0 &    $nan^{+nan}_{-nan}$ &  $2.2^{+0.02}_{-0.02}$ \\
+  HIP 55266 & AB &     1 & no &  $8483 \pm 139$ &      30 &    -0.5 &          0 &  $1.8^{+0.06}_{-0.04}$ &  $2.0^{+0.06}_{-0.05}$ \\
+  HIP 63945 & Aa,Ab or AC? &     1 & no &  $7038 \pm 162$ &      10 &    -0.5 &          0 &  $1.6^{+0.26}_{-0.16}$ &  $1.5^{+0.08}_{-0.06}$ \\
+  HIP 72154 & AB$^{\dagger}$ &     1 & yes &  $4918 \pm 162$ &      30 &    -0.5 &          0 &  $0.9^{+0.22}_{-0.09}$ &  $0.8^{+0.03}_{-0.03}$ \\
+  HIP 76267 & AB &     1 & yes &  $5449 \pm 158$ &       5 &    -0.5 &          0 &  $0.9^{+0.04}_{-0.04}$ &  $0.9^{+0.04}_{-0.03}$ \\
+  HIP 77336 & AB$^{\dagger}$ &     2 & yes &  $6407 \pm 112$ &      20 &     0.0 &          0 &  $1.2^{+0.04}_{-0.04}$ &  $1.3^{+0.04}_{-0.05}$ \\
+  HIP 77516 & AB &     1 & yes &  $6825 \pm 141$ &       5 &     0.5 &          0 &  $1.4^{+0.21}_{-0.06}$ &  $1.4^{+0.03}_{-0.04}$ \\
+  HIP 78820 & AB &     1 & no &  $5658 \pm 158$ &       5 &    -0.5 &          0 &  $1.3^{+0.11}_{-0.13}$ &  $1.0^{+0.04}_{-0.04}$ \\
+  HIP 79199 & AB &     1 & no &  $4616 \pm 158$ &       5 &    -0.5 &          0 &  $0.9^{+0.14}_{-0.14}$ &  $0.8^{+0.02}_{-0.03}$ \\
+  HIP 79404 & AB$^{\dagger}$ &     2 & yes &  $4773 \pm 112$ &      10 &    -0.5 &          0 &  $1.1^{+0.07}_{-0.08}$ &  $0.8^{+0.02}_{-0.01}$ \\
+  HIP 80460 & AB &     1 & yes &  $6391 \pm 155$ &      10 &     0.0 &          0 &  $1.2^{+0.06}_{-0.05}$ &  $1.3^{+0.06}_{-0.06}$ \\
+  HIP 82673 & AB$^{\dagger}$ &     2 & yes &  $4668 \pm 112$ &       5 &     0.5 &          0 &  $0.8^{+0.03}_{-0.03}$ &  $0.8^{+0.01}_{-0.02}$ \\
+  HIP 84606 & AB &     1 & yes &  $5476 \pm 154$ &      10 &    -0.5 &          0 &  $0.9^{+0.05}_{-0.04}$ &  $0.9^{+0.04}_{-0.03}$ \\
+  HIP 88116 & AB$^{\dagger}$ &     2 & yes &  $5293 \pm 112$ &       5 &     0.0 &          0 &  $0.9^{+0.03}_{-0.03}$ &  $0.9^{+0.02}_{-0.03}$ \\
+  HIP 88817 & Ba,Bb$^{\dagger}$ &     1 & yes &  $3647 \pm 154$ &      20 &     0.0 &          0 &  $0.5^{+0.07}_{-0.10}$ &  $0.5^{+0.03}_{-0.05}$ \\
+  HIP 88818 & Aa,Ab &     3 & yes &   $5296 \pm 91$ &      20 &    -0.5 &          0 &  $0.9^{+0.02}_{-0.02}$ &  $0.9^{+0.02}_{-0.03}$ \\
+  HIP 91118 & AB &     1 & yes &  $6492 \pm 155$ &      10 &    -0.5 &          0 &  $1.3^{+0.26}_{-0.07}$ &  $1.3^{+0.06}_{-0.06}$ \\
+  HIP 93805 & Aa,Ab$^{\dagger}$ &     2 & yes &  $4054 \pm 109$ &       5 &    -0.5 &          0 &  $0.6^{+0.03}_{-0.03}$ &  $0.6^{+0.04}_{-0.02}$ \\
+  HIP 96840 & AB &     1 & yes &  $9942 \pm 152$ &      10 &     0.0 &          0 &    $nan^{+nan}_{-nan}$ &  $2.3^{+0.03}_{-0.01}$ \\
+ HIP 100221 & AB &     1 & yes &  $5273 \pm 154$ &      20 &    -0.5 &          0 &  $0.9^{+0.29}_{-0.07}$ &  $0.9^{+0.04}_{-0.03}$ \\
+ HIP 100907 & AB$^{\dagger}$ &     2 & yes &  $5222 \pm 109$ &      10 &     0.0 &          0 &  $0.9^{+0.03}_{-0.03}$ &  $0.9^{+0.04}_{-0.02}$ \\
+ HIP 103298 & Aa,Ab &     3 & yes &   $4615 \pm 90$ &       5 &    -0.5 &          0 &  $0.7^{+0.02}_{-0.02}$ &  $0.8^{+0.01}_{-0.02}$ \\
+ HIP 109139 & AB &     2 & yes &  $5710 \pm 112$ &      20 &    -0.5 &          0 &  $1.0^{+0.04}_{-0.03}$ &  $1.0^{+0.03}_{-0.03}$ \\
+ HIP 109521 & Aa,Ab$^{\dagger}$ &     3 & no &   $4412 \pm 87$ &      10 &     0.0 &          0 &  $0.7^{+0.02}_{-0.02}$ &  $0.7^{+0.01}_{-0.01}$ \\
+ HIP 115115 & AB &     3 & yes &   $4943 \pm 91$ &       5 &    -0.5 &          0 &  $0.8^{+0.02}_{-0.02}$ &  $0.8^{+0.02}_{-0.02}$ 
  
  \enddata
  
