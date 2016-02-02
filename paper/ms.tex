@@ -233,7 +233,7 @@ We show the total survey completeness in Figure \ref{fig:completeness}. The comp
 
 We are now finally in a position to estimate the mass-ratio distribution for our sample. We estimate the mass for each detected companion star by sampling the temperatures given in Table \ref{tab:companions} as a gaussian, and converting each temperature sample into a mass sample. We do the conversion to mass both by interpolating Table 5 from \citet{Pecaut2013}, and by interpolating from temperature and system age (see Section \ref{sec:sp}) to mass with Dartmouth isochrones [CITE]. Both methods give similar results in most cases, although the isochrone masses are significantly higher for very young systems. We only use the results obtained with the isochrone masses in the analysis. We sample the mass ratio of the system by dividing the companion mass samples by samples of the primary mass (Section \ref{sec:sp}). We denote the $n$th mass ratio sample for the $k$th star as $q_k^{(n)}$, and denote the number of these samples as $N_k$.
 
-We do not use systems with more than one companion, unless known the wider companion separated by $ > 10''$ from the primary star (TODO: Check that this limit is true...). We mark the 47 companions we use in the mass ratio analysis with the fourth column of Table \ref{tab:companions}. Many of the companions we use in the analysis only have one detection in our data; 12/22 of these are previously known companions. The remaining 10 are new and unconfirmed detections; these all have very strong CCF signals and are likely to be confirmed with follow-up spectroscopy or imaging. We do not expect their inclusion to significantly alter the results. TODO: test this statement...
+We do not use systems with more than one companion, unless the wider companion is separated by $ > 10''$ from the primary star. We mark the 48 companions we use in the mass ratio analysis with the fourth column of Table \ref{tab:companions}. Many of the companions we use in the analysis only have one detection in our data; 12/22 of these are previously known companions and so don't need follow-up to confirm. The remaining 10 are new and unconfirmed detections; these all have very strong CCF signals and are likely to be confirmed with follow-up spectroscopy or imaging. We do not expect their inclusion to significantly alter the results. TODO: test this statement...
 
 \subsection{Fitting  Methodology}
 
@@ -244,7 +244,7 @@ We use the methodology developed in \citet{Foreman2014} to perform bayesian infe
 \label{eqn:money}
 \end{multline}
 
-In the above equation, $\{\vec{x_k}\}$ denote all of the data for each star, and $\vec{\theta}$ denotes the parameters for the model we are fitting. $K=360$ is the total sample size for our survey, $Q(q)$ is the completeness function shown in Figure \ref{fig:completeness}, and $P(q|\vec{\theta})$ is the likelihood function for the mass ratio given the model parameters. We fit the data to two distinct distributions: a histogram ($P_1$) and a gaussian distribution ($P_2$):
+In the above equation, $\{\vec{x_k}\}$ denotes the full spectrum of star $k$, and $\vec{\theta}$ denotes the parameters for the model we are fitting. $K=360$ is the total sample size for our survey, $Q(q)$ is the completeness function shown in Figure \ref{fig:completeness}, and $P(q|\vec{\theta})$ is the likelihood function for the mass ratio given the model parameters. We fit the data to two distinct distributions: a histogram ($P_1$) and a gaussian distribution ($P_2$):
 
 \begin{align}
  P_1(q|\vec{\theta}) &= \begin{cases}
@@ -267,7 +267,7 @@ We fit both distributions via Importance Nested Sampling with the MultiNest code
 P(\vec{\theta}| \alpha, m, \tau, \epsilon) &= \mathcal{N}(\vec{\theta} | m, K(\{\Delta_j\}, \alpha, \tau, \epsilon)) \\
 K_{ij} &= \sqrt{\left[\alpha \exp{\left(-\frac{(\Delta_i - \Delta_j)^2}{2\tau^2}\right)}\right]^2 + \epsilon^2 \delta_{ij}}
 \end{align}
-The smoothing prior is an 7-dimensional gaussian with mean $m$ and covariance matrix $K_{ij}$, and encodes our belief that the mass ratio distribution is a smoothly varying function while leaving enough flexibility to let the data drive the shape of the function. Since we have introduced three new hyperparameters ($a, m, \tau, \epsilon$), we must apply a prior to them and marginalize over them when estimating the true bin heights. We choose log-uniform priors for $a, \tau$, and $\epsilon$, and a uniform prior for the mean $m$. The full posterior probability distribution for the histogram model is:
+The smoothing prior is an 7-dimensional gaussian with mean $m$ and covariance matrix $K_{ij}$, and encodes our belief that the mass ratio distribution is a smoothly varying function while leaving enough flexibility to let the data drive the shape of the function. Since we have introduced three new hyperparameters ($a, m, \tau, \epsilon$), we must apply a prior to them and marginalize over them when estimating the bin heights. We choose log-uniform priors for $a, \tau$, and $\epsilon$, and a uniform prior for the mean $m$. The full posterior probability distribution for the histogram model is:
 
 \begin{equation}
 P_1(\vec{\theta} | \{\vec{x_k}\}) \propto \mathcal{L}_1(\{\vec{x_k}\}| \vec{\theta}) P(\vec{\theta}| \alpha, m, \tau, \epsilon) P(\alpha, m, \tau, \epsilon)
@@ -1005,7 +1005,7 @@ Based on observations at Cerro Tololo Inter-American Observatory, National Optic
  HIP 100907 & AB$^{\dagger}$ &     2 & yes &  $5222 \pm 109$ &      10 &     0.0  &  $0.9^{+0.03}_{-0.03}$ &  $0.9^{+0.04}_{-0.02}$ \\
  HIP 103298 & Aa,Ab &     3 & yes &   $4615 \pm 90$ &       5 &    -0.5  &  $0.7^{+0.02}_{-0.02}$ &  $0.8^{+0.01}_{-0.02}$ \\
  HIP 109139 & AB &     2 & yes &  $5710 \pm 112$ &      20 &    -0.5  &  $1.0^{+0.04}_{-0.03}$ &  $1.0^{+0.03}_{-0.03}$ \\
- HIP 109521 & Aa,Ab$^{\dagger}$ &     3 & no &   $4412 \pm 87$ &      10 &     0.0  &  $0.7^{+0.02}_{-0.02}$ &  $0.7^{+0.01}_{-0.01}$ \\
+ HIP 109521 & Aa,Ab$^{\dagger}$ &     3 & yes &   $4412 \pm 87$ &      10 &     0.0  &  $0.7^{+0.02}_{-0.02}$ &  $0.7^{+0.01}_{-0.01}$ \\
  HIP 115115 & AB &     3 & yes &   $4943 \pm 91$ &       5 &    -0.5  &  $0.8^{+0.02}_{-0.02}$ &  $0.8^{+0.02}_{-0.02}$ 
  
  \enddata
