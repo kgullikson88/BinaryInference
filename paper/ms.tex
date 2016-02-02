@@ -107,13 +107,13 @@ Most of the detected companions have follow-up spectra to confirm the existence 
 \section{Stellar Parameters}
 \label{sec:sp}
 
-In order to convert from companion temperature to mass ratio, we first need an estimate of the primary mass. In addition, since the primary stars in our systems are A- or B-type stars with main-sequence lifetimes from $\sim 10 - 1000$ Myr, very late-type companions may still be contracting onto the main sequence and so an age estimate for the system is necessary. 
+In order to convert from companion temperature to mass ratio, we first need an estimate of the primary mass. In addition, since the primary stars in our survey have short main-sequence lifetimes, some companions may still be contracting onto the main sequence and so an age estimate for the system is necessary to convert from companion temperature to mass.
 
-About half of our detections have robust mass and age estimates for the primary stars from Str\"omgren uvby$\beta$ photometry \citep{David2015}. For those that do not, we estimate the mass and age of the system as follows. We first cross-correlate the data against a grid of Kurucz model spectra \citep{Castelli2003} spanning
+About half of our detections have robust mass and age estimates for the primary stars from Str\"omgren uvby$\beta$ photometry \citep{David2015}. For those that do not, we estimate the mass and age of the system from our spectra. We first cross-correlate the data against a grid of Kurucz model spectra \citep{Castelli2003} spanning
 
 \begin{itemize}
 \item $7000\ K < T_\mathrm{eff} < 30000\ K$ in steps of $1000\ K$
-\item $3.0 < \log{g} < 4.5$ in steps of $0.25$ dex
+\item $3.0 < \log{g} < 4.5$ in steps of $0.5$ dex
 \item $75 < v\sin{i} < 300\ \mathrm{km s}^{-1}$ in steps of $25\ \mathrm{km s}^{-1}$
 \end{itemize}
 For the optical data, we use the blue echelle orders ($\lambda < 5550 \AA$). We ignore the strong hydrogren Balmer lines in the spectrum because they span several echelle orders and make continuum normalization very difficult, potentially biasing the result. There are sufficient metal lines in the optical spectra that the resulting CCF always has a very strong peak at the radial velocity of the primary star. The near-infrared IGRINS spectra are dominated by hydrogren Brackett lines and have very few strong metal lines; we use the subset from $1.51 - 1.73 \micron$ for these spectra. We then estimate the temperature and surface gravity of the primary stars from the CCF with the largest peak. We adopt the following errors on the temperature and surface gravity:
@@ -126,7 +126,7 @@ For the optical data, we use the blue echelle orders ($\lambda < 5550 \AA$). We 
  \sigma_{\log{g}} &= 0.25
 \end{align}
 
-Next, we use Padova stellar evolutionary tracks \citep{Bressan2012} and the isochrones code \citep{isochrones_code} to estimate the mass and age of the system from the measured temperature and $\log{g}$. As a consistency check, we also interpolate from a table of stellar properties as a function of spectral type \citep{Pecaut2013} to estimate the primary mass from the published spectral types. We show the comparison in Figure \ref{fig:prim_mass}. We estimate uncertainties in the spectral type mass by assuming a spectral type uncertainty of $\pm 0.5$ spectral types. There is excellent agreement between the masses we measure and the spectral type masses.
+Next, we use Padova stellar evolutionary tracks \citep{Bressan2012} and the isochrones code \citep{isochrones_code} to estimate the mass and age of the system from the measured temperature and $\log{g}$. As a consistency check, we also interpolate from a table of stellar properties as a function of spectral type \citep{Pecaut2013} to estimate the primary mass from the published spectral types. We show the comparison in Figure \ref{fig:prim_mass}. We estimate uncertainties in the spectral type mass by assuming a spectral type uncertainty of $\pm 0.5$ spectral types and propagating to mass. There is excellent agreement between the masses we measure and the spectral type masses.
 
 \begin{figure}
 \includegraphics[width=\columnwidth]{PrimaryMassEstimates_log.pdf}
