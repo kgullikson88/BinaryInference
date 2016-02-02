@@ -83,7 +83,7 @@ TODO: MAKE THE SPECTRA AVAILABLE SOMEHOW...
 \section{Companion Search}
 \label{sec:companions}
 
-We search for stellar companions to our sample stars using the direct spectral detection technique, described in detail in \citet{Gullikson2016}. In short, we high-pass filter each of our spectra to remove the broad lines from the primary star, and cross-correlate each \'echelle order or each filtered spectrum against a large grid of Phoenix model spectra \citep{Husser2013_b} with the following parameters:
+We search for stellar companions to our sample stars using the direct spectral detection technique, described in detail in \citet{Gullikson2016}. In short, we high-pass filter each of our spectra to remove the broad lines from the primary star, and cross-correlate each \'echelle order of each filtered spectrum against a large grid of Phoenix model spectra \citep{Husser2013_b} with the following parameters:
 
 \begin{itemize}
 \item $T_\mathrm{eff} = 3000-12000$ K, in steps of 100 K
@@ -91,7 +91,7 @@ We search for stellar companions to our sample stars using the direct spectral d
 \item $v\sin{i} = 1, 5, 10, 20, 30 \ \mathrm{km\ s}^{-1}$
 \end{itemize}
 
-We then combine the cross-correlation functions for all orders using both a simple average and the maximum-likelihood weighting scheme \citep{Zucker2003}. A companion detection is denoted by a strong peak in the combined cross-correlation function (CCF). While the maximum-likelihood scheme produces detections with much higher significance, it also magnifies spurious peaks and so has a larger false-positive rate. For this reason, we use the simple average CCFs in all further analysis unless otherwise specified.
+We then combine the cross-correlation functions for all orders using both a simple average and the maximum-likelihood weighting scheme \citep{Zucker2003}. A companion detection is denoted by a strong peak in the combined cross-correlation function (CCF). While the maximum-likelihood scheme produces detections with much higher significance, it also magnifies spurious peaks and so has a larger false-positive rate. For this reason, we use the simple average CCFs in all further analysis.
 
 The peak height in the CCF as a function of the stellar model acts in a similar way to the more typical $\chi^2$ map of parameter space. More concretely, as the stellar model template gets closer to the true companion spectrum, the CCF peak gets higher. We can therefore measure the companion temperature and, to a lesser degree its metallicity and $v\sin{i}$, in a single spectrum. Imperfect stellar models cause a bias between the true companion temperature and the temperature of the Phoenix model which produces the largest CCF peak. This bias is most pronounced at low temperatures, where the difficult-to-model molecular absorption becomes important. We correct for the bias by applying the calibrations developed in \citet{Gullikson2016}. These calibrations are only valid for companions with $3000 < T_\mathrm{eff} < 7000 K$; for detections at hotter temperatures we assume that the temperature which produces the maximum CCF peak is an \emph{unbiased} estimator of the true companion temperature.
 
