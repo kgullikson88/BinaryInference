@@ -270,7 +270,8 @@ In the above equation, $\{\vec{x_k}\}$ denotes the full spectrum of star $k$, an
       \hfill \ldots \\
       \hfill \theta_7 \hfill & q \in \Delta_7
      \end{cases} \label{eqn:P1} \\
- P_2(q|\vec{\theta}) &= \frac{A}{\sqrt{2\pi\sigma^2}} e^{-\frac{(q - \mu)^2}{2\sigma^2}} \label{eqn:P2}
+ P_2(q|\vec{\theta}) &= \frac{A}{\sqrt{2\pi\sigma^2}} e^{-\frac{(q - \mu)^2}{2\sigma^2}} \label{eqn:P2} \\
+ P_3(q|\vec{\theta}) &= (1-\gamma)q^{-\gamma} \label{eqn:P3}
 \end{align}
 The constant $A$ in the gaussian distribution is a renormalization factor such that the distribution is only defined from $0 < q < 1$:
 
@@ -278,7 +279,7 @@ The constant $A$ in the gaussian distribution is a renormalization factor such t
 A = \frac{2}{\erf\left(\frac{\mu}{\sigma \sqrt{2}}\right) - \erf\left(\frac{\mu - 1}{\sigma \sqrt{2}}\right)}
 \end{equation}
 
-We fit both distributions via Importance Nested Sampling with the MultiNest code \citep{multinest}. Following \citet{Foreman2014}, we apply a smoothing prior on the parameters $\vec{\theta}$ for the histogram model:
+We fit all distributions via Importance Nested Sampling with the MultiNest code \citep{multinest}. Following \citet{Foreman2014}, we apply a smoothing prior on the parameters $\vec{\theta}$ for the histogram model:
 
 \begin{align}
 P(\vec{\theta}| \alpha, m, \tau, \epsilon) &= \mathcal{N}(\vec{\theta} | m, K(\{\Delta_j\}, \alpha, \tau, \epsilon)) \\
@@ -296,6 +297,8 @@ The gaussian fit only has two parameters ($\mu, \sigma$), and was chosen because
 P_2(\mu, \sigma | \{\vec{x_k}\}) \propto P_2(q|\mu, \sigma) 
 \end{equation}
 
+The power law fit has only one parameter ($\gamma$); we use a uniform prior in the fit.
+
 \subsection{Malmquist Bias Correction}
 
 We are trying to recover the intrinsic distribution from an observed sample; thus we should fit the data to the probability distribution function (PDF) for mass ratio, \emph{given that we observed the star}: $P(q|\vec{\theta}, \mathrm{obs})$. In a volume-limited sample, this is equal to $P(q|\vec{\theta})$; however, our sample is magnitude-limited and therefore suffers from Malmquist bias. There is a higher probability of equal-mass binary systems in our data because they contribute twice the flux and are therefore more likely to fall under the magnitude limit. We can calculate the PDF for mass ratio given that we observed the system from Bayes' theorem:
@@ -304,7 +307,7 @@ We are trying to recover the intrinsic distribution from an observed sample; thu
 P(q|\vec{\theta}, \mathrm{obs}) = \frac{P(\mathrm{obs}|q) P(q|\vec{\theta})}{\int_0^1 P(\mathrm{obs}|q) P(q|\vec{\theta}) dq}
 \end{equation}
 
-We already know $P(q|\vec{\theta})$ (Equations \ref{eqn:P1} and \ref{eqn:P2}). We estimate $P(\mathrm{obs}|q)$ by simulating a very large sample of binary stars:
+We already know $P(q|\vec{\theta})$ (Equations \ref{eqn:P1} - \ref{eqn:P3}). We estimate $P(\mathrm{obs}|q)$ by simulating a very large sample of binary stars:
 
 \begin{enumerate}
 \item Sample primary star masses from the Kroupa IMF \citep{Kroupa2002}
@@ -321,13 +324,13 @@ We already know $P(q|\vec{\theta})$ (Equations \ref{eqn:P1} and \ref{eqn:P2}). W
 
 With the fitted malmquist-correction polynomial, we then substitute $P(q|\vec{\theta}, \mathrm{obs})$ everywhere $P(q|\vec{\theta})$ appears in Equation \ref{eqn:money}.
 
-We show the resulting fits in Figure \ref{fig:mrd}. The $1\sigma$ uncertainties in the bin heights from the histogram model are shown as error bars, and we overplot 500 samples of the gaussian fit to show the spread allowed by the data. 
+We show the resulting fits in Figure \ref{fig:mrd}. The $1\sigma$ uncertainties in the bin heights from the histogram model are shown as error bars, and we overplot 500 samples of the gaussian fit to show the spread allowed by the data. The best-fit power law is plotted with a green dot-dashed line, as well as the mass ratio distribution expected from random pairing from the Kroupa IMF in yellow.
 
 TODO: Put the MCMC samples up on zenodo or something.
 
 \begin{figure}
-\includegraphics[width=\columnwidth]{MRD_normal.pdf}
-\caption{Mass ratio distribution for our sample. The data was fit to both a histogram and a gaussian distribution. The histogram is shown in the solid blue blocks, with $1 \sigma$ uncertainties marked with error bars. The variance of the gaussian fit is shown with 500 samples from the posterior probability distribution for the parameters.}
+\includegraphics[width=\columnwidth]{MRD_total.pdf}
+\caption{Mass ratio distribution for our sample. The data was fit to a histogram, a gaussian distribution, and a power law. The histogram is shown in the solid blue blocks, with $1 \sigma$ uncertainties marked with error bars. The variance of the gaussian fit is shown with 500 samples from the posterior probability distribution for the parameters. We also show the best-fit power law and the mass ratio distribution from random pairing of the Kroupa initial mass function (IMF).}
 \label{fig:mrd}
 \end{figure}
 
@@ -339,9 +342,14 @@ TODO: Put the MCMC samples up on zenodo or something.
 
 Previous measurements of the mass-ratio distribution find that the data is well fit by a power law with index $0.39 \pm 0.23$ \citep[M dwarf stars][]{Delfosse2004}, $0.27 \pm 0.05$ \citep[Solar type stars][]{Duchene2013}, and $-0.45 \pm 0.15$ \citep[intermediate-mass stars][]{Kouwenhoven2007}. The more recent VAST survey found a much steeper power law index of $-2.3^{+1.0}_{-0.9}$ for wide companions, and an inner mass-ratio distribution that is consistent with flat.
 
-The most striking feature of the mass ratio distribution shown in Figure \ref{fig:mrd} is the turnover at intermediate q, which the gaussian fit finds occurs at $q = 0.36 \pm 0.04$ and which excludes a power law fit (including a flat distribution). 
+The most striking feature of the mass ratio distribution shown in Figure \ref{fig:mrd} is the turnover at intermediate q, which the gaussian fit finds occurs at $q = 0.36 \pm 0.04$. Although the power law fit and the Kroupa IMF are visually very poor fits to the data, we formally compare the models to ensure that the different form is not an artifact of binning or simple noise. We make the comparison using the posterior odds:
 
-TODO: Compare to chabrier IMF, power law, and flat distribution quantitatively. Bayesian evidence ratios?
+\begin{equation}
+\mathrm{Odds} = \frac{\int_{\vec{\theta_1}} P_1(q|\vec{\theta_1}) P(\vec{\theta_1})}{\int_{\vec{\theta_2}} P_2(q|\vec{\theta_2}  P(\vec{\theta_2})} \equiv \frac{Z_1}{Z_2}
+\end{equation}
+
+The integrals are estimated as part of the nested sampling algorithm in the MultiNest code. The odds ratio comparing the gaussian to power law fit is $Z_\mathrm{gauss} / Z_\mathrm{power} = 69 \pm 1.1 \e{7}$ indicating a very strong preference for the gaussian model. We also compare to the mass ratio distribution expected for random pairing from the Kroupa IMF. In this case, there are no free parameters so the evidence integral just becomes the likelihood function (Equation \ref{eqn:money}). The corresponding odds ratio is  $Z_\mathrm{gauss} / Z_\mathrm{kroupa} = 333 \pm 4 \e{17}$, again indicating a very strong preference for the gaussian fit.
+
 
 TODO: Speculate on the discrepancy between my results and VAST. Perhaps the change occurs closer than their cut of 125 AU? Perhaps it is inside $\sim 30$ AU, where they have very low completeness?
 
@@ -365,10 +373,7 @@ The Hobby-Eberly Telescope (HET) is a joint project of the University of Texas a
 Based on observations at Cerro Tololo Inter-American Observatory, National Optical Astronomy Observatory (NOAO Prop. IDs: 13A-0139, 13B-0112, 2014A-0260, 14A-0260, 15A-0245; PI: Kevin Gullikson), which is operated by the Association of Universities for Research in Astronomy (AURA) under a cooperative agreement with the National Science Foundation. 
 
 
-
-
-%              &                &                &                &          MJD &            &  exptime &     snr \\
-%         star &            SpT &             ra &            dec & (JD-2450000) & instrument &  (sec)   &         
+     
 
 \LongTables
 \begin{deluxetable*}{|l|lllrlrr|}
