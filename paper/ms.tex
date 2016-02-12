@@ -109,7 +109,8 @@ Most of the detected companions have follow-up spectra to confirm the existence 
 
 \begin{figure}
 \includegraphics[width=\columnwidth]{Imaging_Data.pdf}
-\caption{Detection images for all stars in which we detect a companion in the follow-up NIRI data.}
+\caption{Detection images for all stars in which we detect a companion in the follow-up NIRI data. 
+TODO: Update imaging table. What to do with HIP 88116???}
 \label{fig:images}
 \end{figure}
 
@@ -195,7 +196,7 @@ Finally, we interpolated between the grid points using a linear radial basis fun
 By sampling a suitable distribution of $v\sin{i}$ values for a star of each temperature, we marginalize over the rotation speed:
 
 \begin{equation}
-Q(T_\mathrm{eff}) = \sum_k Q(T, v_k) v_k 
+Q(T) = \sum_k Q(T, v_k) v_k 
 \end{equation} 
 where $Q(T, v\sin{i})$ is the surface plotted in Figure \ref{fig:detrate_2d} and $v_k$ are the samples from the distribution of $v\sin{i}$. For $T < 6000$ K, we sample $v\sin{i}$ using the gyrochronology relation given in \citet{Barnes2010b}:
 
@@ -215,7 +216,7 @@ The gyrochronology relations do not work for stars with $T \gtrsim 6250\ K$, the
 
 Typical velocities from the gyrochronology relationships are $10-20 \mathrm{km\ s}^{-1}$, while the maxwellian velocity distributions have typical velocities $\sim 100 \mathrm{km\ s}^{-1}$. We transition between the two regimes for temperatures in the range $6000\ K < T < 7000\ K$ by first estimating the equatorial velocities from the gyrochronology relationship (Equation \ref{eqn:gyro}) at $T=6000\ K$. We then fit the velocities to a maxwellian distribution, and add the result to the tabulated parameters from \citep{Zorec2012}. With the extended table, we treat stars in the transition range the same way we treat hot stars.
  
-We show the marginalized detection rate and mean value of $v\sin{i}$ as a function of temperature in Figure \ref{fig:marginalized}. Both the detection rate and the average $v\sin{i}$ are smoothly varying, and show the expected behaviour with temperature. The detection rate falls with hotter temperatures because the companions are expected to be fast rotators, which are more difficult to detect. ADAM AND SALLY: IS THIS FIGURE NECESSARY OR IS THE TEXT ENOUGH?
+We show the marginalized detection rate and mean value of $v\sin{i}$ as a function of temperature in Figure \ref{fig:marginalized}. Both the detection rate and the average $v\sin{i}$ are smoothly varying, and show the expected behaviour with temperature. The detection rate falls with hotter temperatures because the companions are expected to be fast rotators, which are more difficult to detect. 
 
 
 \begin{figure}
@@ -250,7 +251,6 @@ We are now finally in a position to estimate the mass-ratio distribution for our
 
 We do not use systems with more than one companion, unless the wider companion is separated by $ > 10''$ from the primary star. We mark the 48 companions we use in the mass ratio analysis with the fourth column of Table \ref{tab:companions}. Many of the companions we use in the analysis only have one detection in our data; 12/22 of these are previously known companions and so don't need follow-up to confirm. An The remaining 10 are new and unconfirmed detections; these all have very strong CCF signals and are likely to be confirmed with follow-up spectroscopy or imaging. We do not expect their inclusion to significantly alter the results. TODO: test this statement...
 
-Where did HIP 118243 go? It has an imaging detection (though at very wide separation), but nothing in the Companion table.
 
 \subsection{Fitting  Methodology}
 
@@ -261,7 +261,7 @@ We use the methodology developed in \citet{Foreman2014} to perform bayesian infe
 \label{eqn:money}
 \end{multline}
 
-In the above equation, $\{\vec{x_k}\}$ denotes the full spectrum of star $k$, and $\vec{\theta}$ denotes the parameters for the model we are fitting. $K=360$ is the total sample size for our survey, $Q(q)$ is the completeness function shown in Figure \ref{fig:completeness}, and $P(q|\vec{\theta})$ is the likelihood function for the mass ratio given the model parameters. We fit the data to two distinct distributions: a histogram ($P_1$) and a gaussian distribution ($P_2$):
+In the above equation, $\{\vec{x_k}\}$ denotes the full spectrum of star $k$, and $\vec{\theta}$ denotes the parameters for the model we are fitting. $K=360$ is the total sample size for our survey, $Q(q)$ is the completeness function shown in Figure \ref{fig:completeness}, and $P(q|\vec{\theta})$ is the likelihood function for the mass ratio given the model parameters. We fit the data to three distinct distributions: a histogram ($P_1$) and a beta distribution ($P_2$), and a power law ($P_3$):
 
 \begin{align}
  P_1(q|\vec{\theta}) &= \begin{cases}
@@ -270,14 +270,15 @@ In the above equation, $\{\vec{x_k}\}$ denotes the full spectrum of star $k$, an
       \hfill \ldots \\
       \hfill \theta_7 \hfill & q \in \Delta_7
      \end{cases} \label{eqn:P1} \\
- P_2(q|\vec{\theta}) &= \frac{A}{\sqrt{2\pi\sigma^2}} e^{-\frac{(q - \mu)^2}{2\sigma^2}} \label{eqn:P2} \\
+ %P_2(q|\vec{\theta}) &= \frac{A}{\sqrt{2\pi\sigma^2}} e^{-\frac{(q - \mu)^2}{2\sigma^2}} \label{eqn:P2} \\
+ P_2(q|\vec{\theta}) &= \frac{\Gamma(a+b)}{\Gamma(a)\Gamma(b)} q^{a-1}(1-q)^{b-1} \\
  P_3(q|\vec{\theta}) &= (1-\gamma)q^{-\gamma} \label{eqn:P3}
 \end{align}
-The constant $A$ in the gaussian distribution is a renormalization factor such that the distribution is only defined from $0 < q < 1$:
+%The constant $A$ in the gaussian distribution is a renormalization factor such that the distribution is only defined from $0 < q < 1$:
 
-\begin{equation}
-A = \frac{2}{\erf\left(\frac{\mu}{\sigma \sqrt{2}}\right) - \erf\left(\frac{\mu - 1}{\sigma \sqrt{2}}\right)}
-\end{equation}
+%\begin{equation}
+%A = \frac{2}{\erf\left(\frac{\mu}{\sigma \sqrt{2}}\right) - \erf\left(\frac{\mu - 1}{\sigma \sqrt{2}}\right)}
+%\end{equation}
 
 We fit all distributions via Importance Nested Sampling with the MultiNest code \citep{multinest}. Following \citet{Foreman2014}, we apply a smoothing prior on the parameters $\vec{\theta}$ for the histogram model:
 
@@ -291,10 +292,10 @@ The smoothing prior is an 7-dimensional gaussian with mean $m$ and covariance ma
 P_1(\vec{\theta} | \{\vec{x_k}\}) \propto \mathcal{L}_1(\{\vec{x_k}\}| \vec{\theta}) P(\vec{\theta}| \alpha, m, \tau, \epsilon) P(\alpha, m, \tau, \epsilon)
 \end{equation}
 
-The gaussian fit only has two parameters ($\mu, \sigma$), and was chosen because it has a similar shape to the histogram resulting from the first model. We use uniform priors on both $\mu$ and $\sigma$, resulting in the posterior probability 
+The beta function fit only has two parameters ($a, b$), and was chosen because it has a similar shape to the histogram resulting from the first model and is only defined for $0 < q < 1$. We use uniform priors on both $a$ and $b$, resulting in the posterior probability 
 
 \begin{equation}
-P_2(\mu, \sigma | \{\vec{x_k}\}) \propto P_2(q|\mu, \sigma) 
+P_2(a, b | \{\vec{x_k}\}) \propto P_2(q|a, b) 
 \end{equation}
 
 The power law fit has only one parameter ($\gamma$); we use a uniform prior in the fit.
@@ -324,13 +325,13 @@ We already know $P(q|\vec{\theta})$ (Equations \ref{eqn:P1} - \ref{eqn:P3}). We 
 
 With the fitted malmquist-correction polynomial, we then substitute $P(q|\vec{\theta}, \mathrm{obs})$ everywhere $P(q|\vec{\theta})$ appears in Equation \ref{eqn:money}.
 
-We show the resulting fits in Figure \ref{fig:mrd}. The $1\sigma$ uncertainties in the bin heights from the histogram model are shown as error bars, and we overplot 500 samples of the gaussian fit to show the spread allowed by the data. The best-fit power law is plotted with a green dot-dashed line, as well as the mass ratio distribution expected from random pairing from the Kroupa IMF in yellow.
+We show the resulting fits in Figure \ref{fig:mrd}. The $1\sigma$ uncertainties in the bin heights from the histogram model are shown as error bars, and we overplot 500 samples of the gaussian fit to show the spread allowed by the data. The best-fit power law is plotted with a green dot-dashed line, as well as the mass ratio distribution expected from random pairing from the Kroupa initial mass function (IMF) in yellow.
 
 TODO: Put the MCMC samples up on zenodo or something.
 
 \begin{figure}
 \includegraphics[width=\columnwidth]{MRD_total.pdf}
-\caption{Mass ratio distribution for our sample. The data was fit to a histogram, a gaussian distribution, and a power law. The histogram is shown in the solid blue blocks, with $1 \sigma$ uncertainties marked with error bars. The variance of the gaussian fit is shown with 500 samples from the posterior probability distribution for the parameters. We also show the best-fit power law and the mass ratio distribution from random pairing of the Kroupa initial mass function (IMF).}
+\caption{Mass ratio distribution for our sample. The data was fit to a histogram, a beta distribution, and a power law. The histogram is shown in the solid blue blocks, with $1 \sigma$ uncertainties marked with error bars. The variance of the beta function fit is shown with 500 samples from the posterior probability distribution for the parameters. We also show the best-fit power law and the mass ratio distribution resulting from random pairing of the Kroupa initial mass function.}
 \label{fig:mrd}
 \end{figure}
 
@@ -342,16 +343,22 @@ TODO: Put the MCMC samples up on zenodo or something.
 
 Previous measurements of the mass-ratio distribution find that the data is well fit by a power law with index $0.39 \pm 0.23$ \citep[M dwarf stars][]{Delfosse2004}, $0.27 \pm 0.05$ \citep[Solar type stars][]{Duchene2013}, and $-0.45 \pm 0.15$ \citep[intermediate-mass stars][]{Kouwenhoven2007}. The more recent VAST survey found a much steeper power law index of $-2.3^{+1.0}_{-0.9}$ for wide companions, and an inner mass-ratio distribution that is consistent with flat.
 
-The most striking feature of the mass ratio distribution shown in Figure \ref{fig:mrd} is the turnover at intermediate q, which the gaussian fit finds occurs at $q = 0.36 \pm 0.04$. Although the power law fit and the Kroupa IMF are visually very poor fits to the data, we formally compare the models to ensure that the different form is not an artifact of binning or simple noise. We make the comparison using the posterior odds:
+The most striking feature of the mass ratio distribution shown in Figure \ref{fig:mrd} is the turnover at intermediate q, which the beta distribution fit finds occurs at $q = 0.30^{+0.03}_{-0.04}$. Although the power law fit and the Kroupa IMF are visually very poor fits to the data, we formally compare the models to ensure that the different form is not an artifact of binning or simple noise. We make the comparison using the posterior odds:
 
 \begin{equation}
 \mathrm{Odds} = \frac{\int_{\vec{\theta_1}} P_1(q|\vec{\theta_1}) P(\vec{\theta_1})}{\int_{\vec{\theta_2}} P_2(q|\vec{\theta_2}  P(\vec{\theta_2})} \equiv \frac{Z_1}{Z_2}
 \end{equation}
 
-The integrals are estimated as part of the nested sampling algorithm in the MultiNest code. The odds ratio comparing the gaussian to power law fit is $Z_\mathrm{gauss} / Z_\mathrm{power} = 69 \pm 1.1 \e{7}$ indicating a very strong preference for the gaussian model. We also compare to the mass ratio distribution expected for random pairing from the Kroupa IMF. In this case, there are no free parameters so the evidence integral just becomes the likelihood function (Equation \ref{eqn:money}). The corresponding odds ratio is  $Z_\mathrm{gauss} / Z_\mathrm{kroupa} = 333 \pm 4 \e{17}$, again indicating a very strong preference for the gaussian fit.
+The integrals are estimated as part of the nested sampling algorithm in the MultiNest code. The odds ratio comparing the beta distribution to power law fit is $Z_\mathrm{beta} / Z_\mathrm{power} = 81 \pm 1.3 \e{8}$ indicating a very strong preference for the beta distribution model. We also compare to the mass ratio distribution expected for random pairing from the Kroupa IMF. In this case, there are no free parameters so the evidence integral just becomes the likelihood function (Equation \ref{eqn:money}). The corresponding odds ratio is  $Z_\mathrm{beta} / Z_\mathrm{kroupa} = 325 \pm 3.6 \e{18}$, again indicating a very strong preference for the beta distribution fit.
 
 
-TODO: Speculate on the discrepancy between my results and VAST. Perhaps the change occurs closer than their cut of 125 AU? Perhaps it is inside $\sim 30$ AU, where they have very low completeness?
+\subsection{Comparison to Previous Results}
+
+Our mass ratio distribution appears to be in tension with the results of the VAST survey \citep{DeRosa2014}, which finds a nearly flat distribution for close companions. However, their subsample of close companions only includes 18 binaries, so it is possible that the different forms are just a result of small number statistics. To assess the degree of tension, we use the Anderson-Darling [CITE] test to find the probability that both their close companion subsample and our companions are drawn from the same parent distribution. We only use companions from this work with mean $\overline{q} > 0.15$, since the survey completeness is roughly constant in that range. To account for measurement uncertainties in the mass ratios, we choose from the mass ratio samples (see Section \ref{sec:mrd}) many times and compute the Anderson-Darling test statistic each time. Since \citet{DeRosa2014} do not quote uncertainties, we assume uncertainties of $\sigma_q = 0.05$ for all of their measurements. The result is $p = 0.02^{+0.02}_{-0.01}$, indicating that it is unlikely that both samples come from the same parent distribution.
+
+The differing results indicate that the mass ratio distribution changes inside $\sim 30-50$ AU, where \citet{DeRosa2014} has low completeness. This intrepretation implies that the mass ratio distribution is a very steep power law at wide ($a \gtrsim 150$ AU) separations, flattens out at intermediate separations ($50\ \mathrm{AU} \lesssim a \lesssim 150\ \mathrm{AU}$), and begins to show a preference for $q \sim 0.3$ at close separations ($a \lesssim 50$ AU).
+
+\subsection{Theoretical Implications}
 
 TODO: Discuss ways forward. Compile table giving the estimated maximum separation from the RVs. Promote an imaging survey to follow these up. Promote RV monitoring of the detections to get dynamical mass ratios and, more importantly, separations.
 
