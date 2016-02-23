@@ -4,22 +4,18 @@ with the orbit prior and completeness functions
 """
 from __future__ import print_function, absolute_import, division
 
-import pandas as pd
-import matplotlib.pyplot as plt
-import numpy as np
 import os
-import h5py
+import logging
+
+import numpy as np
 from scipy.interpolate import InterpolatedUnivariateSpline as spline
-from kglib.spectral_type import SpectralTypeRelations
 import pandas as pd
+import scipy.interpolate
+
+from kglib.spectral_type import SpectralTypeRelations
 import Mamajek_Table
 from kglib.isochrone_helpers import Feiden
-from kglib.isochrone_helpers.Feiden import Feiden_Isochrone
-import scipy.interpolate
-import logging
 from kglib.utils import StarData
-
-
 
 
 MS = SpectralTypeRelations.MainSequence()
@@ -112,6 +108,7 @@ def get_primary_mass(star, spt, size=1e4, mass_err=0.1):
         source = 'SpT'
         
     return mass_samples, source
+
 
 def get_ages(starname, spt, size=1e4):
     """

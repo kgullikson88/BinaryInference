@@ -1,11 +1,11 @@
-import pymultinest
+import sys
+import os
+
 from isochrones import StarModel
 from isochrones.padova import Padova_Isochrone
-import sys
 import pandas as pd
-import os
 import numpy as np
-import h5py
+
 
 HDF5_OUTPUT = 'Primary_Parameters.h5'
 
@@ -28,11 +28,12 @@ if __name__ == '__main__':
     pad = Padova_Isochrone()
 
     i = int(sys.argv[1])
-    pars = pd.read_csv('Primary_Parameters.csv').loc[i]
+    pars = pd.read_csv('data/Primary_Parameters.csv').loc[i]
     model = MyModel(pad, Teff=(pars.teff, pars.teff_err),
                       logg=(pars.logg, pars.logg_err),
                       feh=(pars.feh, pars.feh_err))
     starname = pars.star.replace(' ', '_')
+    print(starname)
     model.fit(basename=os.path.join('ParFitter', starname),
               overwrite=False)
     print(model.samples.describe())
