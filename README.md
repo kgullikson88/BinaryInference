@@ -14,7 +14,7 @@ The analysis was done in a series of jupyter notebooks using legacy python (pyth
 - **ImagingAnalysis.ipynb**: Finds all stars in my reduced NIRI data, and estimates the separation, position angle, and flux ratio between stars.
 - **MakeCCF_Plots.ipynb**: Makes cross-correlation function plots similar to Figure 1, but for every star.
 - **MakeImagingPlots.ipynb**: Makes Figure 2
-- **Malmquist_Bias.ipynb**: Does the simulation described in Section n 6.2 to estimate the malmquist bias P(obs}|q). This notebook is where the polynomial coefficients present in other notebooks are derived.
+- **Malmquist_Bias.ipynb**: Does the simulation described in Section n 6.2 to estimate the malmquist bias P(obs|q). This notebook is where the polynomial coefficients present in other notebooks are derived.
 - **RealData.ipynb**: does all of the following
     - Compile the mass ratio samples for each star I detect
     - Estimate the completeness as a function of mass ratio
