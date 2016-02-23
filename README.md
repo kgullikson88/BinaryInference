@@ -12,9 +12,9 @@ The analysis was done in a series of jupyter notebooks using legacy python (pyth
 - **CompileCompanionData.ipynb**: Compiles the measured temperature data for the companions into a csv file.
 - **EstimateMasses.ipynb**: Estimates the primary star mass and system age, as well as the companion mass. Saves everything into `data/MassSamples.h5`
 - **ImagingAnalysis.ipynb**: Finds all stars in my reduced NIRI data, and estimates the separation, position angle, and flux ratio between stars.
-- **MakeCCF_Plots.ipynb**: Makes cross-correlation function plots similar to Figure n [TODO: what is n?]
-- **MakeImagingPlots.ipynb**: Makes Figure n [TODO: what is n?]
-- **Malmquist_Bias.ipynb**: Does the simulation described in Section n [TODO: what is n?] to estimate the malmquist bias $P(\mathrm{obs}|q)$. This notebook is where the polynomial coefficients present in other notebooks are derived.
+- **MakeCCF_Plots.ipynb**: Makes cross-correlation function plots similar to Figure 1, but for every star.
+- **MakeImagingPlots.ipynb**: Makes Figure 2
+- **Malmquist_Bias.ipynb**: Does the simulation described in Section n 6.2 to estimate the malmquist bias P(obs}|q). This notebook is where the polynomial coefficients present in other notebooks are derived.
 - **RealData.ipynb**: does all of the following
     - Compile the mass ratio samples for each star I detect
     - Estimate the completeness as a function of mass ratio
