@@ -12,8 +12,8 @@ from scipy.interpolate import InterpolatedUnivariateSpline as spline
 import pandas as pd
 import scipy.interpolate
 
-from kglib.spectral_type import SpectralTypeRelations
-import Mamajek_Table
+from kglib.spectral_type import SpectralTypeRelations, Mamajek_Table
+
 from kglib.isochrone_helpers import Feiden
 from kglib.utils import StarData
 
@@ -23,7 +23,8 @@ MT = Mamajek_Table.MamajekTable()
 sptnum2mass = MT.get_interpolator('SpTNum', 'Msun')
 
 # Read in the David & Hillenbrand summary
-dh2015 = pd.read_csv('/home/kgullikson/Dropbox/School/Research/AstarStuff/TargetLists/David_and_Hillenbrand2015/dh2015-table5.csv')
+home = os.environ['HOME']
+dh2015 = pd.read_csv('{}/Dropbox/School/Research/AstarStuff/TargetLists/David_and_Hillenbrand2015/dh2015-table5.csv'.format(home))
 
 def read_dh2015_posterior(hipnum,
                           basedir='/home/kgullikson/Dropbox/School/Research/AstarStuff/TargetLists/David_and_Hillenbrand2015',
