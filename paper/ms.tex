@@ -83,7 +83,7 @@ IGRINS only has one setting with $R = 40000$. It has complete wavelength coverag
 
 After reducing the data, we fit and remove the telluric spectrum using the TelFit code \citep{Gullikson2014}. We fit each \'echelle order affected by telluric absorption independently from each other to get the best removal. The telluric correction is critical for IGRINS spectra, where every order is dominated by telluric absorption lines. For the optical spectra, it is less critical but allows us to use some of the redder orders than we otherwise would be able to. For unsaturated lines, the best-fit telluric model reproduces the data to within $\sim 1-5\%$ of the continuum level.
 
-We give the spectroscopic observation log in Table \ref{tab:observations}. We calculate the signal-to-noise ratio (the "snr" column) for the optical instruments (CHIRON, TS23, and HRS) as the median of the extracted flux divided by it's uncertainty for each pixel from the \'echelle order nearest $675$ nm. For the IGRINS instrument, we calculate the signal-to-noise ratio from the order nearest $2200$ nm.
+We give the spectroscopic observation log in Table \ref{tab:observations}. We calculate the signal-to-noise ratio (the ``snr'' column) for the optical instruments (CHIRON, TS23, and HRS) as the median of the extracted flux divided by it's uncertainty for each pixel from the \'echelle order nearest $675$ nm. For the IGRINS instrument, we calculate the signal-to-noise ratio from the order nearest $2200$ nm.
 
 
 TODO: MAKE THE SPECTRA AVAILABLE SOMEHOW...
@@ -117,7 +117,10 @@ The peak height in the CCF as a function of the stellar model acts in a similar 
 We list the companion detections in Table \ref{tab:companions}, and report the estimate of the companion temperature, $v\sin{i}$, and metallicity derived from the model parameters which produce the largest CCF peak. The $v\sin{i}$ and metallicity values do not have uncertainties and should only be taken as a rough estimate of the true value. The mean and standard deviation of the companion metallicities is $-0.29 \pm 0.30$; the marginal bias towards low metallicities is most likely a measurement bias and does not reflect the true companion population \citep{Gullikson2016}.  We show the detection CCFs and a plot of peak CCF height as a function of model temperature for HIP 109139 in Figure \ref{fig:ccf}. Similar figures for all companions are available in the supplementary files.
 
 
-Most of the detected companions have follow-up spectra to confirm the existence of the companion. In most cases, there is a clear shift in the radial velocity of the companion, indicating that it is orbiting the target star and is not a foreground or background contaminant (See Figure \ref{fig:ccf}). In addition we obtained Gemini/NIRI adaptive optics imaging data for 19 of the northern companions, and were able to resolve 7 of them. We show the separation, position angle, and magnitude difference in Table \ref{tab:imaging_obs}, and display the images in Figure \ref{fig:images}. One star, HIP 88116, has several nearby sources in the image. We quote the magnitude difference and separation of the brightest source in Table \ref{tab:imaging_obs}, but stress that \emph{none} of the visible sources is likely to be the companion we see in the spectroscopic data. The two epochs of spectroscopic data show a radial velocity shift of $\Delta v = 30.7\ \mathrm{km\ s}^{-1}$ over the course of roughly one year; this orbital motion is much too large to allow for any of the companions visible in the image (all with separations $ > 1''$).
+We have follow-up spectroscopy for 17/27 of the new companions to confirm their existence. In most cases, there is a clear shift in the radial velocity of the companion, indicating that it is orbiting the target star and is not a foreground or background contaminant (See Figure \ref{fig:ccf}). Two of the new detections (companions to HIPs 38593 and 79404) were detected twice but not in a third attempt, most likely because the third spectrum had low signal-to-noise. The companion to HIP 93805, at $\sim 4000$ K, was detected twice with near-infrared IGRINS but not the optical CHIRON instrument that is less sensitive to cool companions than IGRINS. Two of the companions with only one detection were observed at least twice (HIPs 19949 and HIP 23362); both of the non-detections are from the IGRINS instrument, which is less sensitive to hot companions with rapid rotation speeds because there are far fewer spectral lines of the companion in the near-infrared than there are in the optical.
+
+
+In addition we obtained Gemini/NIRI adaptive optics imaging data for 18 of the northern companions, and were able to resolve 7 of them. We show the separation, position angle, and magnitude difference in Table \ref{tab:imaging_obs}, and display the images in Figure \ref{fig:images}. One star, HIP 88116, has several nearby sources in the image. We quote the magnitude difference and separation of the brightest source in Table \ref{tab:imaging_obs}, but stress that \emph{none} of the visible sources is likely to be the companion we see in the spectroscopic data. The two epochs of spectroscopic data show a radial velocity shift of $\Delta v = 30.7\ \mathrm{km\ s}^{-1}$ over the course of roughly one year; this orbital motion is much too large to allow for any of the companions visible in the image (all with separations $ > 1''$).
 
 \begin{figure}
 \includegraphics[width=\columnwidth]{Imaging_Data.pdf}
@@ -1346,7 +1349,6 @@ Based on observations at Cerro Tololo Inter-American Observatory, National Optic
 \startdata
   HIP 22833 &  4.83 &  2015-03-29 &   50x0.3 & $0.352 +/- 0.003$ & $14.1 \pm 0.7$ & $3.04 \pm 0.06$ \\
   HIP 22958 &  5.79 &  2015-10-19 &   52x0.4 & $0.445 +/- 0.003$ & $65.0 \pm 0.3$ & $2.57 \pm 0.05$ \\
-  HIP 23916 &  5.98 &  2015-04-05 &   18x1.1 & \nodata & \nodata & \nodata \\
   HIP 26093 &  5.96 &  2015-03-23 &   33x0.6 & \nodata & \nodata & \nodata \\
   HIP 26126 &  5.07 &  2015-03-29 &   40x0.4 & \nodata & \nodata & \nodata \\
   HIP 29735 &  5.10 &  2015-03-22 &   83x0.2 & \nodata & \nodata & \nodata \\
@@ -1405,7 +1407,6 @@ Based on observations at Cerro Tololo Inter-American Observatory, National Optic
   HIP 22833 & AB &     2 & yes &  $4745 \pm 107$ &      10 &     0.0  &  $0.8^{+0.02}_{-0.02}$ &  $0.8^{+0.02}_{-0.01}$ \\
   HIP 22958 & Aa,Ab &     2 & yes &  $5762 \pm 158$ &      30 &    -0.5  &  $1.3^{+0.19}_{-0.23}$ &  $1.0^{+0.09}_{-0.03}$ \\
   HIP 23362 & AB$^{\dagger}$ &     1 & yes &  $6283 \pm 158$ &       5 &    -0.5  &  $1.2^{+0.06}_{-0.05}$ &  $1.2^{+0.07}_{-0.05}$ \\
-  HIP 23916 & Aa,Ab$^{\dagger}$ &     1 & yes &  $5450 \pm 158$ &       5 &    -0.5  &  $1.1^{+0.20}_{-0.20}$ &  $0.9^{+0.04}_{-0.03}$ \\
   HIP 24902 & AB &     1 & yes &  $5679 \pm 154$ &      30 &     0.0  &  $1.0^{+0.05}_{-0.04}$ &  $1.0^{+0.04}_{-0.03}$ \\
   HIP 26126 & AB? &     3 & yes &   $5841 \pm 91$ &       5 &    -0.5  &  $1.0^{+0.03}_{-0.03}$ &  $1.0^{+0.05}_{-0.04}$ \\
   HIP 32607 & AB$^{\dagger}$ &     3 & yes &   $5068 \pm 91$ &       5 &    -0.5  &  $0.8^{+0.02}_{-0.02}$ &  $0.9^{+0.01}_{-0.01}$ \\
