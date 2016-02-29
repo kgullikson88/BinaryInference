@@ -7,7 +7,7 @@ import pandas as pd
 import numpy as np
 
 
-HDF5_OUTPUT = 'Primary_Parameters.h5'
+HDF5_OUTPUT = 'Primary_Parameters_full.h5'
 
 class MyModel(StarModel):
     def _make_samples(self):
@@ -28,7 +28,7 @@ if __name__ == '__main__':
     pad = Padova_Isochrone()
 
     i = int(sys.argv[1])
-    pars = pd.read_csv('data/Primary_Parameters.csv').loc[i]
+    pars = pd.read_csv('data/Primary_Parameters_full.csv').loc[i]
     model = MyModel(pad, Teff=(pars.teff, pars.teff_err),
                       logg=(pars.logg, pars.logg_err),
                       feh=(pars.feh, pars.feh_err))
