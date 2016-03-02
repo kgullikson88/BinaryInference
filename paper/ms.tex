@@ -120,7 +120,9 @@ We list the companion detections in Table \ref{tab:companions}, and report the e
 We have follow-up spectroscopy for 17/27 of the new companions to confirm their existence. In most cases, there is a clear shift in the radial velocity of the companion, indicating that it is orbiting the target star and is not a foreground or background contaminant (See Figure \ref{fig:ccf}). Two of the new detections (companions to HIPs 38593 and 79404) were detected twice but not in a third attempt, most likely because the third spectrum had low signal-to-noise. The companion to HIP 93805, at $\sim 4000$ K, was detected twice with near-infrared IGRINS but not the optical CHIRON instrument that is less sensitive to cool companions than IGRINS. Two of the companions with only one detection were observed at least twice (HIPs 19949 and HIP 23362); both of the non-detections are from the IGRINS instrument, which is less sensitive to hot companions with rapid rotation speeds because there are far fewer spectral lines of the companion in the near-infrared than there are in the optical.
 
 
-In addition we obtained Gemini/NIRI adaptive optics imaging data for 18 of the northern companions, and were able to resolve 7 of them. We show the separation, position angle, and magnitude difference in Table \ref{tab:imaging_obs}, and display the images in Figure \ref{fig:images}. One star, HIP 88116, has several nearby sources in the image. We quote the magnitude difference and separation of the brightest source in Table \ref{tab:imaging_obs}, but stress that \emph{none} of the visible sources is likely to be the companion we see in the spectroscopic data. The two epochs of spectroscopic data show a radial velocity shift of $\Delta v = 30.7\ \mathrm{km\ s}^{-1}$ over the course of roughly one year; this orbital motion is much too large to allow for any of the companions visible in the image (all with separations $ > 1''$).
+In addition we obtained Gemini/NIRI adaptive optics imaging data for 18 of the northern companions, and were able to resolve 7 of them. We show the separation, position angle, and magnitude difference measurements in Table \ref{tab:imaging_obs}, and display the images in Figure \ref{fig:images}. We also derive the projected separation in AU and the companion mass from the images. We calculate the separation from the measured angular separation and the Hipparchos parallax \citep{Hipparchos}. We calculate the companion mass and uncertainties from 1000 samples of the magnitude difference measurement and the primary star mass, temperature, age, and radius (see Section \ref{sec:sp}). For each sample, we use a grid of Kurucz stellar model spectra [CITE] and the pysynphot code [CITE] to determine the companion temperature needed to replicate the observed magnitude difference. We estimate the companion radius by interpolating solar metallicity Dartmouth isochrones [CITE] from the companion temperature and system age sample. We convert the best temperature to a companion mass using the same isochrone grid. The masses derived from the imaging data have very large uncertainties because the primary star property estimates that they depend on are very uncertain.
+
+One star in the imaging sample, HIP 88116, has several nearby sources in the image. We quote the magnitude difference and separation of the brightest source in Table \ref{tab:imaging_obs}, but stress that \emph{none} of the visible sources is likely to be the companion we see in the spectroscopic data. The two epochs of spectroscopic data show a radial velocity shift of $\Delta v = 30.7\ \mathrm{km\ s}^{-1}$ over the course of roughly one year; this orbital motion is much too large to allow for any of the companions visible in the image (all with separations $ > 1''$ and projected separations $ > 300$ AU).
 
 \begin{figure}
 \includegraphics[width=\columnwidth]{Imaging_Data.pdf}
@@ -265,7 +267,7 @@ We show the total survey completeness in Figure \ref{fig:completeness}. The comp
 \section{Mass-Ratio Distribution}
 \label{sec:mrd}
 
-We are now finally in a position to estimate the mass-ratio distribution for our sample. We estimate the mass for each detected companion star by sampling the temperatures given in Table \ref{tab:companions} as a gaussian, and converting each temperature sample into a mass sample. We do the conversion to mass both by interpolating Table 5 from \citet{Pecaut2013}, and by interpolating from temperature and system age (see Section \ref{sec:sp}) to mass with Dartmouth isochrones [CITE]. Both methods give similar results in most cases, although the isochrone masses are significantly higher for very young systems. We only use the results obtained with the isochrone masses in the analysis. We sample the mass ratio of the system by dividing the companion mass samples by samples of the primary mass (Section \ref{sec:sp}). We denote the $n$th mass ratio sample for the $k$th star as $q_k^{(n)}$, and denote the number of these samples as $N_k$.
+We are now finally in a position to estimate the mass-ratio distribution for our sample. We estimate the mass for each detected companion star by sampling the temperatures given in Table \ref{tab:companions} as a gaussian, and converting each temperature sample into a mass sample. We do the conversion to mass both by interpolating Table 5 from \citet{Pecaut2013}, and by interpolating from temperature and system age (see Section \ref{sec:sp}) to mass with Dartmouth isochrones [CITE]. Both methods give similar results in most cases, although the isochrone masses are significantly higher for very young systems, so we adopt the isochronal values in the analysis. We sample the mass ratio of the system by dividing the companion mass samples by samples of the primary mass (Section \ref{sec:sp}). We denote the $n$th mass ratio sample for the $k$th star as $q_k^{(n)}$, and denote the number of these samples as $N_k$.
 
 We do not use systems with more than one companion, unless the wider companion is separated by $ > 10''$ from the primary star. We mark the 48 companions we use in the mass ratio analysis with the fourth column of Table \ref{tab:companions}. Many of the companions we use in the analysis only have one detection in our data; 12/22 of these are previously known companions and so don't need follow-up to confirm. The remaining 10 are new and unconfirmed detections; these all have very strong CCF signals and are likely to be confirmed with follow-up spectroscopy or imaging. Their inclusion does not significantly change the results.
 
@@ -320,17 +322,17 @@ The power law fit has only one parameter ($\gamma$); we use a uniform prior in t
 
 \subsection{Malmquist Bias Correction}
 
-We are trying to recover the intrinsic distribution from an observed sample; thus we should fit the data to the probability distribution function (PDF) for mass ratio, \emph{given that we observed the star}: $P(q|\vec{\theta}, \mathrm{obs})$. In a volume-limited sample, this is equal to $P(q|\vec{\theta})$; however, our sample is magnitude-limited and therefore suffers from Malmquist bias. There is a higher probability of equal-mass binary systems in our data because they contribute twice the flux and are therefore more likely to fall under the magnitude limit. We can calculate the PDF for mass ratio given that we observed the system from Bayes' theorem:
+We are trying to recover the intrinsic distribution from an observed sample, so we must fit the data to the probability distribution function (PDF) for mass ratio, \emph{given that we observed the star}: $P(q|\vec{\theta}, \mathrm{obs})$. In a volume-limited sample, this is equal to $P(q|\vec{\theta})$. However, our sample is magnitude-limited and therefore suffers from Malmquist bias. There is a higher probability of equal-mass binary systems to occur in our survey because they contribute twice the flux and are therefore more likely to fall under the magnitude limit. We can calculate the PDF for mass ratio, given that we observed the system, from Bayes' theorem:
 
 \begin{equation}
 P(q|\vec{\theta}, \mathrm{obs}) = \frac{P(\mathrm{obs}|q) P(q|\vec{\theta})}{\int_0^1 P(\mathrm{obs}|q) P(q|\vec{\theta}) dq}
 \end{equation}
 
-We already know $P(q|\vec{\theta})$ (Equations \ref{eqn:P1} - \ref{eqn:P3}). We estimate $P(\mathrm{obs}|q)$ by simulating a very large sample of binary stars:
+We already know $P(q|\vec{\theta})$ (Equations \ref{eqn:P1} - \ref{eqn:P3}). We estimate $P(\mathrm{obs}|q)$ by simulating a very large sample of binary stars via these steps:
 
 \begin{enumerate}
-\item Sample primary star masses from the Kroupa IMF \citep{Kroupa2002}
-\item Sample a distance for each star from a disk with infinite extent and scale height of $300$ pc. 
+\item Draw random primary star masses from the Kroupa IMF \citep{Kroupa2002}
+\item Draw a random distance for each star from a disk with infinite extent and scale height of $150$ pc \citep[the approximate scale height of the Milky Way disk for A-type stars,][]{BM1998}. 
 \item For each $q$ from 0 to 1, in steps of 0.01:
 \begin{enumerate}
   \item Add a companion star to each primary with the appropriate mass to make a binary system with mass ratio $q$.
@@ -358,7 +360,7 @@ We show the resulting fits in Figure \ref{fig:mrd}. The $1\sigma$ uncertainties 
 \section{Discussion}
 \label{sec:discussion}
 
-Previous measurements of the mass-ratio distribution find that the data is well fit by a power law with index $0.39 \pm 0.23$ \citep[M dwarf stars][]{Delfosse2004}, $0.27 \pm 0.05$ \citep[Solar type stars][]{Duchene2013}, and $-0.45 \pm 0.15$ \citep[intermediate-mass stars][]{Kouwenhoven2007}. The more recent VAST survey found a much steeper power law index of $-2.3^{+1.0}_{-0.9}$ for wide companions, and an inner mass-ratio distribution that is consistent with flat.
+Previous measurements of the mass-ratio distribution find that the data is well fit by a power law. \citet{Kouwenhoven2007} compiled spectroscopic, imaging, and astrometric observations of binary stars with intermediate-mass primaries in the Scorpius OB association, and derived a power law index of  $-0.45 \pm 0.15$. More recently \citet{DeRosa2014} performed an adaptive optics and common proper motion search for companions to field A-type stars. They found that the distribution for companions on wide ($a > 125\ AU$) orbits has a very steep power law index of $-2.3^{+1.0}_{-0.9}$, while the distribution for close ($30\ AU < a < 125\ AU$) companions is consistent with flat.
 
 \subsection{Model Comparison}
 
@@ -1338,33 +1340,32 @@ Based on observations at Cerro Tololo Inter-American Observatory, National Optic
 
 \clearpage
 
-\begin{deluxetable*}{|l|llllll|}
+\begin{deluxetable*}{|l|llllllll|}
 \tabletypesize{\small}
 \tablewidth{0pt}
 \tablecaption{NIRI Observation log}
 \tablehead{
-       \colhead{star} &  \colhead{K} &   \colhead{date} & \colhead{Exposure} & \colhead{$\rho$} & \colhead{$\theta$} & \colhead{$\Delta \mathrm{K_c}$}
+       \colhead{star} &  \colhead{K} &   \colhead{date} & \colhead{Exposure} & \colhead{$\rho$} & \colhead{$\theta$} & \colhead{$\Delta \mathrm{K_c}$} & \colhead{$M_2 (M_{\odot})$} & \colhead{$a$ (AU)} 
        }
        
 \startdata
-  HIP 22833 &  4.83 &  2015-03-29 &   50x0.3 & $0.352 +/- 0.003$ & $14.1 \pm 0.7$ & $3.04 \pm 0.06$ \\
-  HIP 22958 &  5.79 &  2015-10-19 &   52x0.4 & $0.445 +/- 0.003$ & $65.0 \pm 0.3$ & $2.57 \pm 0.05$ \\
-  HIP 26093 &  5.96 &  2015-03-23 &   33x0.6 & \nodata & \nodata & \nodata \\
-  HIP 26126 &  5.07 &  2015-03-29 &   40x0.4 & \nodata & \nodata & \nodata \\
-  HIP 29735 &  5.10 &  2015-03-22 &   83x0.2 & \nodata & \nodata & \nodata \\
-  HIP 31278 &  5.46 &  2015-03-28 &   29x0.6 & \nodata & \nodata & \nodata \\
-  HIP 38538 &  4.66 &  2015-10-19 &   75x0.2 & \nodata & \nodata & \nodata \\
-  HIP 39847 &  4.66 &  2015-03-27 &   50x0.3 & \nodata & \nodata & \nodata \\
-  HIP 75178 &  5.49 &  2015-03-24 &   29x0.6 & \nodata & \nodata & \nodata \\
-  HIP 88116 &  4.47 &  2015-03-22 &   50x0.3 & $3.260 +/- 0.001$ & $59.29 \pm 0.02$ & $3.9 \pm 0.4$ \\
-  HIP 91118 &  5.67 &  2015-10-16 &   43x0.4 & $0.1667 +/- 0.0007$ & $41.7 \pm 0.2$ & $1.77 \pm 0.01$ \\
- HIP 100221 &  5.70 &  2015-10-18 &   26x0.7 & $0.250 +/- 0.002$ & $346.8 \pm 0.92$ & $2.28 \pm 0.04$ \\
- HIP 100907 &  5.41 &  2015-10-16 &   43x0.4 & $0.463 +/- 0.002$ & $335.4 \pm 0.30$ & $2.91 \pm 0.04$ \\
- HIP 101909 &  $6.47^{\dagger}$ &  2015-10-16 &   39x0.5 & \nodata & \nodata & \nodata \\
- HIP 109139 &  4.40 &  2015-04-26 &   50x0.3 & \nodata & \nodata & \nodata \\
- HIP 109521 &  4.96 &  2015-04-25 &   40x0.4 & \nodata & \nodata & \nodata \\
- HIP 115115 &  4.96 &  2015-10-18 &   40x0.4 & $1.497 +/- 0.002$ & $313.14 \pm 0.08$ & $2.54 \pm 0.04$ \\
- HIP 118243 &  $5.87^{\dagger}$ &  2015-07-23 &   58x0.3 & $4.082 +/- 0.002$ & $310.23 \pm 0.03$ & $2.20 \pm 0.03$
+  HIP 22833 &  4.83 &  2015-03-29 &   50x0.3 & $0.352 +/- 0.003$ & $14.1 \pm 0.7$ & $3.04 \pm 0.06$ & $0.9^{+0.16}_{-0.17}$ & $25.1 \pm 0.24$ \\
+  HIP 22958 &  5.79 &  2015-10-19 &   52x0.4 & $0.445 +/- 0.003$ & $65.0 \pm 0.3$ & $2.57 \pm 0.05$ & $1.5^{+0.35}_{-0.28}$ & $124.1 \pm 0.81$ \\
+  HIP 26093 &  5.96 &  2015-03-23 &   33x0.6 & \nodata & \nodata & \nodata & \nodata & \nodata \\
+  HIP 26126 &  5.07 &  2015-03-29 &   40x0.4 & \nodata & \nodata & \nodata & \nodata & \nodata \\
+  HIP 29735 &  5.10 &  2015-03-22 &   83x0.2 & \nodata & \nodata & \nodata & \nodata & \nodata \\
+  HIP 31278 &  5.46 &  2015-03-28 &   29x0.6 & \nodata & \nodata & \nodata & \nodata & \nodata \\
+  HIP 38538 &  4.66 &  2015-10-19 &   75x0.2 & \nodata & \nodata & \nodata & \nodata & \nodata \\
+  HIP 39847 &  4.66 &  2015-03-27 &   50x0.3 & \nodata & \nodata & \nodata & \nodata & \nodata \\
+  HIP 75178 &  5.49 &  2015-03-24 &   29x0.6 & \nodata & \nodata & \nodata & \nodata & \nodata \\
+  HIP 88116 &  4.47 &  2015-03-22 &   50x0.3 & $3.671 +/- 0.001$ & $242.99 \pm 0.02$ & $3.9 \pm 0.4$ & $1.2^{+0.28}_{-0.24}$ & $467.7 \pm 0.18$ \\
+  HIP 91118 &  5.67 &  2015-10-16 &   43x0.4 & $0.1667 +/- 0.0007$ & $41.7 \pm 0.2$ & $1.77 \pm 0.01$ & $1.5^{+0.39}_{-0.25}$ & $36.4 \pm 0.16$ \\
+ HIP 100221 &  5.70 &  2015-10-18 &   26x0.7 & $0.250 +/- 0.002$ & $346.8 \pm 0.92$ & $2.28 \pm 0.04$ & $0.9^{+0.2}_{-0.23}$ & $28.5 \pm 0.24$ \\
+ HIP 100907 &  5.41 &  2015-10-16 &   43x0.4 & $0.463 +/- 0.002$ & $335.4 \pm 0.30$ & $2.91 \pm 0.04$ & $0.7^{+0.14}_{-0.10}$ & $37.7 \pm 0.16$ \\
+ HIP 101909 &  $6.47^{\dagger}$ &  2015-10-16 &   39x0.5 & \nodata & \nodata & \nodata & \nodata & \nodata \\
+ HIP 109139 &  4.40 &  2015-04-26 &   50x0.3 & \nodata & \nodata & \nodata & \nodata & \nodata \\
+ HIP 109521 &  4.96 &  2015-04-25 &   40x0.4 & \nodata & \nodata & \nodata & \nodata & \nodata \\
+ HIP 115115 &  4.96 &  2015-10-18 &   40x0.4 & $1.497 +/- 0.002$ & $313.14 \pm 0.08$ & $2.54 \pm 0.04$ & $1.3^{+0.28}_{-0.19}$ & $120.0 \pm 0.17$
 \enddata
 \tablecomments{$\dagger$: There is no K-magnitude tabulated in the Simbad Database. The value quoted here is estimated from the spectral type of the star and its V-band magnitude.}
 \label{tab:imaging_obs}
