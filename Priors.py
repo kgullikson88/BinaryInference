@@ -41,7 +41,7 @@ def get_cdf(x, P, accuracy=10):
     return np.round(cdf/cdf[-1], decimals=accuracy)
 
 
-def get_padova_posterior(star, hdf5_filename='Primary_Parameters.h5', var='mass'):
+def get_padova_posterior(star, hdf5_filename='data/Primary_Parameters.h5', var='mass'):
     """ Search the given HDF5 file for an entry for star. If it exists, return the mass samples.
     """
     try:
