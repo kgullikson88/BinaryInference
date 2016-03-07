@@ -290,7 +290,7 @@ We use the methodology developed in \citet{Foreman2014} to perform bayesian infe
 \label{eqn:money}
 \end{multline}
 
-In the above equation, $\{\vec{x_k}\}$ denotes the full spectrum of star $k$, and $\vec{\theta}$ denotes the parameters for the model we are fitting. $K=360$ is the total sample size for our survey, $Q(q)$ is the completeness function shown in Figure \ref{fig:completeness}, and $P(q|\vec{\theta})$ is the likelihood function for the mass ratio given the model parameters. We fit the data to three distinct distributions: a histogram ($P_1$), a beta distribution ($P_2$), and a power law ($P_3$):
+In the above equation, $\{\vec{x_k}\}$ denotes the full spectrum of star $k$, and $\vec{\theta}$ denotes the parameters for the model we are fitting. $K=341$ is the total sample size for our survey, $Q(q)$ is the completeness function shown in Figure \ref{fig:completeness}, and $P(q|\vec{\theta})$ is the likelihood function for the mass ratio given the model parameters. We fit the data to three distinct distributions: a histogram ($P_1$), a lognormal distribution ($P_2$), and a power law ($P_3$):
 
 \begin{align}
  P_1(q|\vec{\theta}) &= \begin{cases}
@@ -300,14 +300,16 @@ In the above equation, $\{\vec{x_k}\}$ denotes the full spectrum of star $k$, an
       \hfill \theta_7 \hfill & q \in \Delta_7
      \end{cases} \label{eqn:P1} \\
  %P_2(q|\vec{\theta}) &= \frac{A}{\sqrt{2\pi\sigma^2}} e^{-\frac{(q - \mu)^2}{2\sigma^2}} \label{eqn:P2} \\
- P_2(q|\vec{\theta}) &= \frac{\Gamma(a+b)}{\Gamma(a)\Gamma(b)} q^{a-1}(1-q)^{b-1} \\
+ %P_2(q|\vec{\theta}) &= \frac{\Gamma(a+b)}{\Gamma(a)\Gamma(b)} q^{a-1}(1-q)^{b-1} \\
+ P_2(q|\vec{\theta}) &= \frac{A}{q\sqrt{2\pi\sigma^2}} e^{-\frac{(\ln{q} - \mu)^2}{2\sigma^2}} \label{eqn:P2} \\
  P_3(q|\vec{\theta}) &= (1-\gamma)q^{-\gamma} \label{eqn:P3}
 \end{align}
-%The constant $A$ in the gaussian distribution is a renormalization factor such that the distribution is only defined from $0 < q < 1$:
+The constant $A$ in the lognormal distribution is a renormalization factor such that the distribution is only defined from $0 < q < 1$:
 
-%\begin{equation}
+\begin{equation}
 %A = \frac{2}{\erf\left(\frac{\mu}{\sigma \sqrt{2}}\right) - \erf\left(\frac{\mu - 1}{\sigma \sqrt{2}}\right)}
-%\end{equation}
+A = \frac{2}{1-\erf\left(\frac{\mu}{\sigma \sqrt{2}}\right)}
+\end{equation}
 
 We fit all distributions via Importance Nested Sampling with the MultiNest code \citep{multinest}. Following \citet{Foreman2014}, we apply a smoothing prior on the parameters $\vec{\theta}$ for the histogram model:
 
@@ -321,13 +323,7 @@ The smoothing prior is an 7-dimensional gaussian with mean $m$ and covariance ma
 P_1(\vec{\theta} | \{\vec{x_k}\}) \propto \mathcal{L}_1(\{\vec{x_k}\}| \vec{\theta}) P(\vec{\theta}| \alpha, m, \tau, \epsilon) P(\alpha, m, \tau, \epsilon)
 \end{equation}
 
-The beta function fit only has two parameters ($a, b$), and was chosen because it has a similar shape to the histogram resulting from the first model and is only defined for $0 < q < 1$. We use uniform priors on both $a$ and $b$, resulting in the posterior probability 
-
-\begin{equation}
-P_2(a, b | \{\vec{x_k}\}) \propto P_2(q|a, b) 
-\end{equation}
-
-The power law fit has only one parameter ($\gamma$); we use a uniform prior in the fit.
+The lognormal distribution only has two parameters ($\mu, \sigma$), and was chosen because it has a similar shape to the histogram resulting from the first model. We use uniform priors on both $\mu$ and $\sigma$, although we note that $\mu$ is compared to $\ln{q}$ and so acts like a log-uniform prior. The power law has only one parameter ($\gamma$); we use a uniform prior in the fit.
 
 \subsection{Malmquist Bias Correction}
 
@@ -354,12 +350,12 @@ We already know $P(q|\vec{\theta})$ (Equations \ref{eqn:P1} - \ref{eqn:P3}). We 
 
 With the fitted malmquist-correction polynomial, we then substitute $P(q|\vec{\theta}, \mathrm{obs})$ everywhere $P(q|\vec{\theta})$ appears in Equation \ref{eqn:money}.
 
-We show the resulting fits in Figure \ref{fig:mrd}. The $1\sigma$ uncertainties in the bin heights from the histogram model are shown as error bars, and we overplot 500 samples of the beta distribution fit to show the spread allowed by the data. The best-fit power law is plotted with a green dot-dashed line, as well as the mass ratio distribution expected from random pairing from the Kroupa initial mass function (IMF) in yellow.
+We show the resulting fits in Figure \ref{fig:mrd}. The $1\sigma$ uncertainties in the bin heights from the histogram model are shown as error bars, and we overplot 300 samples of the lognormal distribution fit to show the spread allowed by the data. The best-fit power law is plotted with a red dot-dashed line. We also estimate the mass ratio distribution expected from random pairing of the Kroupa Initial Mass Function (IMF), and show the result in yellow. We estimated the distribution by drawing 100000 primary stars from the IMF with masses between $1.5 < M/M_{\odot} < 20$. We then drew companions from the same IMF, with the restriction that the companion has a lower mass than the primary. The result plotted in yellow in Figure \ref{fig:mrd} is a gaussian kernel density estimate of the resulting mass ratios, with a bandwidth of $0.05$.
 
 
 \begin{figure}
 \includegraphics[width=\columnwidth]{MRD_total.pdf}
-\caption{Mass ratio distribution for our sample. The data was fit to a histogram, a beta distribution, and a power law. The histogram is shown in the solid blue blocks, with $1 \sigma$ uncertainties marked with error bars. The variance of the beta function fit is shown with 500 samples from the posterior probability distribution for the parameters. We also show the best-fit power law and the mass ratio distribution resulting from random pairing of the Kroupa initial mass function.}
+\caption{Mass ratio distribution for our sample. The data was fit to a histogram, a lognormal distribution, and a power law. The histogram is shown in the solid blue blocks, with $1 \sigma$ uncertainties marked with error bars. The variance of the lognormal  fit is shown with 300 samples from the posterior probability distribution for the parameters in green. We also show the best-fit power law and the mass ratio distribution resulting from random pairing of the Kroupa initial mass function. Finally, we display the raw mass ratio measurements with associated uncertainties in the cluster of data points near the top of the figure.}
 \label{fig:mrd}
 \end{figure}
 
@@ -373,28 +369,41 @@ Previous measurements of the mass-ratio distribution find that the data is well 
 
 \subsection{Model Comparison}
 
-The most striking feature of the mass ratio distribution shown in Figure \ref{fig:mrd} is the turnover at intermediate q, which the beta distribution fit finds occurs at $q = 0.30^{+0.03}_{-0.04}$. Although the power law fit and the Kroupa IMF are visually very poor fits to the data, we formally compare the models to ensure that the different form is not an artifact of binning or simple noise. We make the comparison using the posterior odds:
+The most striking feature of the mass ratio distribution shown in Figure \ref{fig:mrd} is the turnover or flattening at intermediate q. The maximum of the lognormal distribution occurs at $q = 0.30 \pm 0.03$ and is an estimate of the characteristic scale.
+
+Although the power law fit and the Kroupa IMF are visually very poor fits to the data, we formally compare the models to ensure that the different form is not an artifact of binning or simple noise. We make the comparison using the posterior odds:
 
 \begin{equation}
 \mathrm{Odds} = \frac{\int_{\vec{\theta_1}} P_1(q|\vec{\theta_1}) P(\vec{\theta_1})}{\int_{\vec{\theta_2}} P_2(q|\vec{\theta_2}  P(\vec{\theta_2})} \equiv \frac{Z_1}{Z_2}
 \end{equation}
 
-The integrals are estimated as part of the nested sampling algorithm in the MultiNest code. The odds ratio comparing the beta distribution to power law fit is $Z_\mathrm{beta} / Z_\mathrm{power} = 81 \pm 1.3 \e{8}$ indicating a very strong preference for the beta distribution model. We also compare to the mass ratio distribution expected for random pairing from the Kroupa IMF. In this case, there are no free parameters so the evidence integral just becomes the likelihood function (Equation \ref{eqn:money}). The corresponding odds ratio is  $Z_\mathrm{beta} / Z_\mathrm{kroupa} = 325 \pm 3.6 \e{18}$, again indicating a very strong preference for the beta distribution fit. The extreme unlikeliness of the Kroupa IMF model also indicates that our sample is not significantly biased by foreground or background contaminants.
+The integrals are estimated as part of the nested sampling algorithm in the MultiNest code. The odds ratio comparing the lognormal distribution to power law fit is $Z_\mathrm{lognormal} / Z_\mathrm{power} = 5.1 \pm 0.1 \e{6}$, indicating a very strong preference for the lognormal distribution model. We also compare to the mass ratio distribution expected for random pairing from the Kroupa IMF and to a uniform distribution (a special case of the power law). In these cases, there are no free parameters so the evidence integral just becomes the likelihood function (Equation \ref{eqn:money}). The corresponding odds ratios are  $Z_\mathrm{lognormal} / Z_\mathrm{IMF} = 6.5 \pm 0.1 \e{22}$ and $Z_\mathrm{lognormal} / Z_\mathrm{uniform} = 7.0 \pm 0.1 \e{6}$. Both of these again demonstrate a very strong preference of the lognormal distribution. 
+
+The extreme unlikeliness of the Kroupa IMF model also indicates that our sample is not significantly biased by foreground or background contaminants. In fact, the present-day background star mass function is more bottom heavy than the initial mass function because some of the massive stars have evolved to white dwarfs or ended their lives in a supernova. The comparison to a Kroupa IMF therefore \emph{underestimates} the likelihood of background star contamination.
 
 
 \subsection{Comparison to Previous Results}
 
-Our mass ratio distribution appears to be in tension with the results of the VAST survey \citep{DeRosa2014}, which finds a nearly flat distribution for close companions. However, their subsample of close companions only includes 18 binaries, so it is possible that the different forms are just a result of small number statistics. To assess the degree of tension, we use the Anderson-Darling  test \citep{Anderson1954} to find the probability that both their close companion subsample and our companions are drawn from the same parent distribution. We only use companions from this work with mean $\overline{q} > 0.15$, since the survey completeness is roughly constant in that range and because the VAST survey subsample makes the same cut. To account for measurement uncertainties in the mass ratios, we choose from the mass ratio samples ($q_k^{(n)}$, see Section \ref{sec:mrd}) many times and compute the Anderson-Darling test statistic each time. Since \citet{DeRosa2014} do not quote uncertainties, we assume uncertainties of $\sigma_q = 0.05$ for all of their measurements. The result is $p = 0.02^{+0.02}_{-0.01}$, indicating that it is unlikely that both samples come from the same parent distribution.
+Our mass ratio distribution appears to be in tension with the results of the VAST survey \citep{DeRosa2014}, which finds a nearly flat distribution for close companions. However, their subsample of close companions only includes 18 binaries, so it is possible that the different forms are just a result of small number statistics. To assess the degree of tension, we use the Anderson-Darling  test \citep{Anderson1954} to find the probability that both their close companion subsample and our companions are drawn from the same parent distribution. We only use companions from this work with mean $\overline{q} > 0.15$ because the VAST survey subsample makes the same cut. To account for measurement uncertainties in the mass ratios, we choose from the mass ratio samples ($q_k^{(n)}$, see Section \ref{sec:mrd}) many times and compute the Anderson-Darling test statistic each time. Since \citet{DeRosa2014} do not quote uncertainties, we assume uncertainties of $\sigma_q = 0.05$ for all of their measurements. The result is $p = 0.10^{+0.07}_{-0.04}$; we cannot reject the hypothesis that both samples come from the same distribution.
 
-The differing results indicate that the mass ratio distribution changes inside $\sim 30-50$ AU, where \citet{DeRosa2014} has low completeness. This intrepretation implies that the mass ratio distribution is a very steep power law at wide ($a \gtrsim 150$ AU) separations, flattens out at intermediate separations ($50\ \mathrm{AU} \lesssim a \lesssim 150\ \mathrm{AU}$), and begins to show a preference for $q \sim 0.3$ at close separations ($a \lesssim 50$ AU).
 
-%\subsection{Theoretical Implications}
+\subsection{Theoretical Implications}
+\label{subsec:theory}
 
-%TODO: Discuss ways forward. Compile table giving the estimated maximum separation from the RVs. Promote an imaging survey to follow these up. Promote RV monitoring of the detections to get dynamical mass ratios and, more importantly, separations.
+The mass ratio distribution derived in this work has a very different form than the power law found for companions at wide separations. This is likely a result of disk interactions as the two components are accreting. The close companions that we detect may form with similar masses to their counterparts at large separations ($a \gtrsim 1000\ AU$), but preferentially accrete matter from the dense primary star disk. Since preferential accretion is strongest at the most extreme mass ratios [CITE], the result would be a depletion of low mass ratio companions as they become intermediate to high mass ratio companions. The characteristic scale of $\sim 0.3$ that we see in Figure \ref{fig:mrd} would then be related to the disk timescale, since with enough time the preferential accretion would push all companions to $q = 1.0$. 
 
-%TODO: Discuss physical mechanism to generate a preferrence for $q = 0.3$. Saying something about when disk fragments (how much time is left for the companion to accrete)? Saying something about migration in the early disk? Perhaps the extreme mass-ratio systems migrate inwards as they accrete material. If they continue migrating long enough to get much over $q \sim 0.3$, they end up falling into the star?
+It is also possible that some of the companions found in this work were formed from a gravitationally unstable disk \citep[e.g.][]{Kratter2006, Stamatellos2011}. Being a completely different formation mechanism than the way wide companions form, we would expect the mass function to differ. Additionally, such companions would undergo the same preferential accretion discussed above. This explanation may even be preferable, since it could explain why we see a separation-dependent mass ratio distribution around intermediate-mass stars but not low-mass stars: more massive stars tend to have more massive disks [CITE] that are more likely to fragment.
 
-\subsection{Supplemental Data}
+Large scale simulations are likely needed to distinguish between the two scenarios and fully interpret the results of this survey. A significant amount of work has already been put towards this end in the form of radiation hydrodynamic simulations of full giant molecular clouds \citep{Bate2012, Krumholz2012}. However, the present simulations do not generate enough stars more massive than the sun to compare binary and multiple star statistics to observations. 
+
+
+\section{Summary}
+
+In this work, we described a binary survey of 341 bright A- and B-type stars. We used the direct spectroscopic detection method \citep{Gullikson2016} to find the spectral lines of 64 companions with temperatures ranging from $3600 - 16000\ K$.  We used the cross-correlation functions to estimate the temperature, surface gravity, and metallicity of most of our sample stars, and converted to mass and age by interpolating Padova stellar evolutionary tracks \citep{Bressan2012}. Likewise, we convert the companion temperature measurements to mass by using solar metallicity Dartmough evolutionary tracks [CITE]. 
+
+We then use the formalism introduced in \citet{Foreman2014}, which self-consistently accounts for measurement errors, to infer the form of the mass ratio distribution (shown in Figure \ref{fig:mrd}). Unlike most previous work, we find that a power law is a poor descriptor of the data and find that a lognormal distribution performs much better. This result, which only includes close companions since it is a spectroscopic technique, is consistent with the 18 close companions found in the VAST survey \cite{DeRosa2014}. However, this result shows much more detail due to a larger number of companions. 
+
+We interpret the mass ratio distribution in terms of formation mechanism in Section \ref{subsec:theory}. It is likely that the mass ratio distribution we find is largely a result of preferential accretion onto the secondary star, which largely stops when the circumprimary or circumbinary disk dissipates.
 
 In the effort of open and reproducible research, we have made several data products freely available to the community. The samples of primary and companion mass and system age are available at \url{https://zenodo.org/record/46340}. The files generated by MultiNest, which include samples from the posterior distributions described in Section \ref{sec:mrd}, are available at the same url. We additionally provide a series of python libraries and jupyter notebooks with the computer code we used for the analysis on github: \url{https://github.com/kgullikson88/BinaryInference}.
 
