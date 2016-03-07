@@ -85,8 +85,7 @@ After reducing the data, we fit and remove the telluric spectrum using the TelFi
 
 We give the spectroscopic observation log in Table \ref{tab:observations}. We calculate the signal-to-noise ratio (the ``snr'' column) for the optical instruments (CHIRON, TS23, and HRS) as the median of the extracted flux divided by it's uncertainty for each pixel from the \'echelle order nearest $675$ nm. For the IGRINS instrument, we calculate the signal-to-noise ratio from the order nearest $2200$ nm.
 
-
-TODO: MAKE THE SPECTRA AVAILABLE SOMEHOW...
+All of the reduced and telluric-corrected spectra used in this study will be released with this work, and will be available at the following url: \url{https://zenodo.org/record/46482}. 
 
 
 \subsection{Imaging Data}
@@ -109,6 +108,13 @@ We search for stellar companions to our sample stars using the direct spectral d
 \item $v\sin{i} = 1, 5, 10, 20, 30 \ \mathrm{km\ s}^{-1}$
 \end{itemize}
 
+In order to be sensitive to hot companions, we additionally cross-correlate the spectra against a second grid of Kurucz model spectra \citep{Castelli2003}. The change in model is necessary because the Phoenix model library does not extend beyond $12000\ K$. The Kurucz grid is defined as follows:
+
+\begin{itemize}
+\item $T_\mathrm{eff} = 9000-30000$ K, in steps of 1000 K
+\item {[}Fe/H{]} = -0.5, 0.0, +0.5
+\item $v\sin{i} = 1, 5, 10, 20, 30, 40, 50 \ \mathrm{km\ s}^{-1}$
+\end{itemize}
 
 We combine the cross-correlation functions for all orders using both a simple average and the maximum-likelihood weighting scheme \citep{Zucker2003}. A companion detection is denoted by a strong peak in the combined cross-correlation function (CCF). While the maximum-likelihood scheme produces detections with much higher significance, it also magnifies spurious peaks and so has a larger false-positive rate. For this reason, we use the simple average CCFs in all further analysis.
 
@@ -120,7 +126,7 @@ We list the companion detections in Table \ref{tab:companions}, and report the e
 We have follow-up spectroscopy for 17/27 of the new companions to confirm their existence. In most cases, there is a clear shift in the radial velocity of the companion, indicating that it is orbiting the target star and is not a foreground or background contaminant (See Figure \ref{fig:ccf}). Two of the new detections (companions to HIPs 38593 and 79404) were detected twice but not in a third attempt, most likely because the third spectrum had low signal-to-noise. The companion to HIP 93805, at $\sim 4000$ K, was detected twice with near-infrared IGRINS but not the optical CHIRON instrument that is less sensitive to cool companions than IGRINS. Two of the companions with only one detection were observed at least twice (HIPs 19949 and HIP 23362); both of the non-detections are from the IGRINS instrument, which is less sensitive to hot companions with rapid rotation speeds because there are far fewer spectral lines of the companion in the near-infrared than there are in the optical.
 
 
-In addition we obtained Gemini/NIRI adaptive optics imaging data for 18 of the northern companions, and were able to resolve 7 of them. We show the separation, position angle, and magnitude difference measurements in Table \ref{tab:imaging_obs}, and display the images in Figure \ref{fig:images}. We also derive the projected separation in AU and the companion mass from the images. We calculate the separation from the measured angular separation and the Hipparchos parallax \citep{Hipparchos}. We calculate the companion mass and uncertainties from 1000 samples of the magnitude difference measurement and the primary star mass, temperature, age, and radius (see Section \ref{sec:sp}). For each sample, we use a grid of Kurucz stellar model spectra [CITE] and the pysynphot code [CITE] to determine the companion temperature needed to replicate the observed magnitude difference. We estimate the companion radius by interpolating solar metallicity Dartmouth isochrones [CITE] from the companion temperature and system age sample. We convert the best temperature to a companion mass using the same isochrone grid. The masses derived from the imaging data have very large uncertainties because the primary star property estimates that they depend on are very uncertain.
+In addition we obtained Gemini/NIRI adaptive optics imaging data for 18 of the northern companions, and were able to resolve 7 of them. We show the separation, position angle, and magnitude difference measurements in Table \ref{tab:imaging_obs}, and display the images in Figure \ref{fig:images}. We also derive the projected separation in AU and the companion mass from the images. We calculate the separation from the measured angular separation and the Hipparchos parallax \citep{Hipparchos}. We calculate the companion mass and uncertainties from 1000 samples of the magnitude difference measurement and the primary star mass, temperature, age, and radius (see Section \ref{sec:sp}). For each sample, we use a grid of Kurucz stellar model spectra \citep{Castelli2003}and the pysynphot code\footnote{pysynphot is a python code package to perform synthetic photometry, and is available at this url: \url{https://pypi.python.org/pypi/pysynphot}} to determine the companion temperature needed to replicate the observed magnitude difference. We estimate the companion radius by interpolating solar metallicity Dartmouth isochrones [CITE] from the companion temperature and system age sample. We convert the best temperature to a companion mass using the same isochrone grid. The masses derived from the imaging data have very large uncertainties because the primary star property estimates that they depend on are very uncertain.
 
 One star in the imaging sample, HIP 88116, has several nearby sources in the image. We quote the magnitude difference and separation of the brightest source in Table \ref{tab:imaging_obs}, but stress that \emph{none} of the visible sources is likely to be the companion we see in the spectroscopic data. The two epochs of spectroscopic data show a radial velocity shift of $\Delta v = 30.7\ \mathrm{km\ s}^{-1}$ over the course of roughly one year; this orbital motion is much too large to allow for any of the companions visible in the image (all with separations $ > 1''$ and projected separations $ > 300$ AU).
 
@@ -150,17 +156,18 @@ About half of our detections have robust mass and age estimates for the primary 
 \end{itemize}
 Since the Phoenix model library does not extend to temperatures $T > 12000\ K$, we used Kurucz model spectra \citep{Castelli2003} for this grid. 
 
-For the optical data, we use the blue echelle orders ($\lambda < 5550 \AA$). We ignore the strong hydrogren Balmer lines in the spectrum because they span several echelle orders and make continuum normalization very difficult, potentially biasing the result. There are sufficient metal lines in the optical spectra that the resulting CCF always has a very strong peak at the radial velocity of the primary star. The near-infrared IGRINS spectra have very few strong metal lines; we use the subset from $1.51 - 1.73 \micron$ that is dominated by hydrogren Brackett lines for these spectra. We then estimate the temperature and surface gravity of the primary stars from the CCF with the largest peak. We adopt the following errors on the temperature and surface gravity:
+For the optical data, we use the blue \'echelle orders ($\lambda < 5550 \AA$). We ignore the strong hydrogren Balmer lines in the spectrum because they span several \'echelle orders and make continuum normalization very difficult, potentially biasing the result. There are sufficient metal lines in the optical spectra that the resulting CCF always has a very strong peak at the radial velocity of the primary star. The near-infrared IGRINS spectra have very few strong metal lines; we use the subset from $1.51 - 1.73 \micron$ that is dominated by hydrogren Brackett lines for these spectra.  We then estimate the temperature and surface gravity of the primary stars from the CCF with the largest peak. We adopt the following errors on the temperature and surface gravity:
 
 \begin{align}
  \sigma_T &= \begin{cases}
-      \hfill 300\ K \hfill & T < 10000\ K \\
+      \hfill 500\ K \hfill & T < 10000\ K \\
       \hfill 1000\ K \hfill & T >= 10000\ K \\
      \end{cases} \\
  \sigma_{\log{g}} &= 0.25
 \end{align}
+The IGRINS parameters are less reliable because they rely almost solely on the hydrogren Brackett lines that span an entire \'echelle order, so we double the uncertainty on the IGRINS-derived temperature, surface gravity, and metallicity. Additionally, we throw out the IGRINS parameters if the star was also observed by one of the optical instruments in our survey. For stars observed multiple times, we use the average parameters and reduce the uncertainties accordingly.
 
-Next, we use Padova stellar evolutionary tracks \citep{Bressan2012} and the isochrones code \citep{isochrones_code} to estimate the mass and age of the system from the measured temperature and $\log{g}$. As a consistency check, we also interpolate from a table of stellar properties as a function of spectral type \citep{Pecaut2013} to estimate the primary mass from the published spectral types. We show the comparison in Figure \ref{fig:prim_mass}. We estimate uncertainties in the spectral type mass by assuming a spectral type uncertainty of $\pm 0.5$ spectral types and propagating to mass. There is excellent agreement between the masses we measure and the spectral type masses.
+Next, we use Padova stellar evolutionary tracks \citep{Bressan2012} and the isochrones code \citep{isochrones_code} to estimate the mass and age of the system from the measured temperature and surface gravity. As a consistency check, we also interpolate from a table of stellar properties as a function of spectral type \citep{Pecaut2013} to estimate the primary mass from the published spectral types. We show the comparison in Figure \ref{fig:prim_mass}. We estimate uncertainties in the spectral type mass by assuming a spectral type uncertainty of $\pm 0.5$ spectral types and propagating to mass. There is excellent agreement between the masses we measure and the spectral type masses.
 
 \begin{figure}
 \includegraphics[width=\columnwidth]{PrimaryMassEstimates_log.pdf}
@@ -168,7 +175,7 @@ Next, we use Padova stellar evolutionary tracks \citep{Bressan2012} and the isoc
 \label{fig:prim_mass}.
 \end{figure}
 
-We show the temperature, surface gravity, mass, and age estimates for all primary stars in Table \ref{tab:sample}. The MCMC samples generated by the isochrones code are available at [GIVE ZENODO LINK OR SOMETHING].
+We show the temperature, surface gravity, mass, and age estimates for most of our sample stars Table \ref{tab:sample}. We do not give parameters for the few stars that show strong discrepancies with the spectral-type estimate, most of which are early B-stars that have temperatures higher than the maximum grid temperature of $30000\ K$. The MCMC samples generated by the isochrones code are available at the following url: \url{https://zenodo.org/record/46482}.
 
 
 
@@ -181,7 +188,7 @@ The detectability of a companion mostly depends on its temperature: cooler compa
 
 \subsection{Sensitivity Analysis}
 
-To quantify the detection rate as a function of companion temperature and $v\sin{i}$, we performed a series of injection/recovery experiments. We started by creating synthetic binary star observations from each of our observed spectra. We made two distinct grids of companion stars: a low temperature grid spanning
+To quantify the detection rate as a function of companion temperature and $v\sin{i}$, we performed a series of injection and recovery experiments. We started by creating synthetic binary star observations from each of our observed spectra. We made two distinct grids of companion stars: a low temperature grid spanning
 
 \begin{itemize}
 \item $3000\ K < T_\mathrm{eff} < 6500\ K$ in steps of $100\ K$
@@ -195,7 +202,7 @@ and a high temperature grid spanning
 \end{itemize}
 For each grid point, we added a solar metallicity Phoenix model spectrum to the observed data after scaling to replicate the expected flux between a main sequence companion of the model temperature and the known target star spectral type. If the target star had known companions within $3''$, we included the expected flux from the companion when computing the flux ratio. We repeated each grid point at different radial velocities spanning $-400\ \mathrm{km\ s}^{-1} < v < 400\ \mathrm{km\ s}^{-1}$ in $50\ \mathrm{km\ s}^{-1}$ steps to sample the noise properties of the spectra and estimate a probability of detection at each point.
 
-Next, we cross correlated all of the synthetic observations against the Phoenix model template that was used to construct them. We counted the companion as detected if the highest point in the resulting CCF was found at the correct radial velocity. We then combined all of the radial velocity trials for each grid point to estimate a probability of detection at that grid point:
+Next, we cross correlated all of the synthetic observations against the Phoenix model template that was used to construct them. We counted the companion as detected if the highest point in the resulting CCF was found at the correct radial velocity, and if the peak had a significance of $>5\sigma$, where $\sigma$ is the standard deviation of the CCF for points more than $100\ \mathrm{km\ s}^{-1}$ away from the peak. We then combined all of the radial velocity trials for each grid point to estimate a probability of detection at that grid point:
 
 \begin{equation}
 P(\mathrm{detection}) = \frac{N_\mathrm{detected}}{N_\mathrm{rv}}
@@ -263,6 +270,8 @@ In the equation above, $N_i$ is the number of sample stars that contain an estim
 \end{figure}
 
 We show the total survey completeness in Figure \ref{fig:completeness}. The completeness falls very rapidly towards low mass ratios, although we are still $\sim 70\%$ complete at $q = 0.1$. The slow fall-off towards large mass ratios is caused by the same effect as in Figure \ref{fig:marginalized}: large mass ratio companions tend to be rapid rotators that are more difficult to detect.
+
+TODO: Discuss fudge factor if Adam agrees...
 
 \section{Mass-Ratio Distribution}
 \label{sec:mrd}
