@@ -262,6 +262,8 @@ Q(q_i) = \frac{1}{N_i} \sum_j Q_j(q_i)
 \end{equation}
 In the equation above, $N_i$ is the number of sample stars that contain an estimate for $Q(q_i)$ without extrapolating. For $q_i \sim 0.2$, $N_i$ is near the total sample size. However, $N_i$ falls for both low and high q, since a $3000\ K$/$12000\ K$ companion has a mass ratio $q = 0.08/2.0$ for an A9V primary, but $q = 0.007/0.19$ for a B0V primary. Our sensitivity analysis therefore does not sample large mass ratios around the very early-type primary stars in the sample, and does not sample very low mass ratios around late-type primary stars.
 
+We test to determine if the completeness is reasonable at large mass ratios by comparing to known binary systems. We detect 15 of the 25 stars in our sample with a hot ($T > 7000\ K$) companion. The completeness function for hot, roughly equal-mass companions suggest the probability of detection if $\sim 80\%$, which is incompatible with our low detection rate (p=0.01). The discrepancy may be due to an underestimate of the typical rotation rates for hot stars, used when marginalizing out the dependence on $v\sin{i}$. Additionally, rapidly rotating companions, especially when they have a similar temperature to the primary, are more difficult to detect if they have a small radial velocity offset from the primary star. While the injection and recovery experiments do sample velocity space to account for this, they may be over-sampling companions with very large velocity offsets and producing anomalously high detection rates. We account for the discrepancy by introducing a scaling factor: we multiply the estimated detection rate for all companions with $T > 7000\ K$ by $f=0.8$. 
+
 
 \begin{figure}
 \includegraphics[width=\columnwidth]{SurveyCompleteness.pdf}
@@ -269,9 +271,7 @@ In the equation above, $N_i$ is the number of sample stars that contain an estim
 \label{fig:completeness}
 \end{figure}
 
-We show the total survey completeness in Figure \ref{fig:completeness}. The completeness falls very rapidly towards low mass ratios, although we are still $\sim 70\%$ complete at $q = 0.1$. The slow fall-off towards large mass ratios is caused by the same effect as in Figure \ref{fig:marginalized}: large mass ratio companions tend to be rapid rotators that are more difficult to detect.
-
-TODO: Discuss fudge factor if Adam agrees...
+We show the resulting total survey completeness in Figure \ref{fig:completeness}. The completeness falls very rapidly towards low mass ratios, although we are still $\sim 60\%$ complete at $q = 0.1$. The slow fall-off towards large mass ratios is caused by a combination of the scale factor described above and the inherent difficulty of detecting rapidly rotating companions (see Figure \ref{fig:marginalized}). The detection rate at large mass ratios is now $\sim 0.6-0.7$, which is consistent with our 15/25 empirical detection rate. 
 
 \section{Mass-Ratio Distribution}
 \label{sec:mrd}
