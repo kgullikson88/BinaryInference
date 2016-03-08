@@ -73,12 +73,6 @@ For the northern targets, we use a combination of the High Resolution Spectrogra
 
 For the TS23 spectrograph, we use a $1.2''$ slit in combination with the E2 \'echelle grating (53 grooves/mm, blaze angle $65^{\circ}$), yielding a resolving power of $R=60000$ and a wavelength coverage from 375-1020 nm. We reduce the data using an IRAF pipeline very similar to the ones we use for CHIRON and HRS, and wavelength calibrate using a Th-Ar lamp observed immediately before the science observations.
 
-\begin{figure*}
-\includegraphics[width=\textwidth]{HIP_109139.pdf}
-\caption{\emph{Left}: Cross-correlation function between the observed spectra of HIP 109139 and a $5700\ K$ Phoenix model spectra. The detection at two dates shows significant velocity variation, indicating orbital motion with a short period. \emph{Right}: Peak CCF height as a function of Phoenix model spectra template temperature. The maxima of the curves indicate the temperature of the companion.}
-\label{fig:ccf}
-\end{figure*}
-
 IGRINS has a single setting with $R = 40000$. It has complete wavelength coverage from $1475-2480$ nm, except in the telluric water band from $1810 - 1930$ nm. Each star is observed in an ABBA nodding mode, and reduced using the standard IGRINS pipeline \citep{IGRINS_plp_v2}. The standard pipeline uses atmospheric OH emission lines as well as a Th-Ar calibration frame to calibrate the wavelengths; we further refine the wavelength solution using telluric absorption lines in the science spectrum.
 
 After reducing the data, we fit and remove the telluric spectrum using the TelFit code \citep{Gullikson2014}. We fit each \'echelle order affected by telluric absorption independently from each other to get the best removal. The telluric correction is critical for IGRINS spectra, where every order is dominated by telluric absorption lines. For the optical spectra, it is less critical but allows us to use some of the redder orders than we otherwise would be able to. For unsaturated lines, the best-fit telluric model reproduces the data to within $\sim 1-5\%$ of the continuum level.
@@ -92,6 +86,11 @@ As part of the follow-up effort, we used the NIRI instrument behind the Altair a
 We measure the flux and position of both stars by fitting a 2D Moffat function \citep{Moffat1969} to both stars simultaneously, constraining the shape parameters for both functions to be the same. The ratio of the amplitudes gives the magnitude difference, and the pixel locations along with the detector pixel scale gives the separation and position angle between the stars. We note that the goal of these images was confirmation and we did not observe any reference targets to make a distortion map and correct the image rotation. The uncertainty in position angle and to a lesser degree separation quoted in Table \ref{tab:imaging_obs} is likely underestimated.
 
 
+\begin{figure*}
+\includegraphics[width=\textwidth]{HIP_109139.pdf}
+\caption{\emph{Left}: Cross-correlation function between the observed spectra of HIP 109139 and a $5700\ K$ Phoenix model spectra. The detection at two dates shows significant velocity variation, indicating orbital motion with a short period. \emph{Right}: Peak CCF height as a function of Phoenix model spectra template temperature. The maxima of the curves indicate the temperature of the companion.}
+\label{fig:ccf}
+\end{figure*}
 
 
 
@@ -184,7 +183,7 @@ We show the temperature, surface gravity, mass, and age estimates for most of ou
 
 The detectability of a companion mostly depends on its temperature: cooler companions emit much less light and so are increasingly lost in the Poisson noise from the primary star spectrum. A companion with a high rotation rate is also more difficult to detect because the cross-correlation function gets most of its power from narrow spectral lines.  
 
-\subsection{Sensitivity Analysis}
+\subsection{Injection and Recovery Tests}
 
 To quantify the detection rate as a function of companion temperature and $v\sin{i}$, we performed a series of injection and recovery experiments. We started by creating synthetic binary star observations from each of our observed spectra. We made two distinct grids of companion stars: a low temperature grid spanning
 
