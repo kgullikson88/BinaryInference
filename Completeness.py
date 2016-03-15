@@ -68,7 +68,7 @@ def teff2radius(T):
     return retval
 
 
-def lnlike(P, P_0, t, tau, k_C, k_I):
+def lnlike(P, P_0, t, tau, k_C, k_I, *args, **kwargs):
     """
     This is the likelihood function for getting the period out of Equation 19 in Barnes (2010)
     :param P: Period (what we will be solving for)
@@ -89,6 +89,53 @@ def lnlike(P, P_0, t, tau, k_C, k_I):
 
 def poolfcn(args):
     return minimize_scalar(args[0], bracket=args[1], bounds=args[2], method='brent', args=args[3:]).x
+
+
+
+def get_periods_deterministic(ages, P0_vals, T_vals, k_C=0.646, k_I=452, nproc=None, safe=True):
+    """
+    All-important function to get the period distribution out of stuff that I know - parallel version!
+    :param ages: Random samples for the age of the system (Myr)
+    :param P0_min, P0_max: The minimum and maximum values of P0, the initial period. (days)
+                           We will choose random values in equal log-spacing.
+    :param T_star: The temperature of the star, in Kelvin
+    :keyword N_age, N_P0: The number of samples to take in age and initial period
+    :keyword k_C, k_I: The parameters fit in Barnes 2010
+    :keyword safe: Remove the periods with values < 0?
+    """
+
+    # Set up multiprocessing and a fit function with only one argument set
+    pool = multiprocessing.Pool(processes=nproc)
+    def errfcn(P, args):
+        return lnlike(P, *args)
+    bracket = [4.0, 7.0]
+    bounds = [0.1, 100]
+
+    args = []
+    for T_star in T_vals:
+        # Convert temperature to convection turnover timescale
+        tau = teff2tau(T_star)
+        for age in ages:
+            a = [(lnlike, bracket, bounds, P0, age, tau, k_C, k_I, T_star) for P0 in P0_vals]
+            args.extend(a)
+    #    period_list.extend(pool.map(poolfcn, args))
+    period_list = pool.map(poolfcn, args)
+    p0_list = [ag[3] for ag in args]
+    age_list = [ag[4] for ag in args]
+    T_list = [ag[8] for ag in args]
+
+    pool.close()
+    pool.join()
+
+    P = np.array(period_list)
+    if P.ndim > 1:
+        P = P[:, 0]
+    P0 = np.array(p0_list)
+    age = np.array(age_list)
+    teff = np.array(T_list)
+    if safe:
+        return P[P > 0], P0[P > 0], age[P > 0], teff[P > 0]
+    return P, P0, age, teff
 
 
 def get_period_dist_parallel(ages, P0_min, P0_max, T_star, N_P0=1000, k_C=0.646, k_I=452, nproc=None, safe=True):
@@ -400,16 +447,22 @@ class VelocityPDF(object):
         try:
             period_fcn = self.period_fcn
         except AttributeError:
+            #print('Getting period function... ', end=' ')
             period_fcn = get_barnes_interpolator()
+            _ = period_fcn(5000, 250, 1) # Calling it once makes subsequent calls faster for some reason...
             self.period_fcn = period_fcn
+            #print('Done!')
         
         #P0 = np.random.uniform(P0_min, P0_max, teff.size)
         P0 = 10**np.random.uniform(np.log10(P0_min), np.log10(P0_max), size=teff.size)
+        #print(teff.shape, age.shape, P0.shape)
         period = period_fcn(teff, age, P0)
 
         # Convert to an equatorial velocity distribution by using the radius
         #R = teff2radius(teff)
+        #print('Getting radius... ', end=' ')
         R = self.radius(teff, age)
+        #print('Done!')
         v_eq = 2.0*np.pi*R*constants.R_sun/(period*u.day)
         return v_eq
 
@@ -466,6 +519,8 @@ class VelocityPDF(object):
         lowT = self.Teff < 6000
         midT = (self.Teff >= 6000) & (self.Teff < 14000)
         highT = self.Teff >= 14000
+        #print(Teff, Teff.size)
+        #print(age, age.size)
         
         # Make a vsini array
         vsini = np.empty_like(self.Teff, dtype=np.float)
